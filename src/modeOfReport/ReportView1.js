@@ -63,10 +63,10 @@ export default class ReportView1 extends Component {
             // console.log('copyDataAll.deviceInfo.rt_content:', copyDataAll.deviceInfo.rt_content);
             needRenderContent = JSON.parse(copyDataAll.deviceInfo.rt_content).map((item) => {
                 if (item.type_id === '10' || item.type_id === '11') {
-                    item.isCollecting = false, 
+                    item.isCollecting = false;
                     item.value = ''
                 }
-                item.isChecked = false;
+                item.isChecked = false; /// 将所有项都至成了没有选择过的状态
                 return item
             })
         } else {
@@ -74,37 +74,21 @@ export default class ReportView1 extends Component {
             // console.log("copyDataAll.deviceInfo.sp_content:", copyDataAll.deviceInfo.sp_content);
             if (copyDataAll.deviceInfo.sp_content) {
                 let a = JSON.parse(copyDataAll.deviceInfo.sp_content);
-                needRenderContent = a.map((item) => { item.value = ''; item.bug_id = null; item.isChecked = false; if (item.type_id === '10' || item.type_id === '11') { item.isCollecting = false, item.value = '' } return item })
+                needRenderContent = a.map((item) => {
+                    item.value = '';
+                    item.bug_id = null;
+                    item.isChecked = false;
+                    if (item.type_id === '10' || item.type_id === '11') {
+                        item.isCollecting = false;
+                        item.value = ''
+                    } return item
+                })
             } else { Toast.info('请配置表单模版'); return; }
         }
         this.setState({
             data: needRenderContent,
             titleData: { title: copyDataAll.deviceInfo.sample_table_name, devicename: copyDataAll.deviceInfo.device_name }
         })
-    }
-
-    removeBugFromLocalstorage = async (deviceId, keyValue) => {
-        let result = await DeviceStorage.get(LOCAL_BUGS)
-        if (result) {
-            for (i = 0; i < result.localBugs.length; i++) {
-                if (result.localBugs[i]['device_id'] === deviceId && result.localBugs[i]['key'] === keyValue) {
-                    ////一次操作只可能删除一个对象。所以不用考虑索引变动
-                    result.localBugs.splice(i, 1);
-                    await DeviceStorage.update(LOCAL_BUGS, { "localBugs": result.localBugs })
-                    let tempdata = JSON.parse(JSON.stringify(this.state.data))
-                    tempdata.forEach((ele) => {
-                        if (ele.key === keyValue) {
-                            ele.bug_id = null
-                            ele.value = ''
-                            this.setState({
-                                data: tempdata
-                            })
-                        }
-                    })
-                    Toast.success('移除此条缺陷缓存成功', 1);
-                }
-            }
-        }
     }
 
     /**
@@ -147,8 +131,10 @@ export default class ReportView1 extends Component {
         let isOk = true;
         if (this.state.data && this.state.data.length > 0) {
             this.state.data.forEach((item) => {
-                if ((item.type_id === '2' && item.value === '') || (item.type_id === '10' && item.value === '')
-                    || (item.type_id === '11' && item.value === '') || (item.type_id === '4' && item.isChecked === false)) {
+                if ((item.type_id === '2' && item.value === '') ||
+                    (item.type_id === '10' && item.value === '') ||
+                    (item.type_id === '11' && item.value === '') ||
+                    (item.type_id === '4' && item.isChecked === false && item.bug_id === null)) {
                     isOk = false
                 }
             })
@@ -303,7 +289,7 @@ export default class ReportView1 extends Component {
                     </View>
                 </View>
             </View>
-        } else {
+        } else if (item.item.type_id === '4') {
             ///type = 4 时 
             component = <TouchableHighlight
                 underlayColor='#EDEDED'

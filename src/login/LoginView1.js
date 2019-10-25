@@ -5,28 +5,18 @@ import NfcManager from 'react-native-nfc-manager';
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO } from '../util/DeviceStorage'
 import AppData from '../util/AppData'
-import ToastExample from '../util/ToastExample'
-import moment from 'moment'
+import { checkTimeAllow } from '../util/Tool'
 
 export default class LoginView1 extends Component {
     constructor(props) {
         super(props);
         this.state = {
             tag: {},
-            // value: "",
         }
     }
     componentDidMount() {
         this.checkNfcHandler();
         this.checkAccount();
-
-        // DeviceEventEmitter.addListener('tmpEvent', (e) => {
-        //     this.setState({ value: e.value })
-        // });
-
-        // DeviceEventEmitter.addListener('vibEvent', (e) => {
-        //     this.setState({ value: e.value })
-        // });
     }
     componentWillUnmount() {
         this.stopDetection();
@@ -101,14 +91,12 @@ export default class LoginView1 extends Component {
             this.LoginHandler(tag)
         } else {
             console.log('已经登录，默认是设备的nfc');
-            let result = await this.checkTimeAllow();
-            if (result === false) {
+            if (AppData.isAllowTime === false) {
                 Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
                 return;
             }
             if (AppData.isNetConnetion) {
                 ////这里要先去后台查询，如果是设备的NFC,就跳转到报表界面。否则就提示用户该NFC号码，不是设备的NFC号码
-                ///还要判断是否在 可上传的时间区间内
                 this.getDeviceInfoFromDB(tag.id)
             } else {
                 console.log('检查到贴卡（巡检）操作。但是没有网络');
@@ -149,6 +137,7 @@ export default class LoginView1 extends Component {
                         AppData.loginFlag = true;
                         AppData.username = response.data.data.username;
                         AppData.user_id = response.data.data.id;
+                        checkTimeAllow();
                     } else {
                         console.log('cardid不存在，不允许登录');
                     }
@@ -181,70 +170,18 @@ export default class LoginView1 extends Component {
             }
         }
     }
-    /**
-     * 判断当前时间是否在规定的巡检时间段以内
-     */
-    checkTimeAllow = async () => {
-        let flag = false;
-        let time = moment().format('YYYY-MM-DD HH:mm:ss');
-        let timeList = await this.getAllowTimeInfo();///从数据库获取允许上传的时间段数据
-        for (let index = 0; index < timeList.length; index++) {
-            const item = timeList[index];
-            let bgt = moment(item).format('YYYY-MM-DD ') + item.begin;
-            let edt = moment(item).format('YYYY-MM-DD ') + item.end;
-            if (time > bgt && time < edt) {
-                flag = true;
-                break;
-            }
-        }
-        return flag;
-    }
-
-    getAllowTimeInfo = () => {
-        return new Promise((resolve, reject) => {
-            let sql = `select * from allow_time`
-            HttpApi.obs({ sql }, (res) => {
-                let result = [];
-                if (res.data.code === 0) {
-                    result = res.data.data
-                }
-                resolve(result);
-            })
-        })
-    }
-
-    // getDeviceInfoByNFC = (NFCinfo) => {
-    // console.log(NFCinfo);
-    // HttpApi.getDeviceInfoByNFC({ nfcid: NFCinfo.nfcid, type: 2 }, (response) => {
-    //     console.log(response.data);
-    //     if (response.data.code === 0) { ///如果查询成功
-    //         let deviceData = response.data.data;
-    //         HttpApi.getDeviceSampleByTypeId({ device_type_id: deviceData.type_id }, (res) => {
-    //             // console.log('该设备的模板查询结果：', res.data.data[0]);
-    //             // return;
-    //             let sampleData = res.data.data[0];
-    //             let deviceInfo = deviceData;
-    //             // console.log("deviceInfo:::",deviceInfo);
-    //             // this.props.navigation.navigate('ReportView', { "sampleData": sampleData, "deviceInfo": deviceInfo })
-    //             this.props.navigation.navigate('ReportView1', { "sampleData": sampleData, "deviceInfo": deviceInfo })
-    //         })
-    //     } else {
-    //         Alert.alert('此设备射频卡数据已经存在于NFC表中', NFCinfo.name);
-    //     }
-    // }, null);
-    // }
     ///在线情况下。获取设备的相关信息。
     getDeviceInfoByNFC = (NFCinfo) => {
         let result = [];
         let sql = `select nt.* from (
-            select d.id as device_id,d.name as device_name,d.type_id as device_type_id,dts.name as device_type_name,dts.sample_name as sample_table_name ,d.nfc_id,nfcs.name as nfc_name,nfcs.nfcid,d.area_id,areas.name as area_name,rt.id as last_record_id,rt.device_status,samples.content as sp_content,rt.content as rt_content,rt.user_id,users.name as user_name,rt.createdAt as rt_createdAt,rt.updatedAt as rt_updatedAt
+            select d.id as device_id,d.name as device_name,d.type_id as device_type_id,dts.name as device_type_name,dts.sample_name as sample_table_name ,d.nfc_id,nfcs.name as nfc_name,nfcs.nfcid,d.area_id,area_3.name as area_name,rt.id as last_record_id,rt.device_status,samples.content as sp_content,rt.content as rt_content,rt.user_id,users.name as user_name,rt.createdAt as rt_createdAt,rt.updatedAt as rt_updatedAt
             from devices d 
             left join 
             ( select * from (select max(a.id) as maxid from records a where a.effective = 1 group by a.device_id) t 
             left join (select * from records where records.effective = 1) r on t.maxid = r.id) rt
             on d.id = rt.device_id 
             left join (select * from device_types where device_types.effective = 1) dts on dts.id = d.type_id 
-            left join (select * from areas where areas.effective = 1) areas on areas.id = d.area_id 
+            left join (select * from area_3 where effective = 1) area_3 on area_3.id = d.area_id 
             left join (select * from users where users.effective = 1) users on users.id = rt.user_id 
             left join (select * from samples where samples.effective = 1) samples on d.type_id = samples.device_type_id 
             left join (select * from nfcs where nfcs.effective = 1) nfcs on d.nfc_id = nfcs.id
@@ -292,54 +229,11 @@ export default class LoginView1 extends Component {
         // console.log(this.state.tag.id);
         last_deivces_info.lastDevicesInfo.forEach((deviceInfo) => {
             if (deviceInfo.nfcid === this.state.tag.id) {
-                // console.log('本地缓存中查询到：', deviceInfo);
+                console.log('本地缓存中查询到：', deviceInfo);
                 this.props.navigation.navigate('ReportView1', { "deviceInfo": deviceInfo })
             }
         })
     }
-    // findOneDeviceInfoFromLocalStorage = (tagId, nfcInfoArr, deviceInfoArr, sampleInfoArr) => {
-    //     let nfcInfo = this.findNfcInfo(tagId, nfcInfoArr);
-    //     if (nfcInfo) {
-    //         let deviceInfo = this.findDeviceInfo(nfcInfo.id, deviceInfoArr);
-    //         if (deviceInfo) {
-    //             let sampleInfo = this.findSampleInfo(deviceInfo.type_id, sampleInfoArr)
-    //             if (sampleInfo) {
-    //                 // console.log("设备信息：",deviceInfo);
-    //                 // console.log("模版信息：",sampleInfo);
-    //                 this.props.navigation.navigate('ReportView1', { "sampleData": sampleInfo, "deviceInfo": deviceInfo })
-    //             }
-    //         }
-    //     } else {
-    //         console.log('该设备信息没有与NFC绑定');
-    //     }
-    // }
-    // findNfcInfo = (tagId, nfcInfoArr) => {
-    //     let result = null;
-    //     nfcInfoArr.forEach((nfcInfo) => {
-    //         if (nfcInfo.nfcid === tagId) {
-    //             result = nfcInfo
-    //         }
-    //     })
-    //     return result
-    // }
-    // findDeviceInfo = (nfcId, deviceInfoArr) => {
-    //     let result = null;
-    //     deviceInfoArr.forEach((deviceInfo) => {
-    //         if (deviceInfo.nfc_id === nfcId) {
-    //             result = deviceInfo
-    //         }
-    //     })
-    //     return result
-    // }
-    // findSampleInfo = (type_id, sampleInfoArr) => {
-    //     let result = null;
-    //     sampleInfoArr.forEach((sampleInfo) => {
-    //         if (sampleInfo.device_type_id === type_id) {
-    //             result = sampleInfo
-    //         }
-    //     })
-    //     return result
-    // }
 }
 
 const styles = StyleSheet.create({

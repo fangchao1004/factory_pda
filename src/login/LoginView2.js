@@ -4,6 +4,7 @@ import { Button, InputItem, Toast, Provider } from '@ant-design/react-native';
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_INFO } from '../util/DeviceStorage'
 import AppData from '../util/AppData'
+import { checkTimeAllow } from '../util/Tool'
 const screenW = Dimensions.get('window').width;
 /**
  * 账户密码登录
@@ -87,25 +88,11 @@ class LoginView2 extends Component {
             password: value
         })
     }
-
     loginHandler = () => {
         if (this.state.username.length == 0 || this.state.password.length == 0) {
             Toast.fail('账号和密码都不能为空', 1)
             return;
         }
-        // let userData = { username: this.state.username, password: this.state.password };
-        // HttpApi.loginByUserInfo(userData, (response) => {
-        //     if (response.status == 200) {
-        //         if (response.data.code == 0) {
-        //             console.log("数据LLL111：",response.data.data);
-        //             this.props.navigation.navigate('MainView')
-        //             this.saveUserInfoInStorageHandler();
-        //             this.saveUserInfoInGloabel(response.data.data);
-        //         } else {
-        //             Toast.fail('用户名密码错误', 1)
-        //         }
-        //     }
-        // })
         let userData = { username: this.state.username, password: this.state.password, effective: 1 };
         HttpApi.getUserInfo(userData, (response) => {
             if (response.status == 200) {
@@ -114,6 +101,7 @@ class LoginView2 extends Component {
                     this.props.navigation.navigate('MainView')
                     this.saveUserInfoInStorageHandler();
                     this.saveUserInfoInGloabel(response.data.data[0]);
+                    checkTimeAllow();
                 } else {
                     Toast.fail('用户名密码错误', 1)
                 }
@@ -139,7 +127,6 @@ class LoginView2 extends Component {
         })
         return p;
     }
-
     saveUserInfoInStorageHandler = () => {
         DeviceStorage.save(USER_INFO, { username: this.state.username, password: this.state.password });
     }

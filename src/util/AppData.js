@@ -8,6 +8,7 @@ const object = {
     loginFlag: false,
     name: null,
     isNetConnetion: true,
+    isAllowTime: true,/// 当前是否为允许巡检的时间
 };
 
 export const UPDATE_DEVICE_INFO = 'updateDeviceInfo'
