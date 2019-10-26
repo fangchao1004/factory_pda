@@ -9,6 +9,7 @@ const object = {
     name: null,
     isNetConnetion: true,
     isAllowTime: true,/// 当前是否为允许巡检的时间
+    checkedAt: null,/// 当前贴卡弹出ReportView1的时间戳 ‘YYYY-MM-DD HH:mm:ss’
 };
 
 export const UPDATE_DEVICE_INFO = 'updateDeviceInfo'

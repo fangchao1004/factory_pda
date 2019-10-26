@@ -4,8 +4,9 @@ import { Button, TextareaItem, Picker, Provider, List, Toast, Portal, InputItem 
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO } from '../util/DeviceStorage'
+import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, AREA1_INFO } from '../util/DeviceStorage'
 import ToastExample from '../util/ToastExample'
+import moment from 'moment'
 
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
@@ -21,7 +22,8 @@ class ReportIndependentView extends Component {
             warning_level_data: [{ label: '一级', value: 1 }, { label: '二级', value: 2 }, { label: '三级', value: 3 }],
             warning_level_select: [],
             descripTxt: '',
-            areaTxt: '',
+            areaArr: [], ///暂时只支持一级区域选择
+            areaId_select: [],///选择的areaId [x]
             majorArr: [],
             majorValue: null,
             isLoading: false,
@@ -47,7 +49,7 @@ class ReportIndependentView extends Component {
         })
     }
     componentWillUnmount() {
-        console.log('componentWillUnmount componentWillUnmount componentWillUnmount');
+        console.log('ReportIndependentView  componentWillUnmount');
     }
     init = async () => {
         let major_result = [];
@@ -57,8 +59,16 @@ class ReportIndependentView extends Component {
                 major_result.push({ label: item.name, value: item.id });
             })
         }
+        let area1_result = [];
+        let area1_info = await DeviceStorage.get(AREA1_INFO);
+        if (area1_info) {
+            area1_info.area1Info.forEach((item) => {
+                area1_result.push({ label: item.name, value: item.id });
+            })
+        }
         this.setState({
             majorArr: major_result,
+            areaArr: area1_result
         })
     }
     collecttempHandler = () => {
@@ -184,17 +194,21 @@ class ReportIndependentView extends Component {
         </View>)
     }
     getAreaInput = () => {
-        return (
-            <InputItem
-                width={screenW * 0.95}
-                clear
-                value={this.state.areaTxt}
-                placeholder="                    请填写位置信息"
-                onChange={(value) => this.setState({ areaTxt: value })}
-            >
-                <Text style={{ fontSize: 15, color: '#000000', marginLeft: -15 }}>所在区域</Text>
-            </InputItem>
-        )
+        return (<View style={{ width: screenW * 0.9 }}>
+            <List style={{ width: screenW * 0.9 }}>
+                <Picker
+                    data={this.state.areaArr}
+                    cols={1}
+                    itemStyle={{ height: 30, marginTop: 8 }}
+                    value={this.state.areaId_select}
+                    onChange={(v, e) => {
+                        this.setState({ areaId_select: v })
+                    }}
+                >
+                    <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>所在区域</Text></List.Item>
+                </Picker>
+            </List>
+        </View>)
     }
     getOneTextArea = () => {
         return (<View style={{ marginTop: 20, width: screenW * 0.9 }}>
@@ -236,12 +250,8 @@ class ReportIndependentView extends Component {
             Toast.info('请先完成采集工作，再上传');
             return;
         }
-        if (!this.state.majorValue) {
-            Toast.fail('请完善信息：缺陷专业', 1);
-            return;
-        }
-        if (this.state.warning_level_select.length === 0 || this.state.descripTxt.length === 0 || this.state.areaTxt.length === 0) {
-            Toast.fail('请完善信息：紧急类型、所在区域、问题描述', 1);
+        if (!this.state.majorValue || this.state.warning_level_select.length === 0 || this.state.descripTxt.length === 0 || this.state.areaId_select.length === 0) {
+            Toast.fail('请完善信息：缺陷专业、紧急类型、所在区域、问题描述', 1);
             return;
         }
         if (AppData.isNetConnetion) {
@@ -258,7 +268,14 @@ class ReportIndependentView extends Component {
                 }
             }
             let reportData = { select: '', majorId: this.state.majorValue[0], text: this.state.descripTxt, imgs: netUriArr }
-            let resultData = { user_id: AppData.user_id, content: JSON.stringify(reportData), buglevel: parseInt(this.state.warning_level_select[0] + ''), area_remark: this.state.areaTxt, major_id: this.state.majorValue[0] }
+            let resultData = {
+                user_id: AppData.user_id,
+                content: JSON.stringify(reportData),
+                buglevel: this.state.warning_level_select[0],
+                area_remark: this.state.areaArr[this.state.areaId_select[0] - 1].label,
+                major_id: this.state.majorValue[0],
+                checkedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+            }
             HttpApi.uploadBugs(resultData, (res) => {
                 Portal.remove(key)
                 if (res.data.code === 0) {
@@ -274,7 +291,15 @@ class ReportIndependentView extends Component {
     }
     saveBugInfoInLocal = async () => {
         let reportData = { select: '', majorId: this.state.majorValue[0], text: this.state.descripTxt, imgs: imgLocalPathArr }
-        let resultData = { user_id: AppData.user_id, content: JSON.stringify(reportData), buglevel: parseInt(this.state.warning_level_select[0] + ''), area_remark: this.state.areaTxt, major_id: this.state.majorValue[0] }
+        let resultData = {
+            user_id: AppData.user_id,
+            content: JSON.stringify(reportData),
+            buglevel: parseInt(this.state.warning_level_select[0] + ''),
+            area_remark: this.state.areaArr[this.state.areaId_select[0] - 1].label,
+            major_id: this.state.majorValue[0],
+            checkedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+        }
+        // return;
         let storageBugs = await DeviceStorage.get(LOCAL_BUGS);
         if (storageBugs) {
             storageBugs.localBugs.push(resultData);
@@ -304,7 +329,7 @@ class ReportIndependentView extends Component {
         this.setState({
             warning_level_select: [],
             descripTxt: '',
-            areaTxt: '',
+            areaId_select: [],
             majorValue: null,
             tempratureValue: null,
             shakeValue: null,

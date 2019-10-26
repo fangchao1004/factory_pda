@@ -296,6 +296,7 @@ class ReportView2 extends Component {
             obj.user_id = AppData.user_id;
             obj.device_id = device_obj.device_id;
             obj.major_id = this.state.majorValue[0];
+            obj.checkedAt = AppData.checkedAt;
             HttpApi.uploadBugs(obj, (res) => {
                 if (res.data.code === 0) {
                     // console.log('bug_id', res.data.data.id);
@@ -335,6 +336,7 @@ class ReportView2 extends Component {
         obj.device_id = device_obj.device_id;
         obj.major_id = this.state.majorValue[0];
         obj.key = AllData.item.key;
+        obj.checkedAt = AppData.checkedAt;
         // console.log("本地存储的bug数据：", obj);
         AllData.callBackBugId(-1, AllData.item.key);
         let storageBugs = await DeviceStorage.get(LOCAL_BUGS);

@@ -10,7 +10,7 @@ import AreaView from '../modeOfArea/AreaView';
 import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO } from '../util/DeviceStorage';
+import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA1_INFO } from '../util/DeviceStorage';
 
 export default class MainView extends Component {
     constructor(props) {
@@ -195,6 +195,11 @@ export default class MainView extends Component {
         if (area_info) { await DeviceStorage.update(AREA_INFO, { "areaInfo": areaInfo }) }
         else { await DeviceStorage.save(AREA_INFO, { "areaInfo": areaInfo }) }
 
+        let area1Info = await this.getArea1InfoInfo();
+        let area1_info = await DeviceStorage.get(AREA1_INFO);
+        if (area1_info) { await DeviceStorage.update(AREA1_INFO, { "area1Info": area1Info }) }
+        else { await DeviceStorage.save(AREA1_INFO, { "area1Info": area1Info }) }
+
         let last_devices_info = await this.getLastRecordsByAllDevices();
         let result = await DeviceStorage.get(LAST_DEVICES_INFO)
         if (result) { await DeviceStorage.update(LAST_DEVICES_INFO, { "lastDevicesInfo": last_devices_info }); }
@@ -235,6 +240,16 @@ export default class MainView extends Component {
         return new Promise((resolve, reject) => {
             let result = [];
             let sql = `select * from area_3 where effective = 1`
+            HttpApi.obs({ sql }, (res) => {
+                if (res.data.code == 0) { result = res.data.data }
+                resolve(result);
+            })
+        })
+    }
+    getArea1InfoInfo = () => {
+        return new Promise((resolve, reject) => {
+            let result = [];
+            let sql = `select * from area_1 where effective = 1`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
                 resolve(result);

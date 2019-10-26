@@ -5,6 +5,7 @@ import AppData, { UPDATE_DEVICE_INFO } from '../util/AppData'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { LOCAL_BUGS, LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage';
 import ToastExample from '../util/ToastExample'
+import moment from 'moment'
 
 const screenW = Dimensions.get('window').width;
 
@@ -22,6 +23,7 @@ export default class ReportView1 extends Component {
         }
     }
     componentDidMount() {
+        AppData.checkedAt = moment().format('YYYY-MM-DD HH:mm:ss')
         this.initFromData();
         ToastExample.isConnected((isConnectedDevice) => {
             // console.log(isConnected);
@@ -118,7 +120,7 @@ export default class ReportView1 extends Component {
                 item.isChecked = true;
             }
         })
-        console.log(tempArr);
+        // console.log(tempArr);
         this.setState({
             data: tempArr
         })
@@ -163,6 +165,8 @@ export default class ReportView1 extends Component {
         recordData.content = JSON.stringify(this.state.data);
         recordData.user_id = AppData.user_id;
         recordData.isUploaded = false;
+        recordData.checkedAt = AppData.checkedAt;
+        // console.log('recordData:', recordData);
         ////联网状态下：
         // console.log('长传record数据:');
         // console.log('content:', this.state.data);
@@ -331,7 +335,7 @@ export default class ReportView1 extends Component {
         let index = Item.index;
         // console.log(item, index, item.isCollecting);
         // return;
-        if (item.isCollecting === false) {///如果 button 字面 是 '采集' 开始采集
+        if (item && item.isCollecting === false) {///如果 button 字面 是 '采集' 开始采集
             if (currentCollectIndex !== null) {///如果当前已经有正在采集的项  提示用户 先完成当前的采集工作
                 Toast.info('请先完成当前的采集工作，再开始下一项');
                 return;
@@ -364,7 +368,6 @@ export default class ReportView1 extends Component {
     render() {
         return (
             <Provider>
-
                 <View style={{ flex: 1, width: screenW, alignItems: 'center', backgroundColor: '#FFFFFF' }}>
                     <View style={{ width: screenW }}>
                         <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF' }}>

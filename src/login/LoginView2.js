@@ -97,7 +97,6 @@ class LoginView2 extends Component {
         HttpApi.getUserInfo(userData, (response) => {
             if (response.status == 200) {
                 if (response.data.code == 0 && response.data.data.length > 0) {
-                    // console.log("数据LLL222：", response.data.data);
                     this.props.navigation.navigate('MainView')
                     this.saveUserInfoInStorageHandler();
                     this.saveUserInfoInGloabel(response.data.data[0]);

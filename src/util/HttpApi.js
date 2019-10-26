@@ -1,9 +1,7 @@
 import Axios from 'axios';
 
-const Testuri1 = 'http://127.0.0.1:3009/' ///本地服务器
+const Testuri1 = 'http://192.168.1.118:3009/' ///本地服务器 安徽芯未来 5g
 const Testuri2 = 'http://hefeixiaomu.com:3009/'///小木服务器数据库
-const Testuri3 = 'http://192.168.3.171:3009/' ///本地x服务器
-const Testuri4 = 'http://192.168.3.119:3009/' ///本地f服务器
 const Testuri = Testuri2;
 
 export const SERVER_URL = Testuri;

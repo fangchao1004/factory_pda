@@ -4,7 +4,8 @@ import AsyncStorage from '@react-native-community/async-storage';
 export const USER_CARD = 'UserCard'
 export const USER_INFO = 'UserInfo'
 export const NFC_INFO = 'NfcInfo'
-export const AREA_INFO = 'AreaInfo'
+export const AREA_INFO = 'AreaInfo' /// 初期表示 第三级区域
+export const AREA1_INFO = 'AreaInfo' /// 初期表示 第一级区域
 export const DEVICE_INFO = 'DeviceInfo'
 export const SAMPLE_INFO = 'SampleInfo'
 export const MAJOR_INFO = 'MajorInfo'
