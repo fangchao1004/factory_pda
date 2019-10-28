@@ -8,8 +8,8 @@ export async function checkTimeAllow() {
     let timeList = await getAllowTimeInfo();///从数据库获取允许上传的时间段数据
     for (let index = 0; index < timeList.length; index++) {
         const item = timeList[index];
-        let bgt = moment(item).format('YYYY-MM-DD ') + item.begin;
-        let edt = moment(item).format('YYYY-MM-DD ') + item.end;
+        let bgt = moment().format('YYYY-MM-DD ') + item.begin;
+        let edt = item.isCross === 0 ? moment().format('YYYY-MM-DD ') + item.end : moment().add(1, 'day').format('YYYY-MM-DD ') + item.end;
         if (time > bgt && time < edt) {
             flag = true;
             break;
