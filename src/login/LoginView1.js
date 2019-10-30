@@ -45,6 +45,7 @@ export default class LoginView1 extends Component {
                     </Button>
                     <Text>{this.state.value}</Text>
                 </View>
+                <Text style={styles.ver}>{AppData.record[0].version}</Text>
             </Provider>
         );
     }
@@ -248,5 +249,9 @@ const styles = StyleSheet.create({
     },
     btn: {
         marginTop: 150,
+    },
+    ver: {
+        alignSelf: "center",
+        color: "#DDDDDD"
     }
 })
