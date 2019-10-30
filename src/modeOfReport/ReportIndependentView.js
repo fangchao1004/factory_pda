@@ -274,7 +274,8 @@ class ReportIndependentView extends Component {
                 buglevel: this.state.warning_level_select[0],
                 area_remark: this.state.areaArr[this.state.areaId_select[0] - 1].label,
                 major_id: this.state.majorValue[0],
-                checkedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+                checkedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+                remark: JSON.stringify({ '0': [], '1': [], '2': [], '3': [] })
             }
             HttpApi.uploadBugs(resultData, (res) => {
                 Portal.remove(key)

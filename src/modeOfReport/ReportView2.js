@@ -247,7 +247,6 @@ class ReportView2 extends Component {
                 imgP = { uri: imgUri }
             }
             ImgsArr.push(<Image key={index + ''} source={imgP} style={{ width: screenW * 0.9, height: screenW * 0.9 / 3 * 4, marginBottom: 10 }} />);
-
         })
         return (<View style={{ marginTop: 20, marginLeft: 15, marginRight: 15, width: screenW * 0.9 }}>
             {ImgsArr.length > 0 ? <Text style={{ color: '#000000', marginBottom: 10, fontSize: 15 }}>图片补充</Text> : null}
@@ -291,12 +290,14 @@ class ReportView2 extends Component {
             let content = JSON.parse(JSON.stringify(this.state.fromData));
             content.imgs = netUriArr;
             let obj = {}
-            obj.title_name = AllData.item.title_name;
-            obj.content = JSON.stringify(content);
-            obj.user_id = AppData.user_id;
-            obj.device_id = device_obj.device_id;
-            obj.major_id = this.state.majorValue[0];
-            obj.checkedAt = AppData.checkedAt;
+            obj.title_name = AllData.item.title_name;///标题
+            obj.title_remark = AllData.item.title_remark; /// 标题备注
+            obj.content = JSON.stringify(content);///内容
+            obj.user_id = AppData.user_id;///上传者id
+            obj.device_id = device_obj.device_id;///设备id
+            obj.major_id = this.state.majorValue[0];///专业id
+            obj.checkedAt = AppData.checkedAt;///检查的时间点 YYYY-MM-DD HH:mm:ss
+            obj.remark = JSON.stringify({ '0': [], '1': [], '2': [], '3': [] });///默认 处理步骤描述数据
             HttpApi.uploadBugs(obj, (res) => {
                 if (res.data.code === 0) {
                     // console.log('bug_id', res.data.data.id);
@@ -382,8 +383,12 @@ class ReportView2 extends Component {
                         scrollEnabled={this.state.enableScrollViewScroll}
                         ref={myScroll => (this._myScroll = myScroll)}>
                         <View style={{ width: screenW, alignItems: 'center' }}>
-                            <Text style={{ color: '#41A8FF', alignSelf: 'flex-start', marginTop: 10, marginLeft: 10 }}>{AllData ? (AllData.item.key + ". " + AllData.item.title_name) : ''}</Text>
-                            {this.state.isBugReview ? this.getOneCheckShowBox(this.state.options) : this.getOneCheckBox(this.state.options)}
+                            <Text style={{ alignSelf: 'flex-start', marginTop: 10, marginLeft: 10 }}>{AllData ? (AllData.item.key + ". " + AllData.item.title_name) : ''}
+                                <Text style={{ color: '#41A8FF' }}>{AllData ? (AllData.item.title_remark) : ''}</Text>
+                            </Text>
+                            {AllData && AllData.item.type_id === '4' ? (
+                                this.state.isBugReview ? this.getOneCheckShowBox(this.state.options) : this.getOneCheckBox(this.state.options))
+                                : null}
                             {this.state.isBugReview ? this.getOneMajorShowPicker() : this.getOneMajorPicker()}
                             {this.state.isBugReview ? this.getOneTextShowArea() : this.getOneTextArea()}
                             {this.state.isBugReview ? this.getImags() : this.getOneImagePicker()}

@@ -128,15 +128,17 @@ export default class ReportView1 extends Component {
 
     /**
      * 检查record内容是否ok
+     * 
+     * 10 测温 11测振 12通用 4多选
      */
     checkContentIsOk = () => {
         let isOk = true;
         if (this.state.data && this.state.data.length > 0) {
             this.state.data.forEach((item) => {
-                if ((item.type_id === '2' && item.value === '') ||
-                    (item.type_id === '10' && item.value === '') ||
+                if ((item.type_id === '10' && item.value === '') ||
                     (item.type_id === '11' && item.value === '') ||
-                    (item.type_id === '4' && item.isChecked === false && item.bug_id === null)) {
+                    (item.type_id === '4' && item.isChecked === false && item.bug_id === null) ||
+                    (item.type_id === '12' && item.isChecked === false && item.bug_id === null)) {
                     isOk = false
                 }
             })
@@ -250,22 +252,7 @@ export default class ReportView1 extends Component {
      */
     renderItem = (item) => {
         let component = null
-        if (item.item.type_id === '2') {
-            component =
-                <View style={{ borderBottomColor: "#bfbfbf", borderBottomWidth: 1 }}>
-                    <View>
-                        <Text style={{ fontSize: 14, color: '#41A8FF', alignSelf: 'flex-start' }}>{item.index + 1}. {item.item.title_name}</Text>
-                    </View>
-                    <InputItem type='number' clear placeholder="请填写数据"
-                        onChange={(v) => {
-                            let copyList = JSON.parse(JSON.stringify(this.state.data));
-                            copyList[item.index].value = v + '';
-                            this.setState({ data: copyList })///修改输入数据
-                        }}
-                    >
-                    </InputItem>
-                </View>
-        } else if (item.item.type_id === '10' || item.item.type_id === '11') {
+        if (item.item.type_id === '10' || item.item.type_id === '11') { /// 10测温  11测振组件
             let unitStr = item.item.type_id === '10' ? '°C' : 'mm';
             let magLft = item.item.type_id === '10' ? 20 : 10;
             let new_title_name = item.item.title_name;
@@ -273,7 +260,7 @@ export default class ReportView1 extends Component {
             let showValue = collectValue ? (item.item.type_id === '11' ? parseFloat(collectValue / 1000).toFixed(3) : parseFloat(collectValue)) : ''
             component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', borderBottomColor: "#bfbfbf", borderBottomWidth: 1, paddingBottom: 10, paddingTop: 10 }}>
                 <View style={{ marginBottom: 5 }}>
-                    <Text style={{ fontSize: 14, color: '#41A8FF', alignSelf: 'flex-start' }}>{item.index + 1}. {new_title_name}</Text>
+                    <Text style={{ fontSize: 14, alignSelf: 'flex-start' }}>{item.index + 1}. {new_title_name}</Text>
                 </View>
                 <View style={{ flexDirection: 'row-reverse' }}>
                     <Button
@@ -282,9 +269,6 @@ export default class ReportView1 extends Component {
                     >
                         {item.item.isCollecting ? '停止' : '采集'}
                     </Button>
-                    {/* <View style={{ alignSelf: 'center', alignItems: 'center', borderWidth: 1, borderRadius: 5, borderColor: '#bfbfbf', width: 80, height: 30, marginRight: 30, backgroundColor: '#D0D0D0' }}>
-                        <Text style={{ marginTop: 4 }}>{showValue}</Text>
-                    </View> */}
                     <View style={{ flexDirection: 'row', marginRight: 30 }}>
                         <View style={{ alignSelf: 'center', alignItems: 'center', borderWidth: 1, borderRadius: 5, borderColor: '#DDDDDD', width: 80, height: 30, backgroundColor: '#D0D0D0' }}>
                             <Text style={{ marginTop: 4 }}>{showValue}</Text>
@@ -293,7 +277,7 @@ export default class ReportView1 extends Component {
                     </View>
                 </View>
             </View>
-        } else if (item.item.type_id === '4') {
+        } else if (item.item.type_id === '4') { ///多选组件
             ///type = 4 时 
             component = <TouchableHighlight
                 underlayColor='#EDEDED'
@@ -302,7 +286,6 @@ export default class ReportView1 extends Component {
                     this.setState({
                         value: item.item.key
                     })
-                    // console.log('click', item); 
                     item.deviceInfo = copyDataAll.deviceInfo;
                     item.callBackBugId = this.callBackBugId;
                     item.callBackIsChecked = this.callBackIsChecked;
@@ -310,8 +293,31 @@ export default class ReportView1 extends Component {
                 }}
             >
                 <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-                    {/* {console.log(item.item.key, item.item.type_id)} */}
-                    <Text style={{ fontSize: 14, color: '#41A8FF' }}>{item.index + 1}. {item.item.title_name}</Text>
+                    <Text style={{ fontSize: 14 }}>{item.index + 1}. {item.item.title_name}</Text>
+                    <View style={{ flexDirection: 'row-reverse' }}>
+                        <Image style={{ width: 20, height: 20, marginLeft: 10 }} source={require('../../assets/jt.png')} />
+                        <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'flex' : 'none' }} source={require('../../assets/red_flag.png')} />
+                        <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'none' : (item.item.isChecked ? 'flex' : 'none') }} source={require('../../assets/green_flag.png')} />
+                    </View>
+                </View>
+            </TouchableHighlight >
+        } else if (item.item.type_id === '12') { ///通用组件
+            ///type = 4 时 
+            component = <TouchableHighlight
+                underlayColor='#EDEDED'
+                style={{ flex: 1, flexDirection: "row", alignItems: 'center', borderBottomColor: '#bfbfbf', borderBottomWidth: 1 }}
+                onPress={() => {
+                    this.setState({
+                        value: item.item.key
+                    })
+                    item.deviceInfo = copyDataAll.deviceInfo;
+                    item.callBackBugId = this.callBackBugId;
+                    item.callBackIsChecked = this.callBackIsChecked;
+                    this.props.navigation.navigate('ReportView2', item)
+                }}
+            >
+                <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+                    <Text style={{ fontSize: 14 }}>{item.index + 1}. {item.item.title_name}</Text>
                     <View style={{ flexDirection: 'row-reverse' }}>
                         <Image style={{ width: 20, height: 20, marginLeft: 10 }} source={require('../../assets/jt.png')} />
                         <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'flex' : 'none' }} source={require('../../assets/red_flag.png')} />
