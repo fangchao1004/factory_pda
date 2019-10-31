@@ -369,6 +369,8 @@ class ReportView2 extends Component {
     }
 
     render() {
+        let titName = AllData ? AllData.item.key + ". " + AllData.item.title_name : '';
+        let titRemark = AllData && AllData.item.title_remark ? '提示：' + AllData.item.title_remark : '';
         return (
             <Provider>
                 <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF' }}>
@@ -383,9 +385,8 @@ class ReportView2 extends Component {
                         scrollEnabled={this.state.enableScrollViewScroll}
                         ref={myScroll => (this._myScroll = myScroll)}>
                         <View style={{ width: screenW, alignItems: 'center' }}>
-                            <Text style={{ alignSelf: 'flex-start', marginTop: 10, marginLeft: 10 }}>{AllData ? (AllData.item.key + ". " + AllData.item.title_name) : ''}
-                                <Text style={{ color: '#41A8FF' }}>{AllData ? (AllData.item.title_remark) : ''}</Text>
-                            </Text>
+                            <Text style={{ alignSelf: 'flex-start', marginTop: 10, marginLeft: 10 }}>{titName}</Text>
+                            <Text style={{ alignSelf: 'flex-start', marginTop: 10, marginLeft: 10, color: '#41A8FF' }}>{titRemark}</Text>
                             {AllData && AllData.item.type_id === '4' ? (
                                 this.state.isBugReview ? this.getOneCheckShowBox(this.state.options) : this.getOneCheckBox(this.state.options))
                                 : null}
