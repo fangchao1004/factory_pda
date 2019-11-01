@@ -29,3 +29,39 @@ function getAllowTimeInfo() {
         })
     })
 }
+
+/**
+ * 将数据库查询的 数据进行 二层结构转换
+ * 
+ * 12级
+ */
+export function transfromDataTo2level(area12result) {
+    let tempObj = {};
+    area12result.forEach((item) => {
+        if (tempObj[item.area1_id]) { /// 如果它已经有了某个一级属性
+            if (item.area2_id)
+                tempObj[item.area1_id].children.push({ value: item.area1_name + '/' + item.area2_name, label: item.area2_name, key: item.area1_id + '/' + item.area2_id })
+        } else {
+            if (item.area2_id) { /// 有二级
+                tempObj[item.area1_id] = {
+                    label: item.area1_name,
+                    value: item.area1_name + '',
+                    key: item.area1_id + '',
+                    children: [{ value: item.area1_name + '/' + item.area2_name, label: item.area2_name, key: item.area1_id + '/' + item.area2_id }]
+                }
+            } else { /// 没有二级
+                tempObj[item.area1_id] = {
+                    label: item.area1_name,
+                    value: item.area1_name + '',
+                    key: item.area1_id + '',
+                    children: []
+                };
+            }
+        }
+    })
+    let jsonList = [];
+    for (let key in tempObj) {
+        jsonList.push(tempObj[key]);
+    }
+    return jsonList;
+}

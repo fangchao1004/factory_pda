@@ -4,7 +4,7 @@ import { Button, TextareaItem, Picker, Provider, List, Toast, Portal, InputItem 
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, AREA1_INFO } from '../util/DeviceStorage'
+import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, AREA12_INFO } from '../util/DeviceStorage'
 import ToastExample from '../util/ToastExample'
 import moment from 'moment'
 
@@ -59,16 +59,10 @@ class ReportIndependentView extends Component {
                 major_result.push({ label: item.name, value: item.id });
             })
         }
-        let area1_result = [];
-        let area1_info = await DeviceStorage.get(AREA1_INFO);
-        if (area1_info) {
-            area1_info.area1Info.forEach((item) => {
-                area1_result.push({ label: item.name, value: item.id });
-            })
-        }
+        let area12_info = await DeviceStorage.get(AREA12_INFO);
         this.setState({
             majorArr: major_result,
-            areaArr: area1_result
+            areaArr: area12_info.area12Info
         })
     }
     collecttempHandler = () => {
@@ -120,14 +114,14 @@ class ReportIndependentView extends Component {
             <View style={{ width: screenW * 0.9 }}>
                 <List style={{ width: screenW * 0.9 }}>
                     <Picker data={this.state.warning_level_data} cols={1}
-                        itemStyle={{ height: 30, marginTop: 8 }}
+                        itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
                         value={Array.from(this.state.warning_level_select)}
                         onChange={(v) => { this.setState({ warning_level_select: v }) }}
                     >
                         <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>紧急类型</Text></List.Item>
                     </Picker>
                 </List>
-            </View>
+            </View >
         )
     }
     getOneMajorPicker = () => {
@@ -136,7 +130,7 @@ class ReportIndependentView extends Component {
                 <Picker
                     data={this.state.majorArr}
                     cols={1}
-                    itemStyle={{ height: 30, marginTop: 8 }}
+                    itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
                     value={this.state.majorValue}
                     onChange={(v) => {
                         this.setState({ majorValue: v })
@@ -198,10 +192,11 @@ class ReportIndependentView extends Component {
             <List style={{ width: screenW * 0.9 }}>
                 <Picker
                     data={this.state.areaArr}
-                    cols={1}
-                    itemStyle={{ height: 30, marginTop: 8 }}
+                    cols={2}
+                    itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
                     value={this.state.areaId_select}
-                    onChange={(v, e) => {
+                    format={(labels) => { return labels.join('/'); }}
+                    onChange={(v) => {
                         this.setState({ areaId_select: v })
                     }}
                 >
@@ -272,7 +267,7 @@ class ReportIndependentView extends Component {
                 user_id: AppData.user_id,
                 content: JSON.stringify(reportData),
                 buglevel: this.state.warning_level_select[0],
-                area_remark: this.state.areaArr[this.state.areaId_select[0] - 1].label,
+                area_remark: this.state.areaId_select[this.state.areaId_select.length - 1],
                 major_id: this.state.majorValue[0],
                 checkedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
                 remark: JSON.stringify({ '0': [], '1': [], '2': [], '3': [] })

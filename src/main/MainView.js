@@ -10,7 +10,8 @@ import AreaView from '../modeOfArea/AreaView';
 import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA1_INFO } from '../util/DeviceStorage';
+import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA1_INFO, AREA12_INFO } from '../util/DeviceStorage';
+import { transfromDataTo2level } from '../util/Tool'
 
 export default class MainView extends Component {
     constructor(props) {
@@ -190,15 +191,16 @@ export default class MainView extends Component {
         if (major_info) { await DeviceStorage.update(MAJOR_INFO, { "majorInfo": majorInfo }) }
         else { await DeviceStorage.save(MAJOR_INFO, { "majorInfo": majorInfo }) }
 
-        let areaInfo = await this.getAreaInfoInfo();
+        let areaInfo = await this.getAreaInfoInfo(); /// 这里的areaInfo 默认是查第三级区域 后期整改
         let area_info = await DeviceStorage.get(AREA_INFO);
         if (area_info) { await DeviceStorage.update(AREA_INFO, { "areaInfo": areaInfo }) }
         else { await DeviceStorage.save(AREA_INFO, { "areaInfo": areaInfo }) }
 
-        let area1Info = await this.getArea1InfoInfo();
-        let area1_info = await DeviceStorage.get(AREA1_INFO);
-        if (area1_info) { await DeviceStorage.update(AREA1_INFO, { "area1Info": area1Info }) }
-        else { await DeviceStorage.save(AREA1_INFO, { "area1Info": area1Info }) }
+        let tempData = await this.getArea12InfoInfo();
+        let area12Info = transfromDataTo2level(tempData);
+        let area12_info = await DeviceStorage.get(AREA12_INFO);
+        if (area12_info) { await DeviceStorage.update(AREA12_INFO, { "area12Info": area12Info }) }
+        else { await DeviceStorage.save(AREA12_INFO, { "area12Info": area12Info }) }
 
         let last_devices_info = await this.getLastRecordsByAllDevices();
         let result = await DeviceStorage.get(LAST_DEVICES_INFO)
@@ -250,6 +252,19 @@ export default class MainView extends Component {
         return new Promise((resolve, reject) => {
             let result = [];
             let sql = `select * from area_1 where effective = 1`
+            HttpApi.obs({ sql }, (res) => {
+                if (res.data.code == 0) { result = res.data.data }
+                resolve(result);
+            })
+        })
+    }
+    getArea12InfoInfo = () => {
+        return new Promise((resolve, reject) => {
+            let result = [];
+            let sql = `select area_1.id as area1_id , area_1.name as area1_name, area_2.id as area2_id ,area_2.name as area2_name from area_1
+            left join (select * from area_2 where effective = 1)area_2 on area_1.id = area_2.area1_id
+            where area_1.effective = 1
+            order by area_1.id`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
                 resolve(result);

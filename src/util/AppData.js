@@ -13,7 +13,8 @@ export default object = {
     record: [ /// 版本更新记录 描述 只起记录作用
         // { version: '0.0.1', ver: '测试' },
         // { version: '0.1.0', ver: '通用模块的增加-独立缺陷增加 remark 字段的初始化值' },
-        { version: '0.1.1', ver: 'remark 调整' },
+        // { version: '0.1.1', ver: 'remark 调整' },
+        { version: '0.1.2', ver: '独立缺陷区域支持二级选择' },
     ]
 };
 
