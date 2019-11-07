@@ -31,8 +31,6 @@ class ReportView2 extends Component {
     initFromData = async () => {
         AllData = this.props.navigation.state.params
         device_obj = AllData.deviceInfo;
-        // console.log('device_obj:::::',device_obj);
-        // console.log("asdasdasdas:",AppData); //{user_id: 1, username: "test", userNFC: "8F2DF1F5", loginFlag: true}
         // console.log('是否已经报告了此缺陷：', AllData.item);
         ///如果bug_id存在 就要去bugs表中去查询 (有网络的情况下)
         if (AppData.isNetConnetion && AllData.item.bug_id && AllData.item.bug_id != -1) {
@@ -116,7 +114,6 @@ class ReportView2 extends Component {
             >{option}</CheckboxItem>)
         });
         return (<View key={'1'} style={{ width: screenW * 0.9, marginTop: 10 }} >
-            {/* <Text style={{ color: '#41A8FF' }}>{AllData.item.key + ". " + AllData.item.title_name}</Text> */}
             {Arrs}
         </View>)
     }
@@ -135,7 +132,6 @@ class ReportView2 extends Component {
         obj.value = haveSelectedArr.join('/')
         let copydata = JSON.parse(JSON.stringify(this.state.fromData));
         copydata.select = obj.value
-        // console.log("fromData::",copydata);
         this.setState({
             options: obj,
             fromData: copydata
@@ -192,7 +188,6 @@ class ReportView2 extends Component {
                 placeholder="请输入备注"
                 style={{ paddingVertical: 5, backgroundColor: '#f0f0f0', borderRadius: 5 }}
                 onChange={(value) => {
-                    //{select:"A/C",text:"哈哈哈",imgs:[".../1.png",".../2.png"]}
                     let copydata = JSON.parse(JSON.stringify(this.state.fromData));
                     copydata.text = value
                     this.setState({
@@ -322,7 +317,6 @@ class ReportView2 extends Component {
      * 确认检查过 是那个项
      */
     isCheckedHandler = () => {
-        // console.log('AllData.item.key:',AllData.item.key);
         AllData.callBackIsChecked(AllData.item.key);
         Toast.success('已检查该项');
         setTimeout(() => {

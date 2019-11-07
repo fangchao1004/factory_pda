@@ -360,7 +360,26 @@ export default class MainView extends Component {
         }
         return null
     }
-    upLoadRecordInfo = (oneRecord) => {
+    upLoadRecordInfo = async (oneRecord) => {
+        let contentArr = JSON.parse(oneRecord.content);
+        for (let index = 0; index < contentArr.length; index++) {
+            const element = contentArr[index];
+            if (element.type_id === '6') {///有图片选择器组件 有的话 将
+                let imgLocalPathArr = element.value;///这里的值 是本地的文件路径
+                if (imgLocalPathArr.length > 0) {
+                    let netUriArr = [];
+                    for (const imgPath of imgLocalPathArr) {
+                        let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
+                        let formData = new FormData()
+                        formData.append('file', imgfile)
+                        let netUri = await this.uploadImage(formData)///上传图片
+                        netUriArr.push(netUri);
+                    }
+                    element.value = netUriArr;///这里的值，是服务器上文件的uuid
+                }
+            }
+        }
+        oneRecord.content = JSON.stringify(contentArr);
         return new Promise((resolve, reject) => {
             HttpApi.upLoadDeviceRecord(oneRecord, (res) => {
                 if (res.data.code === 0) {
@@ -368,6 +387,17 @@ export default class MainView extends Component {
                         if (res.data.code === 0) { resolve(1); }
                     })
                 }
+            })
+        })
+    }
+    uploadImage = (formData) => {
+        return new Promise((resolve, reject) => {
+            let result = ''
+            HttpApi.uploadFile(formData, (res) => {
+                if (res.data.code === 0) {
+                    result = res.data.data;
+                }
+                resolve(result);
             })
         })
     }

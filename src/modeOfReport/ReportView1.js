@@ -6,6 +6,7 @@ import HttpApi from '../util/HttpApi';
 import DeviceStorage, { LOCAL_BUGS, LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage';
 import ToastExample from '../util/ToastExample'
 import moment from 'moment'
+import SelectPhoto from '../modeOfPhoto/SelectPhoto';
 
 const screenW = Dimensions.get('window').width;
 
@@ -67,6 +68,10 @@ export default class ReportView1 extends Component {
                 if (item.type_id === '10' || item.type_id === '11') {
                     item.isCollecting = false;
                     item.value = ''
+                } else if (item.type_id === '2') {
+                    item.value = ''
+                } else if (item.type_id === '6') {
+                    item.value = [];
                 }
                 item.isChecked = false; /// 将所有项都至成了没有选择过的状态
                 return item
@@ -82,8 +87,10 @@ export default class ReportView1 extends Component {
                     item.isChecked = false;
                     if (item.type_id === '10' || item.type_id === '11') {
                         item.isCollecting = false;
-                        item.value = ''
-                    } return item
+                    } else if (item.type_id === '6') {
+                        item.value = [];
+                    }
+                    return item
                 })
             } else { Toast.info('请配置表单模版'); return; }
         }
@@ -130,6 +137,7 @@ export default class ReportView1 extends Component {
      * 检查record内容是否ok
      * 
      * 10 测温 11测振 12通用 4多选
+     * 2 数字输入框 6图片选择器
      */
     checkContentIsOk = () => {
         let isOk = true;
@@ -137,6 +145,8 @@ export default class ReportView1 extends Component {
             this.state.data.forEach((item) => {
                 if ((item.type_id === '10' && item.value === '') ||
                     (item.type_id === '11' && item.value === '') ||
+                    (item.type_id === '2' && item.value === '') ||
+                    (item.type_id === '6' && item.value.length === 0) ||
                     (item.type_id === '4' && item.isChecked === false && item.bug_id === null) ||
                     (item.type_id === '12' && item.isChecked === false && item.bug_id === null)) {
                     isOk = false
@@ -149,9 +159,7 @@ export default class ReportView1 extends Component {
     }
 
     ///点击上传按钮  上传记录
-    upLoadRecordHandler = () => {
-        // console.log(' 上传记录 this.state.data:',this.state.data);
-        // return;
+    upLoadRecordHandler = async () => {
         if (this.checkContentIsOk() === false) { Toast.fail('请检查是否有数据遗漏'); return; }
         this.setState({ isLoading: true })
         var key = Toast.loading('数据上传中...')
@@ -168,22 +176,33 @@ export default class ReportView1 extends Component {
         recordData.user_id = AppData.user_id;
         recordData.isUploaded = false;
         recordData.checkedAt = AppData.checkedAt;
-        // console.log('recordData:', recordData);
-        ////联网状态下：
-        // console.log('长传record数据:');
-        // console.log('content:', this.state.data);
-        // return;
-        // console.log('deviceInfo:', copyDataAll.deviceInfo.id, copyDataAll.deviceInfo.type_id);
-        // console.log('table_name:', copyDataAll.sampleData.table_name);
-        // console.log('user_id', AppData.user_id);
-        // console.log('device_status', status);
-        if (AppData.isNetConnetion) {
+        if (AppData.isNetConnetion) { ///在线情况下
+            ///判断 整个表单中 有没有 图片选择器组件。
+            for (let index = 0; index < this.state.data.length; index++) {
+                const element = this.state.data[index];
+                if (element.type_id === '6') {///有图片选择器组件 有的话 将
+                    let imgLocalPathArr = element.value;///这里的值 是本地的文件路径
+                    if (imgLocalPathArr.length > 0) {
+                        let netUriArr = [];
+                        for (const imgPath of imgLocalPathArr) {
+                            let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
+                            let formData = new FormData()
+                            formData.append('file', imgfile)
+                            let netUri = await this.uploadImage(formData)///上传图片
+                            netUriArr.push(netUri);
+                        }
+                        element.value = netUriArr;///这里的值，是服务器上文件的uuid
+                    }
+                }
+            }
+            recordData.content = JSON.stringify(this.state.data);///直接修改了 this.state.data 和 recordData.content
+            // console.log(this.state.data);
+            // console.log('recordData:', recordData);
+            // return;
             HttpApi.upLoadDeviceRecord(recordData, (res) => {
-                // console.log(res.data.data);
                 if (res.data.code === 0) {
                     HttpApi.updateDeviceStatus({ id: recordData.device_id }, { $set: { status: recordData.device_status } }, (res) => {
                         if (res.data.code === 0) {
-                            // this.getNewDeviceInfoSaveInLocal();
                             Portal.remove(key)
                             Toast.success('设备巡检记录上传成功', 1);
                             ///把record 存本地。
@@ -201,6 +220,15 @@ export default class ReportView1 extends Component {
         } else {
             this.saveReportDataToLocalStorage(recordData);
         }
+    }
+    uploadImage = (formData) => {
+        return new Promise((resolve, reject) => {
+            let result = ''
+            HttpApi.uploadFile(formData, (res) => {
+                if (res.data.code === 0) { result = res.data.data; }
+                resolve(result);
+            })
+        })
     }
     ///有无网络时，都要缓存进本地  还要区分 这个record 是否已经上传过了。 isUploaded
     saveReportDataToLocalStorage = async (recordData) => {
@@ -277,7 +305,33 @@ export default class ReportView1 extends Component {
                     </View>
                 </View>
             </View>
-        } else if (item.item.type_id === '4') { ///多选组件
+        }
+        // else if (item.item.type_id === '4') { ///多选组件
+        //     ///type = 4 时 
+        //     component = <TouchableHighlight
+        //         underlayColor='#EDEDED'
+        //         style={{ flex: 1, flexDirection: "row", alignItems: 'center', borderBottomColor: '#bfbfbf', borderBottomWidth: 1 }}
+        //         onPress={() => {
+        //             this.setState({
+        //                 value: item.item.key
+        //             })
+        //             item.deviceInfo = copyDataAll.deviceInfo;
+        //             item.callBackBugId = this.callBackBugId;
+        //             item.callBackIsChecked = this.callBackIsChecked;
+        //             this.props.navigation.navigate('ReportView2', item)
+        //         }}
+        //     >
+        //         <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+        //             <Text style={{ fontSize: 14 }}>{item.index + 1}. {item.item.title_name}</Text>
+        //             <View style={{ flexDirection: 'row-reverse' }}>
+        //                 <Image style={{ width: 20, height: 20, marginLeft: 10 }} source={require('../../assets/jt.png')} />
+        //                 <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'flex' : 'none' }} source={require('../../assets/red_flag.png')} />
+        //                 <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'none' : (item.item.isChecked ? 'flex' : 'none') }} source={require('../../assets/green_flag.png')} />
+        //             </View>
+        //         </View>
+        //     </TouchableHighlight >
+        // }
+        else if (item.item.type_id === '12') { ///通用组件
             ///type = 4 时 
             component = <TouchableHighlight
                 underlayColor='#EDEDED'
@@ -301,32 +355,39 @@ export default class ReportView1 extends Component {
                     </View>
                 </View>
             </TouchableHighlight >
-        } else if (item.item.type_id === '12') { ///通用组件
-            ///type = 4 时 
-            component = <TouchableHighlight
-                underlayColor='#EDEDED'
-                style={{ flex: 1, flexDirection: "row", alignItems: 'center', borderBottomColor: '#bfbfbf', borderBottomWidth: 1 }}
-                onPress={() => {
-                    this.setState({
-                        value: item.item.key
-                    })
-                    item.deviceInfo = copyDataAll.deviceInfo;
-                    item.callBackBugId = this.callBackBugId;
-                    item.callBackIsChecked = this.callBackIsChecked;
-                    this.props.navigation.navigate('ReportView2', item)
-                }}
-            >
-                <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-                    <Text style={{ fontSize: 14 }}>{item.index + 1}. {item.item.title_name}</Text>
-                    <View style={{ flexDirection: 'row-reverse' }}>
-                        <Image style={{ width: 20, height: 20, marginLeft: 10 }} source={require('../../assets/jt.png')} />
-                        <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'flex' : 'none' }} source={require('../../assets/red_flag.png')} />
-                        <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'none' : (item.item.isChecked ? 'flex' : 'none') }} source={require('../../assets/green_flag.png')} />
-                    </View>
+        } else if (item.item.type_id === '2') { ///数字输入框
+            component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+                <Text style={{ fontSize: 14 }}>{item.index + 1}. {item.item.title_name}</Text>
+                <View>
+                    <InputItem type='number' placeholder='数字输入' onChange={(v) => {
+                        let copyList = JSON.parse(JSON.stringify(this.state.data));
+                        copyList[item.index].value = v + '';
+                        this.setState({ data: copyList })///修改输入数据
+                    }} ></InputItem>
                 </View>
-            </TouchableHighlight >
+            </View>
+        } else if (item.item.type_id === '6') {///图片选择器
+            component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+                <Text style={{ fontSize: 14 }}>{item.index + 1}. {item.item.title_name}</Text>
+                <View style={{ marginTop: 5 }}>
+                    <SelectPhoto onChange={(value) => this.photoChangeHandler(value, item.index)} />
+                </View>
+            </View>
         }
         return component
+    }
+
+    photoChangeHandler = (value, index) => {
+        let imgLocalPathArr = [];
+        value.forEach(element => {
+            imgLocalPathArr.push(element.uri);
+        });
+        // let copydata = JSON.parse(JSON.stringify(this.state.fromData));
+        // copydata.imgs = imgLocalPathArr;
+        // console.log('imgLocalPathArr:', imgLocalPathArr);
+        let copyList = JSON.parse(JSON.stringify(this.state.data));
+        copyList[index].value = imgLocalPathArr;
+        this.setState({ data: copyList })///修改输入数据
     }
 
     /**

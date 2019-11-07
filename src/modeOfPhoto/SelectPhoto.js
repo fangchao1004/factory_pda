@@ -75,8 +75,8 @@ export default class SelectPhoto extends Component {
             <View style={styles.FlatListView}>
                 <FlatList
                     data={this.state.data}
-                    numColumns={cols}
-                    horizontal={false}
+                    // numColumns={cols}
+                    horizontal={true}
                     renderItem={({ item }) => {
                         return (
                             <View>
