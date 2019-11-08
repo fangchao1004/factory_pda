@@ -61,8 +61,12 @@ export default class ReportView1 extends Component {
         }
         copyDataAll = JSON.parse(JSON.stringify(AllData))
         let needRenderContent = [];
-        //先判断有没有网络   有网络且最近一次有record提交。那么就将record 渲染。
-        if (AppData.isNetConnetion && copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.rt_content !== '[]') {
+        let hasBugid = false;
+        JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
+            if (item.bug_id !== null) { hasBugid = true }
+        })
+        //先判断有没有网络   有网络且最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。
+        if (AppData.isNetConnetion && copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.rt_content !== '[]' && hasBugid) {
             // console.log('copyDataAll.deviceInfo.rt_content:', copyDataAll.deviceInfo.rt_content);
             needRenderContent = JSON.parse(copyDataAll.deviceInfo.rt_content).map((item) => {
                 item.value = ''
@@ -75,7 +79,7 @@ export default class ReportView1 extends Component {
                 return item
             })
         } else {
-            // 如果没有网络。或是 有网络 但是没有最近一次的record。那么就只渲染 sample 模版
+            // 如果没有网络。或是 有网络 但是没有最近一次的record。或者是有record,但是最近一次的record中没有缺陷 bug_id 都为null 那么就只渲染 sample 模版
             // console.log("copyDataAll.deviceInfo.sp_content:", copyDataAll.deviceInfo.sp_content);
             if (copyDataAll.deviceInfo.sp_content) {
                 let a = JSON.parse(copyDataAll.deviceInfo.sp_content);
@@ -375,7 +379,7 @@ export default class ReportView1 extends Component {
             </View>
         } else if (item.item.type_id === '13') {///副标题组件
             component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#55555' }}>{item.item.title_name}</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#555555' }}>{item.item.title_name}</Text>
             </View>
         }
         return component
