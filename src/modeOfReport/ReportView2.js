@@ -363,7 +363,7 @@ class ReportView2 extends Component {
     }
 
     render() {
-        let titName = AllData ? AllData.item.key + ". " + AllData.item.title_name : '';
+        let titName = AllData ? AllData.item.title_name : '';
         let titRemark = AllData && AllData.item.title_remark ? '提示：' + AllData.item.title_remark : '';
         return (
             <Provider>
