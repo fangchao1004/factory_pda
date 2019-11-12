@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
-import { View, Text, TouchableHighlight, FlatList, Image, Dimensions, DeviceEventEmitter, KeyboardAvoidingView, ScrollView } from 'react-native'
-import { Modal, Button, Provider, Portal, Toast, InputItem } from '@ant-design/react-native'
+import { View, Text, TouchableHighlight, Image, Dimensions, DeviceEventEmitter, ScrollView } from 'react-native'
+import { Button, Provider, Portal, Toast, InputItem } from '@ant-design/react-native'
 import AppData, { UPDATE_DEVICE_INFO } from '../util/AppData'
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { LOCAL_BUGS, LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage';
+import DeviceStorage, { LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage';
 import ToastExample from '../util/ToastExample'
 import moment from 'moment'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';

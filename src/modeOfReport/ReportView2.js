@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { View, Text, ScrollView, Dimensions, Image, KeyboardAvoidingView } from 'react-native'
-import { Checkbox, TextareaItem, Button, List, Provider, Portal, Toast, Picker, InputItem } from '@ant-design/react-native'
+import { View, Text, ScrollView, Dimensions, Image } from 'react-native'
+import { Checkbox, TextareaItem, Button, List, Provider, Portal, Toast, Picker } from '@ant-design/react-native'
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto'
 import HttpApi, { SERVER_URL } from '../util/HttpApi';
