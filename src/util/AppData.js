@@ -15,7 +15,8 @@ export default object = {
         // { version: '0.1.0', ver: '通用模块的增加-独立缺陷增加 remark 字段的初始化值' },
         // { version: '0.1.1', ver: 'remark 调整' },
         // { version: '0.1.2', ver: '独立缺陷区域支持二级选择' },
-        { version: '0.1.3', ver: '副标题-数字输入框-图片选择器-添加' },
+        // { version: '0.1.3', ver: '副标题-数字输入框-图片选择器-添加' },
+        { version: '0.1.4', ver: '解决reportView1中,虚拟键盘与FlatList冲突的问题' },
     ]
 };
 

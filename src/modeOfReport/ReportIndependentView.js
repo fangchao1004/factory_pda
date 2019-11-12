@@ -68,7 +68,7 @@ class ReportIndependentView extends Component {
     collecttempHandler = () => {
         let isCollectingTemp = this.state.isCollectingTemp;
         if (this.state.isConnectedDevice === false) {
-            Toast.info('请先连接设备!');
+            Toast.info('请先连接测具!');
             return;
         }
         if (this.state.isCollectingShake) {
@@ -90,7 +90,7 @@ class ReportIndependentView extends Component {
     collectshakeHandler = () => {
         let isCollectingShake = this.state.isCollectingShake;
         if (this.state.isConnectedDevice === false) {
-            Toast.info('请先连接设备!');
+            Toast.info('请先连接测具!');
             return;
         }
         if (this.state.isCollectingTemp) {

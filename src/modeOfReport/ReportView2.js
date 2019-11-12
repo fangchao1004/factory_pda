@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { View, Text, ScrollView, Dimensions, Image } from 'react-native'
-import { Checkbox, TextareaItem, Button, List, Provider, Portal, Toast, Picker } from '@ant-design/react-native'
+import { View, Text, ScrollView, Dimensions, Image, KeyboardAvoidingView } from 'react-native'
+import { Checkbox, TextareaItem, Button, List, Provider, Portal, Toast, Picker, InputItem } from '@ant-design/react-native'
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto'
 import HttpApi, { SERVER_URL } from '../util/HttpApi';
@@ -31,25 +31,26 @@ class ReportView2 extends Component {
     initFromData = async () => {
         AllData = this.props.navigation.state.params
         device_obj = AllData.deviceInfo;
-        // console.log('是否已经报告了此缺陷：', AllData.item);
+        console.log('AllData:', AllData);
+        // console.log('是否已经报告了此缺陷：', AllData);
         ///如果bug_id存在 就要去bugs表中去查询 (有网络的情况下)
-        if (AppData.isNetConnetion && AllData.item.bug_id && AllData.item.bug_id != -1) {
-            HttpApi.getBugs({ id: AllData.item.bug_id }, (res) => {
+        if (AppData.isNetConnetion && AllData.bug_id && AllData.bug_id != -1) {
+            HttpApi.getBugs({ id: AllData.bug_id }, (res) => {
                 if (res.data.code === 0) {
                     // console.log("res.data.data[0].content:", res.data.data[0].content);
                     this.setState({ fromData: JSON.parse(res.data.data[0].content) })
                 }
             })
 
-        } else if (!AppData.isNetConnetion && AllData.item.bug_id === -1) {
+        } else if (!AppData.isNetConnetion && AllData.bug_id === -1) {
             ///无网络时。
-            // console.log("无网络时。当前key", AllData.item.key);
+            // console.log("无网络时。当前key", AllData.key);
             // console.log('设备信息id：', AllData.deviceInfo.device_id);
             let result = await DeviceStorage.get(LOCAL_BUGS)
             // console.log('无网络时。再尝试获取：', result.localBugs);
             if (result) {
                 result.localBugs.forEach((item) => {
-                    if (item.device_id === AllData.deviceInfo.device_id && item.key === AllData.item.key) {
+                    if (item.device_id === AllData.deviceInfo.device_id && item.key === AllData.key) {
                         this.setState({
                             fromData: JSON.parse(item.content)
                         })
@@ -77,8 +78,8 @@ class ReportView2 extends Component {
 
         this.setState({
             majorArr: major_result,
-            options: AllData.item,
-            isBugReview: AllData.item.bug_id ? true : false
+            options: AllData,
+            isBugReview: AllData.bug_id ? true : false
         })
     }
 
@@ -98,7 +99,7 @@ class ReportView2 extends Component {
                 }} >{option}</CheckboxItem>)
         });
         return (<View key={params.key} style={{ width: screenW * 0.9 }} >
-            {/* <Text style={{ color: '#41A8FF' }}>{AllData.item.key + ". " + AllData.item.title_name}</Text> */}
+            {/* <Text style={{ color: '#41A8FF' }}>{AllData.key + ". " + AllData.title_name}</Text> */}
             {Arrs}
         </View>)
     }
@@ -285,8 +286,8 @@ class ReportView2 extends Component {
             let content = JSON.parse(JSON.stringify(this.state.fromData));
             content.imgs = netUriArr;
             let obj = {}
-            obj.title_name = AllData.item.title_name;///标题
-            obj.title_remark = AllData.item.title_remark; /// 标题备注
+            obj.title_name = AllData.title_name;///标题
+            obj.title_remark = AllData.title_remark; /// 标题备注
             obj.content = JSON.stringify(content);///内容
             obj.user_id = AppData.user_id;///上传者id
             obj.device_id = device_obj.device_id;///设备id
@@ -300,7 +301,7 @@ class ReportView2 extends Component {
                     Toast.success('缺陷记录上传成功', 1);
                     setTimeout(() => {
                         this.props.navigation.goBack();
-                        AllData.callBackBugId(res.data.data.id, AllData.item.key);
+                        AllData.callBackBugId(res.data.data.id, AllData.key);
                     }, 1100);
                 } else {
                     Portal.remove(key)
@@ -317,7 +318,7 @@ class ReportView2 extends Component {
      * 确认检查过 是那个项
      */
     isCheckedHandler = () => {
-        AllData.callBackIsChecked(AllData.item.key);
+        AllData.callBackIsChecked(AllData.key);
         Toast.success('已检查该项');
         setTimeout(() => {
             this.props.navigation.goBack();
@@ -325,15 +326,15 @@ class ReportView2 extends Component {
     }
     saveBugInfoInLocal = async () => {
         let obj = {}
-        obj.title_name = AllData.item.title_name;
+        obj.title_name = AllData.title_name;
         obj.content = JSON.stringify(this.state.fromData);
         obj.user_id = AppData.user_id;
         obj.device_id = device_obj.device_id;
         obj.major_id = this.state.majorValue[0];
-        obj.key = AllData.item.key;
+        obj.key = AllData.key;
         obj.checkedAt = AppData.checkedAt;
         // console.log("本地存储的bug数据：", obj);
-        AllData.callBackBugId(-1, AllData.item.key);
+        AllData.callBackBugId(-1, AllData.key);
         let storageBugs = await DeviceStorage.get(LOCAL_BUGS);
         if (storageBugs) {
             storageBugs.localBugs.push(obj);
@@ -363,8 +364,8 @@ class ReportView2 extends Component {
     }
 
     render() {
-        let titName = AllData ? AllData.item.title_name : '';
-        let titRemark = AllData && AllData.item.title_remark ? '提示：' + AllData.item.title_remark : '';
+        let titName = AllData ? AllData.title_name : '';
+        let titRemark = AllData && AllData.title_remark ? '提示：' + AllData.title_remark : '';
         return (
             <Provider>
                 <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF' }}>
@@ -381,7 +382,7 @@ class ReportView2 extends Component {
                         <View style={{ width: screenW, alignItems: 'center' }}>
                             <Text style={{ alignSelf: 'flex-start', marginTop: 10, marginLeft: 10 }}>{titName}</Text>
                             <Text style={{ alignSelf: 'flex-start', marginTop: 10, marginLeft: 10, color: '#41A8FF' }}>{titRemark}</Text>
-                            {AllData && AllData.item.type_id === '4' ? (
+                            {AllData && AllData.type_id === '4' ? (
                                 this.state.isBugReview ? this.getOneCheckShowBox(this.state.options) : this.getOneCheckBox(this.state.options))
                                 : null}
                             {this.state.isBugReview ? this.getOneMajorShowPicker() : this.getOneMajorPicker()}

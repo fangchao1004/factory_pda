@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text, TouchableHighlight, FlatList, Image, Dimensions, DeviceEventEmitter } from 'react-native'
+import { View, Text, TouchableHighlight, FlatList, Image, Dimensions, DeviceEventEmitter, KeyboardAvoidingView, ScrollView } from 'react-native'
 import { Modal, Button, Provider, Portal, Toast, InputItem } from '@ant-design/react-native'
 import AppData, { UPDATE_DEVICE_INFO } from '../util/AppData'
 import HttpApi from '../util/HttpApi';
@@ -9,6 +9,7 @@ import moment from 'moment'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';
 
 const screenW = Dimensions.get('window').width;
+const screenH = Dimensions.get('window').height;
 
 var copyDataAll = [];
 var currentCollectIndex = null; /// 当前正在采集的是那个选项 所在的index 索引
@@ -282,24 +283,24 @@ export default class ReportView1 extends Component {
     /**
      * 渲染每一行 - 函数 - 根据 type_id 不同渲染不同的组件
      */
-    renderItem = (item) => {
+    renderItem = (item, index) => {
         let component = null
-        if (item.item.type_id === '10' || item.item.type_id === '11') { /// 10测温  11测振组件
-            let unitStr = item.item.type_id === '10' ? '°C' : 'mm';
-            let magLft = item.item.type_id === '10' ? 20 : 10;
-            let new_title_name = item.item.title_name;
-            let collectValue = this.state.data[parseInt(item.index)].value;
-            let showValue = collectValue ? (item.item.type_id === '11' ? parseFloat(collectValue / 1000).toFixed(3) : parseFloat(collectValue)) : ''
-            component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', borderBottomColor: "#bfbfbf", borderBottomWidth: 1, paddingBottom: 10, paddingTop: 10 }}>
+        if (item.type_id === '10' || item.type_id === '11') { /// 10测温  11测振组件
+            let unitStr = item.type_id === '10' ? '°C' : 'mm';
+            let magLft = item.type_id === '10' ? 20 : 10;
+            let new_title_name = item.title_name;
+            let collectValue = this.state.data[parseInt(index)].value;
+            let showValue = collectValue ? (item.type_id === '11' ? parseFloat(collectValue / 1000).toFixed(3) : parseFloat(collectValue)) : ''
+            component = <View key={index} style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', borderBottomColor: "#bfbfbf", borderBottomWidth: 1, paddingBottom: 10, paddingTop: 10 }}>
                 <View style={{ marginBottom: 5 }}>
                     <Text style={{ fontSize: 14, alignSelf: 'flex-start' }}>{new_title_name}</Text>
                 </View>
                 <View style={{ flexDirection: 'row-reverse' }}>
                     <Button
                         style={{ alignSelf: 'center' }} size='small' type='primary'
-                        onPress={() => { this.collectHandler(item) }}
+                        onPress={() => { this.collectHandler(item, index) }}
                     >
-                        {item.item.isCollecting ? '停止' : '采集'}
+                        {item.isCollecting ? '停止' : '采集'}
                     </Button>
                     <View style={{ flexDirection: 'row', marginRight: 30 }}>
                         <View style={{ alignSelf: 'center', alignItems: 'center', borderWidth: 1, borderRadius: 5, borderColor: '#DDDDDD', width: 80, height: 30, backgroundColor: '#D0D0D0' }}>
@@ -310,76 +311,46 @@ export default class ReportView1 extends Component {
                 </View>
             </View>
         }
-        // else if (item.item.type_id === '4') { ///多选组件
-        //     ///type = 4 时 
-        //     component = <TouchableHighlight
-        //         underlayColor='#EDEDED'
-        //         style={{ flex: 1, flexDirection: "row", alignItems: 'center', borderBottomColor: '#bfbfbf', borderBottomWidth: 1 }}
-        //         onPress={() => {
-        //             this.setState({
-        //                 value: item.item.key
-        //             })
-        //             item.deviceInfo = copyDataAll.deviceInfo;
-        //             item.callBackBugId = this.callBackBugId;
-        //             item.callBackIsChecked = this.callBackIsChecked;
-        //             this.props.navigation.navigate('ReportView2', item)
-        //         }}
-        //     >
-        //         <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-        //             <Text style={{ fontSize: 14 }}>{item.item.title_name}</Text>
-        //             <View style={{ flexDirection: 'row-reverse' }}>
-        //                 <Image style={{ width: 20, height: 20, marginLeft: 10 }} source={require('../../assets/jt.png')} />
-        //                 <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'flex' : 'none' }} source={require('../../assets/red_flag.png')} />
-        //                 <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'none' : (item.item.isChecked ? 'flex' : 'none') }} source={require('../../assets/green_flag.png')} />
-        //             </View>
-        //         </View>
-        //     </TouchableHighlight >
-        // }
-        else if (item.item.type_id === '12') { ///通用组件
-            ///type = 4 时 
+        else if (item.type_id === '12') { ///通用组件
             component = <TouchableHighlight
+                key={index}
                 underlayColor='#EDEDED'
                 style={{ flex: 1, flexDirection: "row", alignItems: 'center', borderBottomColor: '#F0F0F0', borderBottomWidth: 1 }}
                 onPress={() => {
-                    this.setState({
-                        value: item.item.key
-                    })
                     item.deviceInfo = copyDataAll.deviceInfo;
                     item.callBackBugId = this.callBackBugId;
                     item.callBackIsChecked = this.callBackIsChecked;
                     this.props.navigation.navigate('ReportView2', item)
-                }}
-            >
-                <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-                    <Text style={{ fontSize: 14 }}>{item.item.title_name}</Text>
+                }}>
+                <View style={{ flex: 1, flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+                    <Text style={{ fontSize: 14 }}>{item.title_name}</Text>
                     <View style={{ flexDirection: 'row-reverse' }}>
                         <Image style={{ width: 20, height: 20, marginLeft: 10 }} source={require('../../assets/jt.png')} />
-                        <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'flex' : 'none' }} source={require('../../assets/red_flag.png')} />
-                        <Image style={{ width: 24, height: 24, display: item.item.bug_id ? 'none' : (item.item.isChecked ? 'flex' : 'none') }} source={require('../../assets/green_flag.png')} />
+                        <Image style={{ width: 24, height: 24, display: item.bug_id ? 'flex' : 'none' }} source={require('../../assets/red_flag.png')} />
+                        <Image style={{ width: 24, height: 24, display: item.bug_id ? 'none' : (item.isChecked ? 'flex' : 'none') }} source={require('../../assets/green_flag.png')} />
                     </View>
                 </View>
             </TouchableHighlight >
-        } else if (item.item.type_id === '2') { ///数字输入框
-            component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-                <Text style={{ fontSize: 14 }}>{item.item.title_name}</Text>
+        } else if (item.type_id === '2') { ///数字输入框
+            component = <View key={index} style={{ flex: 1, flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+                <Text style={{ fontSize: 14 }}>{item.title_name}</Text>
                 <View>
                     <InputItem type='number' placeholder='数字输入' onChange={(v) => {
-                        let copyList = JSON.parse(JSON.stringify(this.state.data));
-                        copyList[item.index].value = v + '';
-                        this.setState({ data: copyList })///修改输入数据
+                        this.state.data[index].value = v + '';
+                        this.setState({ data: this.state.data })///修改输入数据
                     }} ></InputItem>
                 </View>
             </View>
-        } else if (item.item.type_id === '6') {///图片选择器
-            component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-                <Text style={{ fontSize: 14 }}>{item.item.title_name}</Text>
-                <View style={{ marginTop: 5 }}>
-                    <SelectPhoto onChange={(value) => this.photoChangeHandler(value, item.index)} />
+        } else if (item.type_id === '6') {///图片选择器
+            component = <View key={index} style={{ flex: 1, flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+                <Text style={{ fontSize: 14 }}>{item.title_name}</Text>
+                <View style={{ marginTop: 5, alignItems: 'center' }}>
+                    <SelectPhoto onChange={(value) => this.photoChangeHandler(value, index)} />
                 </View>
             </View>
-        } else if (item.item.type_id === '13') {///副标题组件
-            component = <View style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#555555' }}>{item.item.title_name}</Text>
+        } else if (item.type_id === '13') {///副标题组件
+            component = <View key={index} style={{ flex: 1, flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#555555' }}>{item.title_name}</Text>
             </View>
         }
         return component
@@ -390,24 +361,20 @@ export default class ReportView1 extends Component {
         value.forEach(element => {
             imgLocalPathArr.push(element.uri);
         });
-        // let copydata = JSON.parse(JSON.stringify(this.state.fromData));
-        // copydata.imgs = imgLocalPathArr;
-        // console.log('imgLocalPathArr:', imgLocalPathArr);
         let copyList = JSON.parse(JSON.stringify(this.state.data));
         copyList[index].value = imgLocalPathArr;
         this.setState({ data: copyList })///修改输入数据
     }
 
     /**
+     * 采集操作
      * 开始整体处理数据
      */
-    collectHandler = (Item) => {
+    collectHandler = (item, index) => {
         if (this.state.isConnectedDevice === false) {
-            Toast.info('请先连接设备!');
+            Toast.info('请先连接测具!');
             return;
         }
-        let item = Item.item;
-        let index = Item.index;
         // console.log(item, index, item.isCollecting);
         // return;
         if (item && item.isCollecting === false) {///如果 button 字面 是 '采集' 开始采集
@@ -454,12 +421,11 @@ export default class ReportView1 extends Component {
                             <Text style={{ margin: 10, fontSize: 14, color: '#000000' }}><Text style={{ color: '#000000' }}>上传者: </Text>{AppData.name}</Text>
                         </View>
                     </View>
-                    <FlatList
-                        style={{ width: screenW * 0.95, borderWidth: 1, borderRadius: 5, borderColor: '#F0F0F0' }}
-                        contentContainerStyle={{ width: screenW * 0.9, alignSelf: 'center' }}
-                        data={this.state.data}
-                        renderItem={(item) => this.renderItem(item)}
-                    />
+                    <ScrollView style={{ width: screenW * 0.95, height: screenH - 130 }}>
+                        {this.state.data.map((item, index) => {
+                            return this.renderItem(item, index)
+                        })}
+                    </ScrollView>
                     <Button loading={this.state.isLoading} disabled={this.state.isLoading} style={{ marginTop: 10, marginBottom: 10, width: screenW * 0.9 }} type='primary' onPress={this.upLoadRecordHandler}>
                         {this.state.isLoading ? '正在上传' : '确定上传'}
                     </Button>
