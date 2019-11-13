@@ -63,9 +63,11 @@ export default class ReportView1 extends Component {
         copyDataAll = JSON.parse(JSON.stringify(AllData))
         let needRenderContent = [];
         let hasBugid = false;
-        JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
-            if (item.bug_id !== null) { hasBugid = true }
-        })
+        if (copyDataAll.deviceInfo.rt_content) {
+            JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
+                if (item.bug_id !== null) { hasBugid = true }
+            })
+        }
         //先判断有没有网络   有网络且最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。
         if (AppData.isNetConnetion && copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.rt_content !== '[]' && hasBugid) {
             // console.log('copyDataAll.deviceInfo.rt_content:', copyDataAll.deviceInfo.rt_content);
