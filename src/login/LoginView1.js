@@ -221,19 +221,11 @@ export default class LoginView1 extends Component {
         this.props.navigation.navigate('RegisterDeviceView', { 'nfcid': this.state.tag.id })
     }
     getSomeInfoFromLocalStorage = async () => {
-        // let nfcInfoObj = await DeviceStorage.get(NFC_INFO)
-        // let deviceInfoObj = await DeviceStorage.get(DEVICE_INFO)
-        // let sampleInfoObj = await DeviceStorage.get(SAMPLE_INFO)
-        // console.log('当前被检设备的nfc_id:', this.state.tag.id);
-        // console.log("nfc数据：", nfcInfoObj.nfcInfo);
-        // console.log("device数据：", deviceInfoObj.deviceInfo);
-        // console.log("sample数据：", sampleInfoObj.sampleInfo);
-        // this.findOneDeviceInfoFromLocalStorage(this.state.tag.id, nfcInfoObj.nfcInfo, deviceInfoObj.deviceInfo, sampleInfoObj.sampleInfo);
+        foFromLocalStorage(this.state.tag.id, nfcInfoObj.nfcInfo, deviceInfoObj.deviceInfo, sampleInfoObj.sampleInfo);
         let last_deivces_info = await DeviceStorage.get(LAST_DEVICES_INFO)
-        // console.log(this.state.tag.id);
         last_deivces_info.lastDevicesInfo.forEach((deviceInfo) => {
             if (deviceInfo.nfcid === this.state.tag.id) {
-                console.log('本地缓存中查询到：', deviceInfo);
+                // console.log('本地缓存中查询到：', deviceInfo);
                 this.props.navigation.navigate('ReportView1', { "deviceInfo": deviceInfo })
             }
         })
@@ -252,10 +244,10 @@ export default class LoginView1 extends Component {
             AppData.isNetConnetion = networkType.type !== 'none';
             // console.log("AppData.isNetConnetion:", AppData.isNetConnetion);
             if (AppData.isNetConnetion) {
-                Toast.success('连接上网络', 1);
+                Toast.success('连接上网络', 0.5);
                 DeviceEventEmitter.emit(NET_CONNECT);
             } else {
-                Toast.fail('网络断开', 1);
+                Toast.fail('网络断开', 0.5);
                 DeviceEventEmitter.emit(NET_DISCONNECT);
             }
         })

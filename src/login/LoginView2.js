@@ -102,25 +102,28 @@ class LoginView2 extends Component {
             Toast.fail('账号和密码都不能为空', 1)
             return;
         }
-        let userData = { username: this.state.username, password: this.state.password, effective: 1 };
-        HttpApi.getUserInfo(userData, (response) => {
-            if (response.status == 200) {
-                if (response.data.code == 0 && response.data.data.length > 0) {
-                    this.props.navigation.navigate('MainView')
-                    this.saveUserInfoInStorageHandler();
-                    this.saveUserInfoInGloabel(response.data.data[0]);
-                    checkTimeAllow();
-                } else {
-                    Toast.fail('用户名密码错误', 1)
-                }
+        // let userData = { username: this.state.username, password: this.state.password, effective: 1 };
+        let sql = `select users.*,levels.name as levelname from users 
+        left join (select * from levels where effective = 1) levels on levels.id = users.level_id
+        where users.username = '${this.state.username}' and users.password = '${this.state.password}' and users.effective = 1`
+        HttpApi.obs({ sql }, (res) => {
+            if (res.data.code == 0 && res.data.data.length > 0) {
+                this.props.navigation.navigate('MainView')
+                this.saveUserInfoInStorageHandler();
+                this.saveUserInfoInGloabel(res.data.data[0]);
+                checkTimeAllow();
+            } else {
+                Toast.fail('用户名密码错误', 1)
             }
         })
+
     }
     saveUserInfoInGloabel = async (data) => {
         AppData.username = this.state.username;
         AppData.loginFlag = true;
         AppData.user_id = data.id;
         AppData.name = data.name;
+        AppData.levelname = data.levelname;
         AppData.userNFC = await this.getUserNFC(data.nfc_id);
     }
     getUserNFC = (nfc_id) => {
@@ -140,7 +143,7 @@ class LoginView2 extends Component {
     }
     checkUserInfoInStorageHandler = () => {
         DeviceStorage.get(USER_INFO).then((value) => {
-            console.log('本机存储USER_INFO信息：', value);
+            // console.log('本机存储USER_INFO信息：', value);
             if (value) {
                 // console.log(value);
                 this.setState({
@@ -164,10 +167,10 @@ class LoginView2 extends Component {
             AppData.isNetConnetion = networkType.type !== 'none';
             // console.log("AppData.isNetConnetion:", AppData.isNetConnetion);
             if (AppData.isNetConnetion) {
-                Toast.success('连接上网络', 1);
+                Toast.success('连接上网络', 0.5);
                 DeviceEventEmitter.emit(NET_CONNECT);
             } else {
-                Toast.fail('网络断开', 1);
+                Toast.fail('网络断开', 0.5);
                 DeviceEventEmitter.emit(NET_DISCONNECT);
             }
         })

@@ -5,6 +5,7 @@ export default object = {
     user_id: null,
     username: null,
     userNFC: null,
+    levelname: null,
     loginFlag: false,
     name: null,
     isNetConnetion: false,

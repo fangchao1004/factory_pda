@@ -6,7 +6,6 @@ import AppData, { NET_CONNECT } from '../util/AppData'
 import HttpApi from '../util/HttpApi'
 
 const screenW = Dimensions.get('window').width;
-const screenH = Dimensions.get('window').height;
 
 export default class SelfView extends Component {
     constructor(props) {
@@ -21,6 +20,9 @@ export default class SelfView extends Component {
     componentDidMount() {
         this.sub2 = DeviceEventEmitter.addListener(NET_CONNECT, this.refreshHandler);
         if (AppData.isNetConnetion) { this.init(); }
+        else {
+            this.getDataFromStorage();
+        }
     }
     componentWillUnmount() {
         this.sub2.remove();
@@ -41,21 +43,25 @@ export default class SelfView extends Component {
             userInfo: userInfoData
         })
     }
+    getDataFromStorage = () => {
+        this.setState({
+            userInfo: { name: AppData.name, username: AppData.username, levelname: AppData.levelname }
+        })
+
+    }
     getUserInfo = () => {
-        let p = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             HttpApi.getUserInfo({ username: AppData.username }, (res) => {
                 resolve(res.data.data);
             })
         })
-        return p;
     }
     getLevelInfo = (level_id) => {
-        let p = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             HttpApi.getLevelInfo({ id: level_id }, (res) => {
                 resolve(res.data.data);
             })
         })
-        return p;
     }
 
     render() {
@@ -72,7 +78,6 @@ export default class SelfView extends Component {
                 <View style={{ marginTop: 20, width: screenW * 0.9 }}>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.name : ''}>{'名称:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.username : ''}>{'登录账号:'}</InputItem>
-                    {/* <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.nfcid : ''}>{'员工卡NFC:'}</InputItem> */}
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.levelname : ''}>{'所属部门:'}</InputItem>
                 </View>
             </View>
