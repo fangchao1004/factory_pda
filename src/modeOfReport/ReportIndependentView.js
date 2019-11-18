@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView, Image, TouchableOpacity, DeviceEventEmitter } from 'react-native'
-import { Button, TextareaItem, Picker, Provider, List, Toast, Portal, InputItem } from '@ant-design/react-native'
+import { Button, TextareaItem, Picker, List, Toast, Portal } from '@ant-design/react-native'
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';
 import HttpApi from '../util/HttpApi';
@@ -25,7 +25,7 @@ class ReportIndependentView extends Component {
             areaArr: [], ///暂时只支持一级区域选择
             areaId_select: [],///选择的areaId [x]
             majorArr: [],
-            majorValue: null,
+            majorValue: [],
             isLoading: false,
             tempratureValue: null, /// 温度值
             shakeValue: null, /// 振动值
@@ -297,19 +297,16 @@ class ReportIndependentView extends Component {
             user_id: AppData.user_id,
             content: JSON.stringify(reportData),
             buglevel: parseInt(this.state.warning_level_select[0] + ''),
-            area_remark: this.state.areaArr[this.state.areaId_select[0] - 1].label,
+            area_remark: this.state.areaId_select[1],
             major_id: this.state.majorValue[0],
             checkedAt: moment().format('YYYY-MM-DD HH:mm:ss')
         }
-        // return;
         let storageBugs = await DeviceStorage.get(LOCAL_BUGS);
         if (storageBugs) {
             storageBugs.localBugs.push(resultData);
             await DeviceStorage.update(LOCAL_BUGS, { "localBugs": storageBugs.localBugs })
         } else {
             await DeviceStorage.save(LOCAL_BUGS, { "localBugs": [resultData] })
-            // let result = await DeviceStorage.get(LOCAL_BUGS)
-            // console.log('再尝试获取：', result.localBugs);
         }
         Toast.success('缺陷记录本地缓存成功', 1);
     }
@@ -332,7 +329,7 @@ class ReportIndependentView extends Component {
             warning_level_select: [],
             descripTxt: '',
             areaId_select: [],
-            majorValue: null,
+            majorValue: [],
             tempratureValue: null,
             shakeValue: null,
         })
@@ -354,10 +351,6 @@ class ReportIndependentView extends Component {
                     }}
                     style={{ height: screenH - 110 }}
                 >
-                    <View style={{ flexDirection: "row", alignSelf: "center", justifyContent: 'space-between', width: screenW * 0.95 }}>
-                        <Text style={{ color: '#41A8FF', margin: 10 }}>非设备点</Text>
-                        <Text style={{ color: '#41A8FF', margin: 10 }}>{'上传者: ' + AppData.name}</Text>
-                    </View>
                     <ScrollView
                         keyboardShouldPersistTaps={'always'}
                         style={styles.scrollView}

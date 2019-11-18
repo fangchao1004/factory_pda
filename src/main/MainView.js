@@ -142,7 +142,7 @@ export default class MainView extends Component {
     startMonitorNet = () => {
         //检测网络是否连接
         NetInfo.isConnected.fetch().done((isConnected) => {
-            // console.log("检测网络是否连接:", isConnected);////true
+            console.log("检测网络是否连接:", isConnected);////true
         });
         //    检测网络连接信息
         NetInfo.fetch().done((connectionInfo) => {

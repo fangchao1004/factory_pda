@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Image, Alert, StatusBar, DeviceEventEmitter } from 'react-native'
-import { Button, Provider, Toast, Icon } from '@ant-design/react-native';
+import { Button, Provider, Toast } from '@ant-design/react-native';
 import NfcManager from 'react-native-nfc-manager';
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { USER_CARD, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO } from '../util/DeviceStorage'
-import AppData from '../util/AppData'
+import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO } from '../util/DeviceStorage'
+import AppData, { NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
 import { checkTimeAllow } from '../util/Tool'
+import NetInfo from '@react-native-community/netinfo'
 
 export default class LoginView1 extends Component {
     constructor(props) {
@@ -15,11 +16,13 @@ export default class LoginView1 extends Component {
         }
     }
     componentDidMount() {
+        this.startMonitorNet();
         this.checkNfcHandler();
         this.checkAccount();
     }
     componentWillUnmount() {
         this.stopDetection();
+        NetInfo.removeEventListener('connectionChange')
     }
     render() {
         return (
@@ -232,6 +235,28 @@ export default class LoginView1 extends Component {
             if (deviceInfo.nfcid === this.state.tag.id) {
                 console.log('本地缓存中查询到：', deviceInfo);
                 this.props.navigation.navigate('ReportView1', { "deviceInfo": deviceInfo })
+            }
+        })
+    }
+    startMonitorNet = () => {
+        NetInfo.isConnected.fetch().done((isConnected) => {
+            // console.log("检测网络是否连接:", isConnected);////true
+        });
+        //    检测网络连接信息
+        NetInfo.fetch().done((connectionInfo) => {
+            // console.log('当前检测网络连接信息:', connectionInfo); ///此时 一般为wifi 或 4g
+        });
+        //    检测网络变化事件
+        NetInfo.addEventListener('connectionChange', (networkType) => {
+            // console.log('检测网络变化事件:', networkType); ////{type: "wifi", effectiveType: "unknown"} 或 {type: "cellular", effectiveType: "4g"} 或 {type: "none", effectiveType: "unknown"}
+            AppData.isNetConnetion = networkType.type !== 'none';
+            // console.log("AppData.isNetConnetion:", AppData.isNetConnetion);
+            if (AppData.isNetConnetion) {
+                Toast.success('连接上网络', 1);
+                DeviceEventEmitter.emit(NET_CONNECT);
+            } else {
+                Toast.fail('网络断开', 1);
+                DeviceEventEmitter.emit(NET_DISCONNECT);
             }
         })
     }

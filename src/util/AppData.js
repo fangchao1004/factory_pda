@@ -7,7 +7,7 @@ export default object = {
     userNFC: null,
     loginFlag: false,
     name: null,
-    isNetConnetion: true,
+    isNetConnetion: false,
     isAllowTime: true,/// 当前是否为允许巡检的时间
     checkedAt: null,/// 当前贴卡弹出ReportView1的时间戳 ‘YYYY-MM-DD HH:mm:ss’
     record: [ /// 版本更新记录 描述 只起记录作用
@@ -16,7 +16,8 @@ export default object = {
         // { version: '0.1.1', ver: 'remark 调整' },
         // { version: '0.1.2', ver: '独立缺陷区域支持二级选择' },
         // { version: '0.1.3', ver: '副标题-数字输入框-图片选择器-添加' },
-        { version: '0.1.4', ver: '解决reportView1中,虚拟键盘与FlatList冲突的问题' },
+        // { version: '0.1.4', ver: '解决reportView1中,虚拟键盘与FlatList冲突的问题' },
+        { version: '0.1.5', ver: '添加缺陷等级，修复采集时崩溃的问题' },
     ]
 };
 
