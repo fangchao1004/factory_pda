@@ -17,11 +17,13 @@ class ReportView2 extends Component {
         this.state = {
             enableScrollViewScroll: true,
             options: null,///获取的多选对象数据  {key: "1", title_name: "设备某某状态", type_id: "4", default_values: "选项1/选项2/选项3/选项4", value: null, …}
-            fromData: { "select": '', "majorId": '', "text": '', "imgs": [] },
+            fromData: { "select": '', "text": '', "imgs": [] },
             isBugReview: false, ///是否为 缺陷上传完成后再点击进来查看？ 如果是 则要把bugs表中的数据拿出来，渲染在界面上，同时将组件设置成不可编辑，图片选择器换成image
-            majorValue: null,
+            majorValue: [],
             majorArr: [],
-            isLoading: false
+            isLoading: false,
+            warning_level_data: [{ label: '一级', value: 1 }, { label: '二级', value: 2 }, { label: '三级', value: 3 }],
+            levelValue: [],
         }
     }
 
@@ -31,33 +33,8 @@ class ReportView2 extends Component {
     initFromData = async () => {
         AllData = this.props.navigation.state.params
         device_obj = AllData.deviceInfo;
-        console.log('AllData:', AllData);
+        // console.log('AllData:', AllData);
         // console.log('是否已经报告了此缺陷：', AllData);
-        ///如果bug_id存在 就要去bugs表中去查询 (有网络的情况下)
-        if (AppData.isNetConnetion && AllData.bug_id && AllData.bug_id != -1) {
-            HttpApi.getBugs({ id: AllData.bug_id }, (res) => {
-                if (res.data.code === 0) {
-                    // console.log("res.data.data[0].content:", res.data.data[0].content);
-                    this.setState({ fromData: JSON.parse(res.data.data[0].content) })
-                }
-            })
-
-        } else if (!AppData.isNetConnetion && AllData.bug_id === -1) {
-            ///无网络时。
-            // console.log("无网络时。当前key", AllData.key);
-            // console.log('设备信息id：', AllData.deviceInfo.device_id);
-            let result = await DeviceStorage.get(LOCAL_BUGS)
-            // console.log('无网络时。再尝试获取：', result.localBugs);
-            if (result) {
-                result.localBugs.forEach((item) => {
-                    if (item.device_id === AllData.deviceInfo.device_id && item.key === AllData.key) {
-                        this.setState({
-                            fromData: JSON.parse(item.content)
-                        })
-                    }
-                })
-            }
-        }
         let major_result = [];
         if (AppData.isNetConnetion) {
             HttpApi.getMajorInfo({}, (res) => {
@@ -75,12 +52,42 @@ class ReportView2 extends Component {
                 })
             }
         }
-
         this.setState({
             majorArr: major_result,
             options: AllData,
             isBugReview: AllData.bug_id ? true : false
         })
+        ///如果bug_id存在 就要去bugs表中去查询 (有网络的情况下)
+        if (AppData.isNetConnetion && AllData.bug_id && AllData.bug_id != -1) {
+            HttpApi.getBugs({ id: AllData.bug_id }, (res) => {
+                if (res.data.code === 0) {
+                    this.setState({
+                        majorValue: [res.data.data[0].major_id],
+                        levelValue: [res.data.data[0].buglevel],
+                        fromData: JSON.parse(res.data.data[0].content),
+                    })
+                }
+            })
+
+        } else if (!AppData.isNetConnetion && AllData.bug_id === -1) {
+            ///无网络时。
+            // console.log("无网络时。当前key", AllData.key);
+            // console.log('设备信息id：', AllData.deviceInfo.device_id);
+            let result = await DeviceStorage.get(LOCAL_BUGS)
+            // console.log('无网络时。再尝试获取：', result.localBugs);
+            if (result) {
+                result.localBugs.forEach((item) => {
+                    if (item.device_id === AllData.deviceInfo.device_id && item.key === AllData.key) {
+                        this.setState({
+                            majorValue: [item.major_id],
+                            levelValue: [item.buglevel],
+                            fromData: JSON.parse(item.content),
+                        })
+                    }
+                })
+            }
+        }
+
     }
 
     getOneCheckBox = (params) => {
@@ -139,20 +146,50 @@ class ReportView2 extends Component {
         })
     }
 
-    getOneMajorPicker = () => {
+    getLevel = () => {
+        return (
+            <View style={{ marginTop: 10, width: screenW * 0.9 }}>
+                <Picker data={this.state.warning_level_data} cols={1}
+                    itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
+                    value={this.state.levelValue}
+                    onChange={(v) => {
+                        let copydata = JSON.parse(JSON.stringify(this.state.fromData));
+                        copydata.levelId = v[0]
+                        this.setState({
+                            fromData: copydata,
+                            levelValue: v
+                        })
+                    }}
+                >
+                    <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>紧急类型</Text></List.Item>
+                </Picker>
+            </View >
+        )
+    }
+
+    getShowLevel = () => {
         return (<View style={{ marginTop: 10, width: screenW * 0.9 }}>
+            <Picker data={this.state.warning_level_data} cols={1}
+                itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
+                value={this.state.levelValue}
+                disabled={true}
+            >
+                <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>紧急类型</Text></List.Item>
+            </Picker>
+        </View >)
+    }
+
+    getOneMajorPicker = () => {
+        return (<View style={{ width: screenW * 0.9 }}>
             <Picker
                 data={this.state.majorArr}
                 cols={1}
-                itemStyle={{ height: 30, marginTop: 8 }}
+                itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
                 value={this.state.majorValue}
                 onChange={(v) => {
-                    let copydata = JSON.parse(JSON.stringify(this.state.fromData));
-                    copydata.majorId = v[0]
                     this.setState({
-                        fromData: copydata
+                        majorValue: v
                     })
-                    this.setState({ majorValue: v })
                 }}
             >
                 <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>缺陷专业</Text></List.Item>
@@ -161,22 +198,15 @@ class ReportView2 extends Component {
     }
 
     getOneMajorShowPicker = () => {
-        if (this.state.fromData.majorId) {
-            setTimeout(() => {
-                this.forceUpdate();
-            }, 50);
-        }
-        return (<View style={{ marginTop: 10, width: screenW * 0.9 }}>
-            <Picker
-                data={this.state.majorArr}
-                cols={1}
+        return (<View style={{ width: screenW * 0.9 }}>
+            <Picker data={this.state.majorArr} cols={1}
+                itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
+                value={this.state.majorValue}
                 disabled={true}
-                itemStyle={{ height: 30, marginTop: 8 }}
-                value={[this.state.fromData.majorId]}
             >
                 <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>缺陷专业</Text></List.Item>
             </Picker>
-        </View>)
+        </View >)
     }
 
     getOneTextArea = () => {
@@ -263,7 +293,11 @@ class ReportView2 extends Component {
     }
 
     uploadBugsHandler = async () => {
-        if (!this.state.majorValue) {
+        if (this.state.levelValue.length === 0) {
+            Toast.fail('请选择紧急类型', 1);
+            return;
+        }
+        if (this.state.majorValue.length === 0) {
             Toast.fail('请选择缺陷专业', 1);
             return;
         }
@@ -294,6 +328,7 @@ class ReportView2 extends Component {
             obj.major_id = this.state.majorValue[0];///专业id
             obj.checkedAt = AppData.checkedAt;///检查的时间点 YYYY-MM-DD HH:mm:ss
             obj.remark = JSON.stringify({ '0': [], '1': [], '2': [], '3': [] });///默认 处理步骤描述数据
+            obj.buglevel = this.state.levelValue[0];///等级id
             HttpApi.uploadBugs(obj, (res) => {
                 if (res.data.code === 0) {
                     // console.log('bug_id', res.data.data.id);
@@ -333,6 +368,8 @@ class ReportView2 extends Component {
         obj.major_id = this.state.majorValue[0];
         obj.key = AllData.key;
         obj.checkedAt = AppData.checkedAt;
+        obj.remark = JSON.stringify({ '0': [], '1': [], '2': [], '3': [] });///默认 处理步骤描述数据
+        obj.buglevel = this.state.levelValue[0];///等级id
         // console.log("本地存储的bug数据：", obj);
         AllData.callBackBugId(-1, AllData.key);
         let storageBugs = await DeviceStorage.get(LOCAL_BUGS);
@@ -385,6 +422,7 @@ class ReportView2 extends Component {
                             {AllData && AllData.type_id === '4' ? (
                                 this.state.isBugReview ? this.getOneCheckShowBox(this.state.options) : this.getOneCheckBox(this.state.options))
                                 : null}
+                            {this.state.isBugReview ? this.getShowLevel() : this.getLevel()}
                             {this.state.isBugReview ? this.getOneMajorShowPicker() : this.getOneMajorPicker()}
                             {this.state.isBugReview ? this.getOneTextShowArea() : this.getOneTextArea()}
                             {this.state.isBugReview ? this.getImags() : this.getOneImagePicker()}

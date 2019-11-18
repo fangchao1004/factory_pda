@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Dimensions, DeviceEventEmitter, Image } from 'r
 import { Grid, Toast } from '@ant-design/react-native'
 import AppData, { UPDATE_DEVICE_INFO } from '../util/AppData'
 import DeviceStorage, { AREA_INFO, DEVICE_INFO } from '../util/DeviceStorage'
+import { omitTextLength } from '../util/Tool'
 const screenH = Dimensions.get('window').height;
 const screenW = Dimensions.get('window').width;
 
@@ -25,7 +26,8 @@ class AreaGroupView extends Component {
             let tempArr = [];
             area_info.areaInfo.forEach(element => {
                 tempArr.push({
-                    text: element.name,
+                    allText: element.name,
+                    text: omitTextLength(element.name, 6),
                     id: element.id,
                     icon: <Image style={{ width: 32, height: 32 }} source={require('../../assets/area1.png')} />
                 });
@@ -43,7 +45,7 @@ class AreaGroupView extends Component {
             allDevices.forEach((oneDevice) => {
                 if (oneDevice.area_id === areaItem.id) { result.push(oneDevice) }
             })
-            this.props.navigation.navigate("AreaDeviceView", { 'deviceArr': result, 'areaName': areaItem.text });
+            this.props.navigation.navigate("AreaDeviceView", { 'deviceArr': result, 'areaName': areaItem.allText });
         }
     }
     render() {

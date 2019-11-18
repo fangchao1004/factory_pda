@@ -2,6 +2,22 @@ import HttpApi from './HttpApi'
 import moment from 'moment'
 import AppData from './AppData'
 
+/**
+ *省略文本长度
+ * @param {*} text
+ * @param {*} targetlength
+ * @returns
+ */
+export function omitTextLength(text, targetlength) {
+    let result = ''
+    if (text.length > targetlength) {
+        result = text.substring(0, targetlength) + '...'
+    } else {
+        result = text
+    }
+    return result
+}
+
 export async function checkTimeAllow() {
     let flag = false;
     let time = moment().format('YYYY-MM-DD HH:mm:ss');

@@ -28,32 +28,25 @@ export default class ReportView1 extends Component {
         AppData.checkedAt = moment().format('YYYY-MM-DD HH:mm:ss')
         this.initFromData();
         ToastExample.isConnected((isConnectedDevice) => {
-            // console.log(isConnected);
             this.setState({ isConnectedDevice })
         })
-
-        DeviceEventEmitter.addListener('tmpEvent', (e) => {
-            // this.setState({ value: e.value })
-            ///监听到采集的温度数据 结合 currentCollectIndex  修改 data 值
-            if (currentCollectIndex !== null) {
-                let copyList = JSON.parse(JSON.stringify(this.state.data));
-                if (copyList[currentCollectIndex].isCollecting === true) {
-                    copyList[currentCollectIndex].value = e.value + '';
-                }
-                this.setState({ data: copyList })///修改输入数据
+        DeviceEventEmitter.addListener('tmpEvent', this.setCollValue);
+        DeviceEventEmitter.addListener('vibEvent', this.setCollValue);
+    }
+    setCollValue = (e) => {
+        if (currentCollectIndex !== null) {
+            let copyList = JSON.parse(JSON.stringify(this.state.data));
+            if (copyList[currentCollectIndex].isCollecting === true) {
+                copyList[currentCollectIndex].value = e.value + '';
             }
-        });
+            this.setState({ data: copyList })///修改输入数据
+        }
+    }
 
-        DeviceEventEmitter.addListener('vibEvent', (e) => {
-            // this.setState({ value: e.value })
-            if (currentCollectIndex !== null) {
-                let copyList = JSON.parse(JSON.stringify(this.state.data));
-                if (copyList[currentCollectIndex].isCollecting === true) {
-                    copyList[currentCollectIndex].value = e.value + '';
-                }
-                this.setState({ data: copyList })///修改输入数据
-            }
-        });
+    componentWillUnmount() {
+        currentCollectIndex = null;
+        DeviceEventEmitter.removeListener('tmpEvent', this.setCollValue);
+        DeviceEventEmitter.removeListener('vibEvent', this.setCollValue);
     }
     initFromData = () => {
         let AllData = this.props.navigation.state.params
@@ -291,9 +284,9 @@ export default class ReportView1 extends Component {
             let unitStr = item.type_id === '10' ? '°C' : 'mm';
             let magLft = item.type_id === '10' ? 20 : 10;
             let new_title_name = item.title_name;
-            let collectValue = this.state.data[parseInt(index)].value;
-            let showValue = collectValue ? (item.type_id === '11' ? parseFloat(collectValue / 1000).toFixed(3) : parseFloat(collectValue)) : ''
-            component = <View key={index} style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', borderBottomColor: "#bfbfbf", borderBottomWidth: 1, paddingBottom: 10, paddingTop: 10 }}>
+            let collectValue = this.state.data[index].value;
+            let showValue = collectValue ? (item.type_id === '11' ? (parseFloat(collectValue) / 1000).toFixed(3) : parseFloat(collectValue)) : ''
+            component = <View key={index} style={{ flex: 1, justifyContent: 'space-between', flexDirection: 'column', borderBottomColor: "#F0F0F0", borderBottomWidth: 1, paddingBottom: 10, paddingTop: 10 }}>
                 <View style={{ marginBottom: 5 }}>
                     <Text style={{ fontSize: 14, alignSelf: 'flex-start' }}>{new_title_name}</Text>
                 </View>
@@ -305,7 +298,7 @@ export default class ReportView1 extends Component {
                         {item.isCollecting ? '停止' : '采集'}
                     </Button>
                     <View style={{ flexDirection: 'row', marginRight: 30 }}>
-                        <View style={{ alignSelf: 'center', alignItems: 'center', borderWidth: 1, borderRadius: 5, borderColor: '#DDDDDD', width: 80, height: 30, backgroundColor: '#D0D0D0' }}>
+                        <View style={{ alignSelf: 'center', alignItems: 'center', borderWidth: 1, borderRadius: 5, borderColor: '#DDDDDD', width: 80, height: 30, backgroundColor: '#F0F0F0' }}>
                             <Text style={{ marginTop: 4 }}>{showValue}</Text>
                         </View>
                         <Text style={{ fontSize: 15, color: '#000000', alignSelf: 'center', marginLeft: magLft }}>{unitStr}</Text>
@@ -377,8 +370,6 @@ export default class ReportView1 extends Component {
             Toast.info('请先连接测具!');
             return;
         }
-        // console.log(item, index, item.isCollecting);
-        // return;
         if (item && item.isCollecting === false) {///如果 button 字面 是 '采集' 开始采集
             if (currentCollectIndex !== null) {///如果当前已经有正在采集的项  提示用户 先完成当前的采集工作
                 Toast.info('请先完成当前的采集工作，再开始下一项');
@@ -387,11 +378,10 @@ export default class ReportView1 extends Component {
                 currentCollectIndex = index;///保留当前选中的index值
                 let copy = JSON.parse(JSON.stringify(this.state.data));
                 let tempList = copy.map((item, myIndex) => { if (myIndex === index) { item.isCollecting = true; } return item })
-                // console.log('templist:', tempList);
                 this.setState({
                     data: tempList
                 })
-                ///开始采集操作
+                //开始采集操作
                 if (item.type_id === '10') {
                     ToastExample.collectTmp(v => { });
                 } else if (item.type_id === '11') {
@@ -417,10 +407,8 @@ export default class ReportView1 extends Component {
                         <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF' }}>
                             <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>设备点检</Text>
                         </View>
-                        <Text style={{ alignSelf: 'center', fontSize: 20, marginTop: 10, color: '#41A8FF' }}>{this.state.titleData ? this.state.titleData.title : ''}</Text>
                         <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
-                            <Text style={{ margin: 10, fontSize: 14, color: '#000000' }}><Text style={{ color: '#000000' }}>设备名: </Text>{this.state.titleData ? this.state.titleData.devicename : ''}</Text>
-                            <Text style={{ margin: 10, fontSize: 14, color: '#000000' }}><Text style={{ color: '#000000' }}>上传者: </Text>{AppData.name}</Text>
+                            <Text style={{ margin: 10, fontSize: 18, color: '#000000' }}>{this.state.titleData ? this.state.titleData.devicename : ''}</Text>
                         </View>
                     </View>
                     <ScrollView style={{ width: screenW * 0.95, height: screenH - 130 }}>

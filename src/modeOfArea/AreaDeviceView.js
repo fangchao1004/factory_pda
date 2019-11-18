@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { ScrollView, View, Text, Dimensions, StyleSheet, Image } from 'react-native'
 import { Grid, Provider, Toast } from '@ant-design/react-native'
+import { omitTextLength } from '../util/Tool'
 const screenW = Dimensions.get('window').width;
 
 const ImgSourceObj = {
@@ -34,7 +35,7 @@ export default class AreaDeviceView extends Component {
             data.push(
                 {
                     icon: <Image style={{ width: 32, height: 32 }} source={ImgSourceObj[item.status]} />,
-                    text: item.name,
+                    text: omitTextLength(item.name, 22),
                     status: item.status === 1 ? '正常' : (item.status === 2 ? '故障' : '待检')
                 }
             )
@@ -51,7 +52,7 @@ export default class AreaDeviceView extends Component {
                 <View style={styles.main}>
                     <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>当前区域</Text>
-                        <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>{this.state.areaName}</Text>
+                        <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>{omitTextLength(this.state.areaName, 15)}</Text>
                     </View>
                     <ScrollView>
                         <View style={{ width: screenW, padding: 10, }}>

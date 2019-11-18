@@ -36,20 +36,13 @@ class ReportIndependentView extends Component {
     }
     componentDidMount() {
         this.init();
-        DeviceEventEmitter.addListener('tmpEvent', (e) => {
-            this.setState({ tempratureValue: e.value + '' })
-        });
-        DeviceEventEmitter.addListener('vibEvent', (e) => {
-            this.setState({ shakeValue: parseFloat(e.value / 1000).toFixed(3) + '' })
-        });
+
     }
-    componentWillReceiveProps() {
-        ToastExample.isConnected((isConnectedDevice) => {
-            this.setState({ isConnectedDevice })
-        })
+    setVib = (e) => {
+        this.setState({ shakeValue: parseFloat(e.value / 1000).toFixed(3) })
     }
-    componentWillUnmount() {
-        console.log('ReportIndependentView  componentWillUnmount');
+    setTmp = (e) => {
+        this.setState({ tempratureValue: e.value + '' })
     }
     init = async () => {
         let major_result = [];
@@ -66,48 +59,61 @@ class ReportIndependentView extends Component {
         })
     }
     collecttempHandler = () => {
-        let isCollectingTemp = this.state.isCollectingTemp;
-        if (this.state.isConnectedDevice === false) {
-            Toast.info('请先连接测具!');
-            return;
-        }
-        if (this.state.isCollectingShake) {
-            Toast.info('请先完成振动的采集工作，再开始下一项');
-            return;
-        }
-        if (!isCollectingTemp) {
-            this.setState({
-                isCollectingTemp: true
-            })
-            ToastExample.collectTmp(v => { });
-        } else {
-            ToastExample.stopCollect();
-            this.setState({
-                isCollectingTemp: false
-            })
-        }
+        DeviceEventEmitter.removeListener('tmpEvent', this.setTmp);
+        DeviceEventEmitter.removeListener('vibEvent', this.setVib);
+        ToastExample.isConnected((isConnectedDevice) => {
+            if (isConnectedDevice) {
+                if (this.state.isCollectingShake) {
+                    Toast.info('请先完成振动的采集工作，再开始下一项');
+                    return;
+                }
+                DeviceEventEmitter.addListener('tmpEvent', this.setTmp);
+                if (!this.state.isCollectingTemp) {
+                    this.setState({
+                        isCollectingTemp: true
+                    })
+                    ToastExample.collectTmp(v => { });
+                } else {
+                    ToastExample.stopCollect();
+                    DeviceEventEmitter.removeListener('tmpEvent', this.setTmp);
+                    DeviceEventEmitter.removeListener('vibEvent', this.setVib);
+                    this.setState({
+                        isCollectingTemp: false
+                    })
+                }
+            } else {
+                Toast.info('请先连接测具!');
+            }
+        })
     }
+
     collectshakeHandler = () => {
-        let isCollectingShake = this.state.isCollectingShake;
-        if (this.state.isConnectedDevice === false) {
-            Toast.info('请先连接测具!');
-            return;
-        }
-        if (this.state.isCollectingTemp) {
-            Toast.info('请先完成温度的采集工作，再开始下一项');
-            return;
-        }
-        if (!isCollectingShake) {
-            this.setState({
-                isCollectingShake: true
-            })
-            ToastExample.collectVib(v => { });
-        } else {
-            ToastExample.stopCollect();
-            this.setState({
-                isCollectingShake: false
-            })
-        }
+        DeviceEventEmitter.removeListener('tmpEvent', this.setTmp);
+        DeviceEventEmitter.removeListener('vibEvent', this.setVib);
+        ToastExample.isConnected((isConnectedDevice) => {
+            if (isConnectedDevice) {
+                if (this.state.isCollectingTemp) {
+                    Toast.info('请先完成温度的采集工作，再开始下一项');
+                    return;
+                }
+                DeviceEventEmitter.addListener('vibEvent', this.setVib);
+                if (!this.state.isCollectingShake) {
+                    this.setState({
+                        isCollectingShake: true
+                    })
+                    ToastExample.collectVib(v => { });
+                } else {
+                    ToastExample.stopCollect();
+                    DeviceEventEmitter.removeListener('tmpEvent', this.setTmp);
+                    DeviceEventEmitter.removeListener('vibEvent', this.setVib);
+                    this.setState({
+                        isCollectingShake: false
+                    })
+                }
+            } else {
+                Toast.info('请先连接测具!');
+            }
+        })
     }
     getLevel = () => {
         return (
@@ -156,7 +162,7 @@ class ReportIndependentView extends Component {
                     </Button>
                     <View style={{ flexDirection: 'row', marginRight: 30 }}>
                         <View style={{ alignSelf: 'center', alignItems: 'center', borderWidth: 1, borderRadius: 5, borderColor: '#DDDDDD', width: 80, height: 30, backgroundColor: '#D0D0D0' }}>
-                            <Text style={{ marginTop: 4 }}>{this.state.shakeValue}</Text>
+                            <Text style={{ marginTop: 4 }}>{this.state.tempratureValue}</Text>
                         </View>
                         <Text style={{ fontSize: 15, color: '#000000', alignSelf: 'center', marginLeft: 20 }}>°C</Text>
                     </View>
@@ -179,7 +185,7 @@ class ReportIndependentView extends Component {
                     </Button>
                     <View style={{ flexDirection: 'row', marginRight: 30 }}>
                         <View style={{ alignSelf: 'center', alignItems: 'center', borderWidth: 1, borderRadius: 5, borderColor: '#DDDDDD', width: 80, height: 30, backgroundColor: '#D0D0D0' }}>
-                            <Text style={{ marginTop: 4 }}>{this.state.tempratureValue}</Text>
+                            <Text style={{ marginTop: 4 }}>{this.state.shakeValue}</Text>
                         </View>
                         <Text style={{ fontSize: 15, color: '#000000', alignSelf: 'center', marginLeft: 10 }}>mm</Text>
                     </View>
