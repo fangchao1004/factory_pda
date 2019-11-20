@@ -166,6 +166,7 @@ export default class ReportView1 extends Component {
         let status = 1;///1正常，2故障
         this.state.data.forEach((item) => {
             if (item.bug_id) { status = 2 }
+            if (item.type_id === '12') { delete item.deviceInfo }
         })
         let recordData = {};
         recordData.device_id = copyDataAll.deviceInfo.device_id;
