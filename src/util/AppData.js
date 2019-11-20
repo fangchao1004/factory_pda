@@ -18,7 +18,8 @@ export default object = {
         // { version: '0.1.2', ver: '独立缺陷区域支持二级选择' },
         // { version: '0.1.3', ver: '副标题-数字输入框-图片选择器-添加' },
         // { version: '0.1.4', ver: '解决reportView1中,虚拟键盘与FlatList冲突的问题' },
-        { version: '0.1.5', ver: '添加缺陷等级，修复采集时崩溃的问题' },
+        // { version: '0.1.5', ver: '添加缺陷等级，修复采集时崩溃的问题' },
+        { version: '0.1.6', ver: '解决records中content包含deviceInfo的问题' },
     ]
 };
 
