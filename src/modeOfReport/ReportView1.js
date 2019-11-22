@@ -291,6 +291,7 @@ export default class ReportView1 extends Component {
                 tempDeviceArr.forEach((oneDevice) => {
                     if (oneDevice.id === oneRecord.device_id) { ////如果找到record和device的匹配项
                         oneDevice.status = oneRecord.device_status ////将record的device_status替换到设备的status
+                        oneDevice.switch = oneDevice.switch ///将record的switch替换到设备的switch
                     }
                 })
             })

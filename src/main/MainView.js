@@ -383,7 +383,7 @@ export default class MainView extends Component {
         return new Promise((resolve, reject) => {
             HttpApi.upLoadDeviceRecord(oneRecord, (res) => {
                 if (res.data.code === 0) {
-                    HttpApi.updateDeviceStatus({ id: oneRecord.device_id }, { $set: { status: oneRecord.device_status } }, (res) => {
+                    HttpApi.updateDeviceStatus({ id: oneRecord.device_id }, { $set: { status: oneRecord.device_status, switch: oneRecord.switch } }, (res) => {
                         if (res.data.code === 0) { resolve(1); }
                     })
                 }
