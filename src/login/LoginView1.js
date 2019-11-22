@@ -221,7 +221,6 @@ export default class LoginView1 extends Component {
         this.props.navigation.navigate('RegisterDeviceView', { 'nfcid': this.state.tag.id })
     }
     getSomeInfoFromLocalStorage = async () => {
-        foFromLocalStorage(this.state.tag.id, nfcInfoObj.nfcInfo, deviceInfoObj.deviceInfo, sampleInfoObj.sampleInfo);
         let last_deivces_info = await DeviceStorage.get(LAST_DEVICES_INFO)
         last_deivces_info.lastDevicesInfo.forEach((deviceInfo) => {
             if (deviceInfo.nfcid === this.state.tag.id) {

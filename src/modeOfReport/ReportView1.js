@@ -76,7 +76,7 @@ export default class ReportView1 extends Component {
             })
         } else {
             // 如果没有网络。或是 有网络 但是没有最近一次的record。或者是有record,但是最近一次的record中没有缺陷 bug_id 都为null 那么就只渲染 sample 模版
-            // console.log("copyDataAll.deviceInfo.sp_content:", copyDataAll.deviceInfo.sp_content);
+            console.log("copyDataAll.deviceInfo.sp_content:", copyDataAll.deviceInfo.sp_content);
             if (copyDataAll.deviceInfo.sp_content) {
                 let a = JSON.parse(copyDataAll.deviceInfo.sp_content);
                 needRenderContent = a.map((item) => {
