@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, TouchableHighlight, Image, Dimensions, DeviceEventEmitter, ScrollView } from 'react-native'
-import { Button, Provider, Portal, Toast, InputItem } from '@ant-design/react-native'
+import { Button, Provider, Portal, Toast, InputItem, Switch } from '@ant-design/react-native'
 import AppData, { UPDATE_DEVICE_INFO } from '../util/AppData'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage';
@@ -13,6 +13,7 @@ const screenH = Dimensions.get('window').height;
 
 var copyDataAll = [];
 var currentCollectIndex = null; /// 当前正在采集的是那个选项 所在的index 索引
+var originSampleList = [];///用于保存原始的渲染项目数据
 export default class ReportView1 extends Component {
     constructor(props) {
         super(props)
@@ -22,7 +23,7 @@ export default class ReportView1 extends Component {
             titleData: null,
             isLoading: false,
             isConnectedDevice: false,
-            switch: 0,///当前设备是否开机 0为开机 1为停机（屏蔽测温测振）
+            switch: 1,///当前设备是否运行 1为运行 0为停运（屏蔽测温测振）
         }
     }
     componentDidMount() {
@@ -50,6 +51,7 @@ export default class ReportView1 extends Component {
         DeviceEventEmitter.removeListener('vibEvent', this.setCollValue);
     }
     initFromData = () => {
+        originSampleList = []
         let AllData = this.props.navigation.state.params
         if (!AllData || !AllData.deviceInfo) {
             return;
@@ -72,9 +74,10 @@ export default class ReportView1 extends Component {
                     item.value = [];
                 }
                 item.isChecked = false;
-                if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 0) {
+                if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 1) {
                     needRenderContent.push(item);
                 }
+                originSampleList.push(item);
             })
         } else {
             // 如果没有网络。或是 有网络 但是没有最近一次的record。或者是有record,但是最近一次的record中没有缺陷 bug_id 都为null 那么就只渲染 sample 模版
@@ -88,9 +91,10 @@ export default class ReportView1 extends Component {
                     } else if (item.type_id === '6') {
                         item.value = [];
                     }
-                    if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 0) {
+                    if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 1) {
                         needRenderContent.push(item);
                     }
+                    originSampleList.push(item);
                 })
             } else { Toast.info('请配置表单模版'); return; }
         }
@@ -100,6 +104,21 @@ export default class ReportView1 extends Component {
             switch: copyDataAll.deviceInfo.switch,
             data: needRenderContent,
             titleData: { title: copyDataAll.deviceInfo.sample_table_name, devicename: copyDataAll.deviceInfo.device_name }
+        })
+    }
+    ///利用switch开关 切换要渲染的数据
+    getTempData = (value) => {
+        let newList = [];
+        if (value) { newList = originSampleList }
+        else {
+            originSampleList.forEach((item) => {
+                if (item.type_id !== '10' && item.type_id !== '11') {
+                    newList.push(item);
+                }
+            })
+        }
+        this.setState({
+            data: newList
         })
     }
 
@@ -182,6 +201,7 @@ export default class ReportView1 extends Component {
         recordData.user_id = AppData.user_id;
         recordData.isUploaded = false;
         recordData.checkedAt = AppData.checkedAt;
+        recordData.switch = this.state.switch;
         if (AppData.isNetConnetion) { ///在线情况下
             ///判断 整个表单中 有没有 图片选择器组件。
             for (let index = 0; index < this.state.data.length; index++) {
@@ -207,7 +227,7 @@ export default class ReportView1 extends Component {
             // return;
             HttpApi.upLoadDeviceRecord(recordData, (res) => {
                 if (res.data.code === 0) {
-                    HttpApi.updateDeviceStatus({ id: recordData.device_id }, { $set: { status: recordData.device_status } }, (res) => {
+                    HttpApi.updateDeviceStatus({ id: recordData.device_id }, { $set: { status: recordData.device_status, switch: recordData.switch } }, (res) => {
                         if (res.data.code === 0) {
                             Portal.remove(key)
                             Toast.success('设备巡检记录上传成功', 1);
@@ -412,7 +432,18 @@ export default class ReportView1 extends Component {
                     <View style={{ width: screenW }}>
                         <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF', flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>设备点检</Text>
-                            <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>{this.state.switch === 0 ? '开机' : '停机'}</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}> {this.state.switch === 1 ? '运行' : '停运'}</Text>
+                                <Switch
+                                    style={{ marginTop: 15, marginRight: 20 }}
+                                    checked={this.state.switch === 1}
+                                    onChange={(v) => {
+                                        this.setState({ switch: v ? 1 : 0 })
+                                        this.getTempData(v)
+                                    }}
+                                />
+                            </View>
+                            {/* <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>{this.state.switch === 0 ? '运行' : '停运'}</Text> */}
                         </View>
                         <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
                             <Text style={{ margin: 10, fontSize: 18, color: '#000000' }}>{this.state.titleData ? this.state.titleData.devicename : ''}</Text>

@@ -20,7 +20,8 @@ export default object = {
         // { version: '0.1.4', ver: '解决reportView1中,虚拟键盘与FlatList冲突的问题' },
         // { version: '0.1.5', ver: '添加缺陷等级，修复采集时崩溃的问题' },
         // { version: '0.1.6', ver: '解决records中content包含deviceInfo的问题' },
-        { version: '0.1.7', ver: '解决不能离线打卡的问题' },
+        // { version: '0.1.7', ver: '解决不能离线打卡的问题' },
+        { version: '0.1.8', ver: '添加运行/停运切换的功能' },
     ]
 };
 
