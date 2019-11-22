@@ -94,8 +94,8 @@ export default class ReportView1 extends Component {
                 })
             } else { Toast.info('请配置表单模版'); return; }
         }
-        console.log('copyDataAll.deviceInfo:', copyDataAll.deviceInfo);
-        console.log('needRenderContent:', needRenderContent);
+        // console.log('copyDataAll.deviceInfo:', copyDataAll.deviceInfo);
+        // console.log('needRenderContent:', needRenderContent);
         this.setState({
             switch: copyDataAll.deviceInfo.switch,
             data: needRenderContent,
