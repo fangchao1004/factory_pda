@@ -178,7 +178,7 @@ export default class LoginView1 extends Component {
     getDeviceInfoByNFC = (NFCinfo) => {
         let result = [];
         let sql = `select nt.* from (
-            select d.id as device_id,d.name as device_name,d.type_id as device_type_id,dts.name as device_type_name,dts.sample_name as sample_table_name ,d.nfc_id,nfcs.name as nfc_name,nfcs.nfcid,d.area_id,area_3.name as area_name,rt.id as last_record_id,rt.device_status,samples.content as sp_content,rt.content as rt_content,rt.user_id,users.name as user_name,rt.createdAt as rt_createdAt,rt.updatedAt as rt_updatedAt
+            select d.id as device_id,d.name as device_name,d.type_id as device_type_id,dts.name as device_type_name,dts.sample_name as sample_table_name ,d.nfc_id,nfcs.name as nfc_name,nfcs.nfcid,d.area_id,area_3.name as area_name,rt.id as last_record_id,rt.device_status,samples.content as sp_content,rt.content as rt_content,rt.user_id,users.name as user_name,rt.createdAt as rt_createdAt,rt.updatedAt as rt_updatedAt,d.switch
             from devices d 
             left join 
             ( select * from (select max(a.id) as maxid from records a where a.effective = 1 group by a.device_id) t 

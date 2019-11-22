@@ -217,7 +217,7 @@ export default class MainView extends Component {
         return new Promise((resolve, reject) => {
             let result = [];
             let sql = `select d.id as device_id,d.name as device_name,d.type_id as device_type_id,dts.name as device_type_name,dts.sample_name as sample_table_name ,d.nfc_id,nfcs.name as nfc_name,nfcs.nfcid,d.area_id,rt.id as last_record_id,rt.device_status,samples.content as sp_content,rt.content as rt_content,rt.user_id,users.name as user_name,rt.createdAt as rt_createdAt,rt.updatedAt as rt_updatedAt
-            ,concat_ws('/',area_1.name,area_2.name,area_3.name) as area_name
+            ,concat_ws('/',area_1.name,area_2.name,area_3.name) as area_name, d.switch
             from devices d 
             left join ( select * from (select max(a.id) as maxid from (select * from records where records.effective = 1) a group by a.device_id) t left join (select * from records where records.effective = 1) r on t.maxid = r.id) rt
             on d.id = rt.device_id 

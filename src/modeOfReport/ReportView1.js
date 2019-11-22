@@ -22,6 +22,7 @@ export default class ReportView1 extends Component {
             titleData: null,
             isLoading: false,
             isConnectedDevice: false,
+            switch: 0,///当前设备是否开机 0为开机 1为停机（屏蔽测温测振）
         }
     }
     componentDidMount() {
@@ -63,23 +64,22 @@ export default class ReportView1 extends Component {
         }
         //先判断有没有网络   有网络且最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。
         if (AppData.isNetConnetion && copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.rt_content !== '[]' && hasBugid) {
-            // console.log('copyDataAll.deviceInfo.rt_content:', copyDataAll.deviceInfo.rt_content);
-            needRenderContent = JSON.parse(copyDataAll.deviceInfo.rt_content).map((item) => {
+            JSON.parse(copyDataAll.deviceInfo.sp_content).forEach((item) => {
                 item.value = ''
                 if (item.type_id === '10' || item.type_id === '11') {
                     item.isCollecting = false;
                 } else if (item.type_id === '6') {
                     item.value = [];
                 }
-                item.isChecked = false; /// 将所有项都至成了没有选择过的状态
-                return item
+                item.isChecked = false;
+                if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 0) {
+                    needRenderContent.push(item);
+                }
             })
         } else {
             // 如果没有网络。或是 有网络 但是没有最近一次的record。或者是有record,但是最近一次的record中没有缺陷 bug_id 都为null 那么就只渲染 sample 模版
-            console.log("copyDataAll.deviceInfo.sp_content:", copyDataAll.deviceInfo.sp_content);
             if (copyDataAll.deviceInfo.sp_content) {
-                let a = JSON.parse(copyDataAll.deviceInfo.sp_content);
-                needRenderContent = a.map((item) => {
+                JSON.parse(copyDataAll.deviceInfo.sp_content).forEach((item) => {
                     item.value = '';
                     item.bug_id = null;
                     item.isChecked = false;
@@ -88,11 +88,16 @@ export default class ReportView1 extends Component {
                     } else if (item.type_id === '6') {
                         item.value = [];
                     }
-                    return item
+                    if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 0) {
+                        needRenderContent.push(item);
+                    }
                 })
             } else { Toast.info('请配置表单模版'); return; }
         }
+        console.log('copyDataAll.deviceInfo:', copyDataAll.deviceInfo);
+        console.log('needRenderContent:', needRenderContent);
         this.setState({
+            switch: copyDataAll.deviceInfo.switch,
             data: needRenderContent,
             titleData: { title: copyDataAll.deviceInfo.sample_table_name, devicename: copyDataAll.deviceInfo.device_name }
         })
@@ -405,8 +410,9 @@ export default class ReportView1 extends Component {
             <Provider>
                 <View style={{ flex: 1, width: screenW, alignItems: 'center', backgroundColor: '#FFFFFF' }}>
                     <View style={{ width: screenW }}>
-                        <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF' }}>
+                        <View style={{ width: screenW, height: 70, backgroundColor: '#41A8FF', flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>设备点检</Text>
+                            <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>{this.state.switch === 0 ? '开机' : '停机'}</Text>
                         </View>
                         <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
                             <Text style={{ margin: 10, fontSize: 18, color: '#000000' }}>{this.state.titleData ? this.state.titleData.devicename : ''}</Text>
