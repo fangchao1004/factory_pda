@@ -4,7 +4,7 @@ import { Checkbox, TextareaItem, Button, List, Provider, Portal, Toast, Picker }
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto'
 import HttpApi, { SERVER_URL } from '../util/HttpApi';
-import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO } from '../util/DeviceStorage';
+import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, BUG_LEVEL_INFO } from '../util/DeviceStorage';
 const CheckboxItem = Checkbox.CheckboxItem;
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
@@ -22,7 +22,7 @@ class ReportView2 extends Component {
             majorValue: [],
             majorArr: [],
             isLoading: false,
-            warning_level_data: [{ label: '一级', value: 1 }, { label: '二级', value: 2 }, { label: '三级', value: 3 }],
+            warning_level_data: [],///
             levelValue: [],
         }
     }
@@ -36,30 +36,28 @@ class ReportView2 extends Component {
         // console.log('AllData:', AllData);
         // console.log('是否已经报告了此缺陷：', AllData);
         let major_result = [];
-        if (AppData.isNetConnetion) {
-            HttpApi.getMajorInfo({}, (res) => {
-                if (res.data.code == 0) {
-                    res.data.data.forEach((item) => {
-                        major_result.push({ label: item.name, value: item.id });
-                    })
-                }
+        let bug_level_result = [];
+        let major_info = await DeviceStorage.get(MAJOR_INFO);
+        if (major_info) {
+            major_info.majorInfo.forEach((item) => {
+                major_result.push({ label: item.name, value: item.id });
             })
-        } else {
-            let major_info = await DeviceStorage.get(MAJOR_INFO);
-            if (major_info) {
-                major_info.majorInfo.forEach((item) => {
-                    major_result.push({ label: item.name, value: item.id });
-                })
-            }
+        }
+        let bug_level_info = await DeviceStorage.get(BUG_LEVEL_INFO);
+        if (bug_level_info) {
+            bug_level_info.bugLevelInfo.forEach((item) => {
+                bug_level_result.push({ label: item.name, value: item.id });
+            })
         }
         this.setState({
+            warning_level_data: bug_level_result,
             majorArr: major_result,
             options: AllData,
             isBugReview: AllData.bug_id ? true : false
         })
         ///如果bug_id存在 就要去bugs表中去查询 (有网络的情况下)
         if (AppData.isNetConnetion && AllData.bug_id && AllData.bug_id != -1) {
-            HttpApi.getBugs({ id: AllData.bug_id }, (res) => {
+            HttpApi.getBugs({ id: AllData.bug_id, effective: 1 }, (res) => {
                 if (res.data.code === 0) {
                     this.setState({
                         majorValue: [res.data.data[0].major_id],

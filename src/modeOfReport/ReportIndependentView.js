@@ -4,7 +4,7 @@ import { Button, TextareaItem, Picker, List, Toast, Portal } from '@ant-design/r
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, AREA12_INFO } from '../util/DeviceStorage'
+import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, AREA12_INFO, BUG_LEVEL_INFO } from '../util/DeviceStorage'
 import ToastExample from '../util/ToastExample'
 import moment from 'moment'
 
@@ -19,7 +19,7 @@ class ReportIndependentView extends Component {
         super(props)
         this.state = {
             enableScrollViewScroll: true,
-            warning_level_data: [{ label: '一级', value: 1 }, { label: '二级', value: 2 }, { label: '三级', value: 3 }],
+            warning_level_data: [],
             warning_level_select: [],
             descripTxt: '',
             areaArr: [], ///暂时只支持一级区域选择
@@ -46,6 +46,7 @@ class ReportIndependentView extends Component {
     }
     init = async () => {
         let major_result = [];
+        let bug_level_result = [];
         let major_info = await DeviceStorage.get(MAJOR_INFO);
         if (major_info) {
             major_info.majorInfo.forEach((item) => {
@@ -53,7 +54,14 @@ class ReportIndependentView extends Component {
             })
         }
         let area12_info = await DeviceStorage.get(AREA12_INFO);
+        let bug_level_info = await DeviceStorage.get(BUG_LEVEL_INFO);
+        if (bug_level_info) {
+            bug_level_info.bugLevelInfo.forEach((item) => {
+                bug_level_result.push({ label: item.name, value: item.id });
+            })
+        }
         this.setState({
+            warning_level_data: bug_level_result,
             majorArr: major_result,
             areaArr: area12_info.area12Info
         })

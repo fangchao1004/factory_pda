@@ -14,6 +14,7 @@ export const MAJOR_INFO = 'MajorInfo'
 export const LOCAL_BUGS = 'LocalBugs'
 export const LOCAL_RECORDS = 'LocalRecords'
 export const LAST_DEVICES_INFO = 'LastDevicesInfo' ////所有设备最近的一次全面信息(包含了每个设备最近一次的record)
+export const BUG_LEVEL_INFO = 'BugLevelInfo' ////缺陷等级数据
 
 class DeviceStorage {
     /**

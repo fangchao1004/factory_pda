@@ -14,6 +14,7 @@ const screenH = Dimensions.get('window').height;
 var copyDataAll = [];
 var currentCollectIndex = null; /// 当前正在采集的是那个选项 所在的index 索引
 var originSampleList = [];///用于保存原始的渲染项目数据
+var originRecordList = [];///用于保存上次record的渲染项目数据
 export default class ReportView1 extends Component {
     constructor(props) {
         super(props)
@@ -52,6 +53,7 @@ export default class ReportView1 extends Component {
     }
     initFromData = () => {
         originSampleList = []
+        originRecordList = []
         let AllData = this.props.navigation.state.params
         if (!AllData || !AllData.deviceInfo) {
             return;
@@ -61,24 +63,38 @@ export default class ReportView1 extends Component {
         let hasBugid = false;
         if (copyDataAll.deviceInfo.rt_content) {
             JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
+                // console.log('item:', item);
                 if (item.bug_id !== null) { hasBugid = true }
             })
         }
         //先判断有没有网络   有网络且最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。
         if (AppData.isNetConnetion && copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.rt_content !== '[]' && hasBugid) {
-            JSON.parse(copyDataAll.deviceInfo.sp_content).forEach((item) => {
+            JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
                 item.value = ''
+                item.isChecked = false;
                 if (item.type_id === '10' || item.type_id === '11') {
                     item.isCollecting = false;
                 } else if (item.type_id === '6') {
-                    item.value = [];
+                    item.value = []
                 }
-                item.isChecked = false;
                 if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 1) {
-                    needRenderContent.push(item);
+                    needRenderContent.push(item);///初次渲染的界面
                 }
-                originSampleList.push(item);
+                originRecordList.push(item);///原始的record记录
             })
+            if (copyDataAll.deviceInfo.sp_content) {
+                JSON.parse(copyDataAll.deviceInfo.sp_content).forEach((item) => {
+                    item.value = '';
+                    item.bug_id = null;
+                    item.isChecked = false;
+                    if (item.type_id === '10' || item.type_id === '11') {
+                        item.isCollecting = false;
+                    } else if (item.type_id === '6') {
+                        item.value = [];
+                    }
+                    originSampleList.push(item);///原始的sample数据
+                })
+            }
         } else {
             // 如果没有网络。或是 有网络 但是没有最近一次的record。或者是有record,但是最近一次的record中没有缺陷 bug_id 都为null 那么就只渲染 sample 模版
             if (copyDataAll.deviceInfo.sp_content) {
@@ -98,8 +114,7 @@ export default class ReportView1 extends Component {
                 })
             } else { Toast.info('请配置表单模版'); return; }
         }
-        // console.log('copyDataAll.deviceInfo:', copyDataAll.deviceInfo);
-        // console.log('needRenderContent:', needRenderContent);
+        // console.log('初次渲染数据:', needRenderContent);
         this.setState({
             switch: copyDataAll.deviceInfo.switch,
             data: needRenderContent,
@@ -108,15 +123,28 @@ export default class ReportView1 extends Component {
     }
     ///利用switch开关 切换要渲染的数据
     getTempData = (value) => {
+        ///首先要将 originRecordList 和 originSampleList 合并 以sample为本，record替换对应的元素 生成最终的数据
+        let copyRecordList = JSON.parse(JSON.stringify(originRecordList));
+        let copySampleList = JSON.parse(JSON.stringify(originSampleList));
+        for (let index = 0; index < copyRecordList.length; index++) {
+            const recordElement = copyRecordList[index];
+            for (let index = 0; index < copySampleList.length; index++) {
+                const sampleElement = copySampleList[index];
+                if (sampleElement.key === recordElement.key && recordElement.bug_id) {
+                    copySampleList[index] = recordElement;
+                }
+            }
+        }
         let newList = [];
-        if (value) { newList = originSampleList }
+        if (value) { newList = copySampleList }
         else {
-            originSampleList.forEach((item) => {
+            copySampleList.forEach((item) => {
                 if (item.type_id !== '10' && item.type_id !== '11') {
                     newList.push(item);
                 }
             })
         }
+        // console.log('切换后的渲染数据：', newList);
         this.setState({
             data: newList
         })

@@ -58,7 +58,7 @@ export default class SelfView extends Component {
     }
     getLevelInfo = (level_id) => {
         return new Promise((resolve, reject) => {
-            HttpApi.getLevelInfo({ id: level_id }, (res) => {
+            HttpApi.getLevelInfo({ id: level_id, effective: 1 }, (res) => {
                 resolve(res.data.data);
             })
         })

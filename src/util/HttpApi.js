@@ -301,6 +301,14 @@ class HttpApi {
         })
     }
 
+    static getBugLevel(params, f1, f2) {
+        Axios.post(Testuri + 'find_bug_level', params).then(res => {
+            if (f1) { f1(res) }
+        }).catch(res => {
+            if (f2) { f2(res) }
+        })
+    }
+
     /**
      * 上传文件
      * @param {*} params 

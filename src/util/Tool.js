@@ -35,7 +35,7 @@ export async function checkTimeAllow() {
 }
 function getAllowTimeInfo() {
     return new Promise((resolve, reject) => {
-        let sql = `select * from allow_time`
+        let sql = `select * from allow_time where effective = 1`
         HttpApi.obs({ sql }, (res) => {
             let result = [];
             if (res.data.code === 0) {
