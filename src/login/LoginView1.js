@@ -95,7 +95,8 @@ export default class LoginView1 extends Component {
             this.LoginHandler(tag)
         } else {
             console.log('已经登录，默认是设备的nfc');
-            if (AppData.isAllowTime === false) {
+            let isAllowTime = await checkTimeAllow();
+            if (!isAllowTime) {
                 Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
                 return;
             }
@@ -141,7 +142,6 @@ export default class LoginView1 extends Component {
                         AppData.loginFlag = true;
                         AppData.username = response.data.data.username;
                         AppData.user_id = response.data.data.id;
-                        checkTimeAllow();
                     } else {
                         console.log('cardid不存在，不允许登录');
                     }

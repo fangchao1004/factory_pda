@@ -10,7 +10,7 @@ import AreaView from '../modeOfArea/AreaView';
 import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA1_INFO, AREA12_INFO, BUG_LEVEL_INFO } from '../util/DeviceStorage';
+import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA1_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
 import { transfromDataTo2level } from '../util/Tool'
 
 export default class MainView extends Component {
@@ -209,14 +209,31 @@ export default class MainView extends Component {
 
         let bug_level_info = await this.getBuglevelInfo();
         let buglevelInfo = await DeviceStorage.get(BUG_LEVEL_INFO)
-        // console.log('result:', result);
         if (buglevelInfo) { await DeviceStorage.update(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
         else { await DeviceStorage.save(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
+
+        let allow_time_info = await this.getAllowTimeInfo();
+        let allowTimeInfo = await DeviceStorage.get(ALLOW_TIME)
+        if (allowTimeInfo) { await DeviceStorage.update(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
+        else { await DeviceStorage.save(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
 
         Toast.info('设备数据本地备份完成', 1);
         ///设备信息 重置好后，通知 DeviceTabs 去获取。
         // console.log('设备信息 重置好后，通知 DeviceTabs 去获取。111'); ///这里没执行。上方代码有误
         DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
+    }
+
+    getAllowTimeInfo = () => {
+        return new Promise((resolve, reject) => {
+            let sql = `select * from allow_time where effective = 1`;
+            HttpApi.obs({ sql }, (res) => {
+                let result = [];
+                if (res.data.code === 0) {
+                    result = res.data.data
+                }
+                resolve(result);
+            })
+        })
     }
 
     getBuglevelInfo = () => {

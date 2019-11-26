@@ -9,7 +9,6 @@ export default object = {
     loginFlag: false,
     name: null,
     isNetConnetion: false,
-    isAllowTime: true,/// 当前是否为允许巡检的时间
     checkedAt: null,/// 当前贴卡弹出ReportView1的时间戳 ‘YYYY-MM-DD HH:mm:ss’
     record: [ /// 版本更新记录 描述 只起记录作用
         // { version: '0.0.1', ver: '测试' },

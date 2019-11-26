@@ -1,7 +1,6 @@
 import HttpApi from './HttpApi'
 import moment from 'moment'
-import AppData from './AppData'
-
+import DeviceStorage, { ALLOW_TIME } from '../util/DeviceStorage';
 /**
  *省略文本长度
  * @param {*} text
@@ -19,19 +18,22 @@ export function omitTextLength(text, targetlength) {
 }
 
 export async function checkTimeAllow() {
-    let flag = false;
-    let time = moment().format('YYYY-MM-DD HH:mm:ss');
-    let timeList = await getAllowTimeInfo();///从数据库获取允许上传的时间段数据
-    for (let index = 0; index < timeList.length; index++) {
-        const item = timeList[index];
-        let bgt = moment().format('YYYY-MM-DD ') + item.begin;
-        let edt = item.isCross === 0 ? moment().format('YYYY-MM-DD ') + item.end : moment().add(1, 'day').format('YYYY-MM-DD ') + item.end;
-        if (time > bgt && time < edt) {
-            flag = true;
-            break;
+    return new Promise(async (resolve, reject) => {
+        let flag = false;
+        let time = moment().format('YYYY-MM-DD HH:mm:ss');
+        let result = await DeviceStorage.get(ALLOW_TIME);///从本地缓存中获取允许上传的时间段数据
+        let timeList = result.allowTimeInfo;
+        for (let index = 0; index < timeList.length; index++) {
+            const item = timeList[index];
+            let bgt = moment().format('YYYY-MM-DD ') + item.begin;
+            let edt = item.isCross === 0 ? moment().format('YYYY-MM-DD ') + item.end : moment().add(1, 'day').format('YYYY-MM-DD ') + item.end;
+            if (time > bgt && time < edt) {
+                flag = true;
+                break;
+            }
         }
-    }
-    AppData.isAllowTime = flag;
+        resolve(flag)
+    })
 }
 function getAllowTimeInfo() {
     return new Promise((resolve, reject) => {
