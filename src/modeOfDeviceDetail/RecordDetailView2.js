@@ -39,8 +39,10 @@ class RecordDetailView2 extends Component {
         bugsArr.forEach((item) => { bug_id_arr.push(item.bug_id); })
         // console.log("bug_id_arr", bug_id_arr); ///[999,1000]
         bug_info_arr = await this.getBugInfo(bug_id_arr);
-        let result = this.linkTwoData(bugsArr, bug_info_arr)
-
+        let result = [];
+        if (bug_info_arr.length > 0) {
+            result = this.linkTwoData(bugsArr, bug_info_arr);
+        }
         let major_result = [];
         let major_info = await DeviceStorage.get(MAJOR_INFO);
         if (major_info) {
