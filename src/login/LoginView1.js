@@ -18,10 +18,35 @@ export default class LoginView1 extends Component {
     componentDidMount() {
         this.checkNfcHandler();
         this.checkAccount();
+        this.startMonitorNet();
     }
     componentWillUnmount() {
         console.log('loginView1 卸载');
         this.stopDetection();
+        NetInfo.removeEventListener('connectionChange', this.netHandler)
+    }
+    startMonitorNet = () => {
+        NetInfo.isConnected.fetch().done((isConnected) => {
+            // console.log("检测网络是否连接:", isConnected);////true
+        });
+        //    检测网络连接信息
+        NetInfo.fetch().done((connectionInfo) => {
+            // console.log('当前检测网络连接信息:', connectionInfo); ///此时 一般为wifi 或 4g
+        });
+        //    检测网络变化事件
+        NetInfo.addEventListener('connectionChange', this.netHandler)
+    }
+    netHandler = (networkType) => {
+        // console.log('检测网络变化事件:', networkType); ////{type: "wifi", effectiveType: "unknown"} 或 {type: "cellular", effectiveType: "4g"} 或 {type: "none", effectiveType: "unknown"}
+        AppData.isNetConnetion = networkType.type !== 'none';
+        // console.log("AppData.isNetConnetion:", AppData.isNetConnetion);
+        if (AppData.isNetConnetion) {
+            Toast.success('连接上网络', 0.5);
+            DeviceEventEmitter.emit(NET_CONNECT);
+        } else {
+            Toast.fail('网络断开', 0.5);
+            DeviceEventEmitter.emit(NET_DISCONNECT);
+        }
     }
     render() {
         return (

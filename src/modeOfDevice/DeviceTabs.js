@@ -43,6 +43,7 @@ export default class DeviceTabs extends Component {
     }
     componentWillUnmount() {
         this.subscription.remove();
+        this.sub3.remove();
     }
     render() {
         // console.log('listDataOfAll:', this.state.listDataOfAll);
