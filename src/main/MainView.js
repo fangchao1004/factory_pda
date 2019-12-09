@@ -47,9 +47,6 @@ export default class MainView extends Component {
                 >
                     <TabNavigator.Item
                         title="设备列表"
-                        // renderBadge={() =>
-                        //     <Badge style={styles.badge} text={2} />
-                        // }
                         renderIcon={() => <Image style={styles.icon} source={require('../../assets/tabBar/deviceList2.png')} />}
                         renderSelectedIcon={() => <Image style={styles.icon} source={require('../../assets/tabBar/deviceList1.png')} />}
                         selected={this.state.selectedTab === 'a1'}
