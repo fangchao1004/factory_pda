@@ -35,7 +35,7 @@ export default class AreaDeviceView extends Component {
             data.push(
                 {
                     icon: <Image style={{ width: 32, height: 32 }} source={ImgSourceObj[item.status]} />,
-                    text: omitTextLength(item.name, 22),
+                    text: omitTextLength(item.name, 18),
                     status: item.status === 1 ? '正常' : (item.status === 2 ? '故障' : '待检')
                 }
             )
