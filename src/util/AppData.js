@@ -23,7 +23,8 @@ export default object = {
         // { version: '0.1.8', ver: '添加运行/停运切换的功能' },
         // { version: '0.1.9', ver: '处理小红旗不显示的问题' },
         // { version: '0.2.0', ver: 'test' },
-        { version: '0.2.1', ver: '解决重复上传record的问题（页面卸载后网络状态监听器没有移除）' },
+        // { version: '0.2.1', ver: '解决重复上传record的问题（页面卸载后网络状态监听器没有移除）' },
+        { version: '0.2.2', ver: 'loginView1中恢复网络状态的监听功能' },
     ]
 };
 
