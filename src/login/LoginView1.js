@@ -16,13 +16,12 @@ export default class LoginView1 extends Component {
         }
     }
     componentDidMount() {
-        this.startMonitorNet();
         this.checkNfcHandler();
         this.checkAccount();
     }
     componentWillUnmount() {
+        console.log('loginView1 卸载');
         this.stopDetection();
-        NetInfo.removeEventListener('connectionChange')
     }
     render() {
         return (
@@ -95,11 +94,11 @@ export default class LoginView1 extends Component {
             this.LoginHandler(tag)
         } else {
             console.log('已经登录，默认是设备的nfc');
-            let isAllowTime = await checkTimeAllow();
-            if (!isAllowTime) {
-                Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
-                return;
-            }
+            // let isAllowTime = await checkTimeAllow();
+            // if (!isAllowTime) {
+            //     Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
+            //     return;
+            // }
             if (AppData.isNetConnetion) {
                 ////这里要先去后台查询，如果是设备的NFC,就跳转到报表界面。否则就提示用户该NFC号码，不是设备的NFC号码
                 this.getDeviceInfoFromDB(tag.id)
@@ -226,28 +225,6 @@ export default class LoginView1 extends Component {
             if (deviceInfo.nfcid === this.state.tag.id) {
                 // console.log('本地缓存中查询到：', deviceInfo);
                 this.props.navigation.navigate('ReportView1', { "deviceInfo": deviceInfo })
-            }
-        })
-    }
-    startMonitorNet = () => {
-        NetInfo.isConnected.fetch().done((isConnected) => {
-            // console.log("检测网络是否连接:", isConnected);////true
-        });
-        //    检测网络连接信息
-        NetInfo.fetch().done((connectionInfo) => {
-            // console.log('当前检测网络连接信息:', connectionInfo); ///此时 一般为wifi 或 4g
-        });
-        //    检测网络变化事件
-        NetInfo.addEventListener('connectionChange', (networkType) => {
-            // console.log('检测网络变化事件:', networkType); ////{type: "wifi", effectiveType: "unknown"} 或 {type: "cellular", effectiveType: "4g"} 或 {type: "none", effectiveType: "unknown"}
-            AppData.isNetConnetion = networkType.type !== 'none';
-            // console.log("AppData.isNetConnetion:", AppData.isNetConnetion);
-            if (AppData.isNetConnetion) {
-                Toast.success('连接上网络', 0.5);
-                DeviceEventEmitter.emit(NET_CONNECT);
-            } else {
-                Toast.fail('网络断开', 0.5);
-                DeviceEventEmitter.emit(NET_DISCONNECT);
             }
         })
     }

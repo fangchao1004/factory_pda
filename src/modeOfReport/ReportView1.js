@@ -214,7 +214,6 @@ export default class ReportView1 extends Component {
     upLoadRecordHandler = async () => {
         if (this.checkContentIsOk() === false) { Toast.fail('请检查是否有数据遗漏'); return; }
         this.setState({ isLoading: true })
-        var key = Toast.loading('数据上传中...')
         let status = 1;///1正常，2故障
         this.state.data.forEach((item) => {
             if (item.bug_id) { status = 2 }
@@ -231,6 +230,7 @@ export default class ReportView1 extends Component {
         recordData.checkedAt = AppData.checkedAt;
         recordData.switch = this.state.switch;
         if (AppData.isNetConnetion) { ///在线情况下
+            var key = Toast.loading('数据上传中...')
             ///判断 整个表单中 有没有 图片选择器组件。
             for (let index = 0; index < this.state.data.length; index++) {
                 const element = this.state.data[index];

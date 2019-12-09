@@ -33,10 +33,11 @@ export default class MainView extends Component {
         this.localDataSave();
     }
     componentWillUnmount() {
+        console.log('mainview 卸载');
         if (Platform.OS === 'android') {
             BackHandler.removeEventListener('hardwareBackPress', this.onBackAndroid);
         }
-        NetInfo.removeEventListener('connectionChange');
+        NetInfo.removeEventListener('connectionChange', this.netHandler);
     }
     render() {
         return (
@@ -149,19 +150,20 @@ export default class MainView extends Component {
             // console.log('当前检测网络连接信息:', connectionInfo); ///此时 一般为wifi 或 4g
         });
         //    检测网络变化事件
-        NetInfo.addEventListener('connectionChange', (networkType) => {
-            // console.log('检测网络变化事件:', networkType); ////{type: "wifi", effectiveType: "unknown"} 或 {type: "cellular", effectiveType: "4g"} 或 {type: "none", effectiveType: "unknown"}
-            AppData.isNetConnetion = networkType.type !== 'none';
-            // console.log("AppData.isNetConnetion:", AppData.isNetConnetion);
-            if (AppData.isNetConnetion) {
-                Toast.success('连接上网络', 1);
-                DeviceEventEmitter.emit(NET_CONNECT);
-                this.checkLocalStorageAndUploadToDB();
-            } else {
-                Toast.fail('网络断开', 1);
-                DeviceEventEmitter.emit(NET_DISCONNECT);
-            }
-        })
+        NetInfo.addEventListener('connectionChange', this.netHandler)
+    }
+    netHandler = (networkType) => {
+        // console.log('检测网络变化事件111:', networkType); ////{type: "wifi", effectiveType: "unknown"} 或 {type: "cellular", effectiveType: "4g"} 或 {type: "none", effectiveType: "unknown"}
+        AppData.isNetConnetion = networkType.type !== 'none';
+        // console.log("AppData.isNetConnetion:", AppData.isNetConnetion);
+        if (AppData.isNetConnetion) {
+            Toast.success('连接上网络', 1);
+            DeviceEventEmitter.emit(NET_CONNECT);
+            this.checkLocalStorageAndUploadToDB();
+        } else {
+            Toast.fail('网络断开', 1);
+            DeviceEventEmitter.emit(NET_DISCONNECT);
+        }
     }
 
     localDataSave = async () => {
@@ -360,8 +362,9 @@ export default class MainView extends Component {
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let re = await DeviceStorage.get(LOCAL_RECORDS);
         let newBugsArrhasBugId = [];
+        // if (bug || re) { key = Toast.loading('缓存信息上传中...'); }
         if (bugs) {
-            key = Toast.loading('缓存信息上传中...');
+            // key = Toast.loading('缓存信息上传中...');
             // console.log('本地的待上传的bugs', bugs.localBugs);
             ///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
             let newBugsArrhasNetImgUri = await this.changeImgsValue(bugs.localBugs);
@@ -372,14 +375,13 @@ export default class MainView extends Component {
             await DeviceStorage.delete(LOCAL_BUGS)
         }
         if (re) {
-            // console.log('本地的待上传的records', re.localRecords);
             // this.testHandler(newBugsArrhasBugId, re.localRecords);
             ////开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
             let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, re.localRecords);
             // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
             await this.uploadRecordsToDB(newRecordsHasReallyBugId);
             Portal.remove(key);
-            // Toast.success('缓存信息上传成功', 1);
+            Toast.success('缓存信息上传成功', 1);
             // DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
             DeviceStorage.delete(LOCAL_RECORDS)
         }
