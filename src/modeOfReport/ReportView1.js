@@ -385,7 +385,7 @@ export default class ReportView1 extends Component {
             component = <View key={index} style={{ flex: 1, flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
                 <Text style={{ fontSize: 14 }}>{item.title_name}</Text>
                 <View>
-                    <InputItem type='number' placeholder='数字输入' onChange={(v) => {
+                    <InputItem type='number' placeholder='数字输入' extra={item.title_remark} onChange={(v) => {
                         this.state.data[index].value = v + '';
                         this.setState({ data: this.state.data })///修改输入数据
                     }} ></InputItem>
