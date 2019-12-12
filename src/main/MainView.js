@@ -11,7 +11,7 @@ import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA1_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
-import { transfromDataTo2level } from '../util/Tool'
+import { transfromDataTo2level, findDurtion } from '../util/Tool'
 
 export default class MainView extends Component {
     constructor(props) {
@@ -167,7 +167,13 @@ export default class MainView extends Component {
         // console.log('重新登录后。执行所有数据的重新缓存操作。只在登录后执行一次');
         // console.log('所有的缓存进本地的设备状态   都有重置成 待检');
 
-        let deviceInfo = await this.getDeviceInfo();
+        let allow_time_info = await this.getAllowTimeInfo();
+        let allowTimeInfo = await DeviceStorage.get(ALLOW_TIME)
+        if (allowTimeInfo) { await DeviceStorage.update(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
+        else { await DeviceStorage.save(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
+
+        let needTimeDevicesList = this.getNeedDeviceList(allow_time_info);
+        let deviceInfo = await this.getDeviceInfo(needTimeDevicesList);
         ////状态先重置成待检 存在本地缓存中
         deviceInfo.forEach((oneDevice) => { oneDevice.status = 3 })
         //////////////////////////////
@@ -211,15 +217,20 @@ export default class MainView extends Component {
         if (buglevelInfo) { await DeviceStorage.update(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
         else { await DeviceStorage.save(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
 
-        let allow_time_info = await this.getAllowTimeInfo();
-        let allowTimeInfo = await DeviceStorage.get(ALLOW_TIME)
-        if (allowTimeInfo) { await DeviceStorage.update(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
-        else { await DeviceStorage.save(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
-
         Toast.info('设备数据本地备份完成', 1);
         ///设备信息 重置好后，通知 DeviceTabs 去获取。
         // console.log('设备信息 重置好后，通知 DeviceTabs 去获取。111'); ///这里没执行。上方代码有误
         DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
+    }
+
+    getNeedDeviceList = (allowTimeList) => {
+        let targetItem = findDurtion(allowTimeList);
+        // console.log('targetItem:', targetItem);
+        let devicesList = [];
+        if (targetItem.selected_devices && targetItem.selected_devices.length > 0) {
+            devicesList = JSON.parse(targetItem.selected_devices);
+        }
+        return devicesList;
     }
 
     getAllowTimeInfo = () => {
@@ -312,13 +323,10 @@ export default class MainView extends Component {
             })
         })
     }
-    getDeviceInfo = () => {
+    getDeviceInfo = (needTimeDevicesList) => {
         return new Promise((resolve, reject) => {
             let result = [];
-            // let sql = `select d.*,n.name as nfc_name,dt.name as type_name,a.name as area_name from devices d 
-            // left join (select * from nfcs where nfcs.effective = 1) n on n.id=d.nfc_id 
-            // left join (select * from device_types where device_types.effective = 1) dt on d.type_id = dt.id 
-            // left join (select * from area_3 where area_3.effective = 1) a on a.id = d.area_id where d.effective = 1`
+            let sql1 = needTimeDevicesList && needTimeDevicesList.length > 0 ? `and d.id in (${needTimeDevicesList.join(',')})` : ``;
             let sql = `select d.*,n.name as nfc_name,dt.name as type_name,
             concat_ws('/',area_1.name,area_2.name,area_3.name) as area_name
             from devices d 
@@ -327,7 +335,7 @@ export default class MainView extends Component {
             left join (select * from area_3 where effective = 1) area_3 on area_3.id = d.area_id 
             left join (select * from area_2 where effective = 1) area_2 on area_2.id = area_3.area2_id 
             left join (select * from area_1 where effective = 1) area_1 on area_1.id = area_2.area1_id 
-            where d.effective = 1`
+            where d.effective = 1 ${sql1}`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code === 0) {
                     result = res.data.data
