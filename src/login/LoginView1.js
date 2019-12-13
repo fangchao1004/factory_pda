@@ -6,6 +6,7 @@ import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
 import { checkTimeAllow } from '../util/Tool'
+import ToastExample from '../util/ToastExample'
 import NetInfo from '@react-native-community/netinfo'
 
 export default class LoginView1 extends Component {
@@ -154,24 +155,35 @@ export default class LoginView1 extends Component {
             })
     }
     LoginHandler = (tag) => {
-        if (tag && tag.id) {
-            HttpApi.loginByNFC({ nfcid: tag.id, type: 1 }, (response) => {
-                if (response.status == 200) {
-                    if (response.data.code == 0) {
-                        // console.log("数据LLL：",response.data.data);
-                        // ToastAndroid.show('允许登录' + tag.id, ToastAndroid.SHORT);
-                        this.props.navigation.navigate('MainView') ///登录成功
-                        this.saveUserNFCInStorageHandler(tag)
-                        AppData.userNFC = tag.id;
-                        AppData.loginFlag = true;
-                        AppData.username = response.data.data.username;
-                        AppData.user_id = response.data.data.id;
-                    } else {
-                        console.log('cardid不存在，不允许登录');
+        ToastExample.getMac((macAddress) => {
+            let sql = `select * from mac_address where address = '${macAddress}'`
+            HttpApi.obs({ sql }, (res) => {
+                if (res.data.code == 0 && res.data.data.length > 0) {
+                    if (tag && tag.id) {
+                        HttpApi.loginByNFC({ nfcid: tag.id, type: 1 }, (response) => {
+                            if (response.status == 200) {
+                                if (response.data.code == 0) {
+                                    // console.log("数据LLL：",response.data.data);
+                                    // ToastAndroid.show('允许登录' + tag.id, ToastAndroid.SHORT);
+                                    this.props.navigation.navigate('MainView') ///登录成功
+                                    this.saveUserNFCInStorageHandler(tag)
+                                    AppData.userNFC = tag.id;
+                                    AppData.loginFlag = true;
+                                    AppData.username = response.data.data.username;
+                                    AppData.user_id = response.data.data.id;
+                                } else {
+                                    console.log('cardid不存在，不允许登录');
+                                }
+                            }
+                        })
                     }
+                } else {
+                    Toast.info('当前设备未注册-请联系管理员进行注册');
                 }
             })
-        }
+        })
+
+
     }
     getDeviceInfoFromDB = async (NFCId) => {
         let NFCinfo = await this.getNFCInfo(NFCId)

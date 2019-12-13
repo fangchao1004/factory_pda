@@ -1,23 +1,25 @@
 package com.factory_mobile;
 
 import android.app.Application;
+import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import com.facebook.react.ReactApplication;
-import com.reactnativecommunity.netinfo.NetInfoPackage;
-import com.reactnativecommunity.viewpager.RNCViewPagerPackage;
-import com.imagepicker.ImagePickerPackage;
-import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
-import community.revteltech.nfc.NfcManagerPackage;
-import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 import com.facebook.soloader.SoLoader;
+import com.imagepicker.ImagePickerPackage;
+import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
+import com.reactnativecommunity.netinfo.NetInfoPackage;
+import com.reactnativecommunity.viewpager.RNCViewPagerPackage;
+import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
+
+import community.revteltech.nfc.NfcManagerPackage;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -51,10 +53,19 @@ public class MainApplication extends Application implements ReactApplication {
         return mReactNativeHost;
     }
 
+    private static Context context;
     @Override
     public void onCreate() {
         super.onCreate();
         Log.i("coco", "this is MainApplication");
         SoLoader.init(this, /* native exopackage */ false);
+        context = getApplicationContext();
+    }
+    public static WifiManager getWifiManager(){
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        return wifiManager;
+    }
+    public static Context getContext(){
+        return context;
     }
 }

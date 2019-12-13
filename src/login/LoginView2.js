@@ -5,6 +5,7 @@ import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
 import { checkTimeAllow } from '../util/Tool'
+import ToastExample from '../util/ToastExample'
 import NetInfo from '@react-native-community/netinfo'
 const screenW = Dimensions.get('window').width;
 /**
@@ -94,29 +95,40 @@ class LoginView2 extends Component {
         })
     }
     loginHandler = () => {
-        if (!AppData.isNetConnetion) {
-            Toast.fail('请检查当前网络状态');
-            return;
-        }
-        if (this.state.username.length == 0 || this.state.password.length == 0) {
-            Toast.fail('账号和密码都不能为空', 1)
-            return;
-        }
-        // let userData = { username: this.state.username, password: this.state.password, effective: 1 };
-        let sql = `select users.*,levels.name as levelname from users 
-        left join (select * from levels where effective = 1) levels on levels.id = users.level_id
-        where users.username = '${this.state.username}' and users.password = '${this.state.password}' and users.effective = 1`
-        HttpApi.obs({ sql }, (res) => {
-            if (res.data.code == 0 && res.data.data.length > 0) {
-                this.props.navigation.navigate('MainView')
-                this.saveUserInfoInStorageHandler();
-                this.saveUserInfoInGloabel(res.data.data[0]);
-                checkTimeAllow();
-            } else {
-                Toast.fail('用户名密码错误', 1)
+        ToastExample.getMac((macAddress) => {
+            if (!AppData.isNetConnetion) {
+                Toast.fail('请检查当前网络状态');
+                return;
             }
-        })
+            if (this.state.username.length == 0 || this.state.password.length == 0) {
+                Toast.fail('账号和密码都不能为空', 1)
+                return;
+            }
+            let sql1 = `select * from mac_address where address = '${macAddress}'`
+            HttpApi.obs({ sql: sql1 }, (res) => {
+                if (res.data.code == 0 && res.data.data.length > 0) {
+                    let sql = `select users.*,levels.name as levelname from users 
+                    left join (select * from levels where effective = 1) levels on levels.id = users.level_id
+                    where users.username = '${this.state.username}' 
+                    and users.password = '${this.state.password}' 
+                    and users.effective = 1`
+                    HttpApi.obs({ sql }, (data) => {
+                        if (data.data.code == 0 && data.data.data.length > 0) {
+                            this.props.navigation.navigate('MainView')
+                            this.saveUserInfoInStorageHandler();
+                            this.saveUserInfoInGloabel(data.data.data[0]);
+                            checkTimeAllow();
+                        } else {
+                            Toast.fail('用户名密码错误', 1)
+                        }
+                    })
+                } else {
+                    Toast.info('当前设备未注册-请联系管理员进行注册');
+                }
+            })
 
+
+        });
     }
     saveUserInfoInGloabel = async (data) => {
         AppData.username = this.state.username;
