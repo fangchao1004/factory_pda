@@ -2,6 +2,8 @@
  * 全局数据
  */
 export default object = {
+    mac_address: null,
+    tool_addres: null,
     user_id: null,
     username: null,
     userNFC: null,
@@ -25,7 +27,9 @@ export default object = {
         // { version: '0.2.0', ver: 'test' },
         // { version: '0.2.1', ver: '解决重复上传record的问题（页面卸载后网络状态监听器没有移除）' },
         // { version: '0.2.2', ver: 'loginView1中恢复网络状态的监听功能' },
-        { version: '0.2.3', ver: '根据时间段-筛选查询到所有待检设备' },
+        // { version: '0.2.3', ver: '根据时间段-筛选查询到所有待检设备' },
+        // { version: '0.2.4', ver: 'mac地址限定功能' },
+        { version: '0.2.5', ver: 'mac地址数据库端限定功能' },
     ]
 };
 

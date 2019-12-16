@@ -68,11 +68,13 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         Toast.makeText(getReactApplicationContext(), message, duration).show();
     }
 
+    private final String MAC_ADDRESS_1 = "DC:0D:30:70:3F:46";///工厂测试一
+    private final String MAC_ADDRESS_2 = "DC:0D:30:70:3F:0C";///wdf测试一
 
     @ReactMethod
-    public void bindDevice() {
-        ClientManager.getClientManager().bindSensor(getReactApplicationContext(), "DC:0D:30:70:3F:46");
-        Toast.makeText(getReactApplicationContext(), "绑定成功 DC:0D:30:70:3F:46", Toast.LENGTH_SHORT).show();
+    public void bindDevice(String tool_address) {
+        ClientManager.getClientManager().bindSensor(getReactApplicationContext(), tool_address);
+        Toast.makeText(getReactApplicationContext(), "绑定成功 " + tool_address, Toast.LENGTH_SHORT).show();
     }
 
     @ReactMethod
@@ -267,11 +269,12 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
 
     /**
      * 获取mac地址（适配所有Android版本）
+     *
      * @return
      */
     @ReactMethod
     public void getMac(Callback callbacks) {
-        String mac  = "";
+        String mac = "";
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             mac = getMacDefault(MainApplication.getContext());
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {

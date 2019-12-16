@@ -107,6 +107,8 @@ class LoginView2 extends Component {
             let sql1 = `select * from mac_address where address = '${macAddress}'`
             HttpApi.obs({ sql: sql1 }, (res) => {
                 if (res.data.code == 0 && res.data.data.length > 0) {
+                    AppData.mac_address = res.data.data[0].address;
+                    AppData.tool_address = res.data.data[0].tool_address;
                     let sql = `select users.*,levels.name as levelname from users 
                     left join (select * from levels where effective = 1) levels on levels.id = users.level_id
                     where users.username = '${this.state.username}' 

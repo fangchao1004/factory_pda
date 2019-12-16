@@ -159,6 +159,8 @@ export default class LoginView1 extends Component {
             let sql = `select * from mac_address where address = '${macAddress}'`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0 && res.data.data.length > 0) {
+                    AppData.mac_address = res.data.data[0].address;
+                    AppData.tool_address = res.data.data[0].tool_address;
                     if (tag && tag.id) {
                         HttpApi.loginByNFC({ nfcid: tag.id, type: 1 }, (response) => {
                             if (response.status == 200) {

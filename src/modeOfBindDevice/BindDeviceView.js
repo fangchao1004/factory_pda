@@ -37,7 +37,10 @@ export default class BindDeviceView extends Component {
                         style={{ marginTop: 20 }}
                         type='primary'
                         onPress={() => {
-                            ToastExample.bindDevice();
+                            // console.log("AppData:", AppData)
+                            if (AppData.tool_address && AppData.tool_address !== '')
+                                ToastExample.bindDevice(AppData.tool_address);
+                            else { Toast.show('此设备无匹配的测具-请联系管理员处理'); }
                         }}>
                         绑定设备
                     </Button>
