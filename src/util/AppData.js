@@ -29,7 +29,8 @@ export default object = {
         // { version: '0.2.2', ver: 'loginView1中恢复网络状态的监听功能' },
         // { version: '0.2.3', ver: '根据时间段-筛选查询到所有待检设备' },
         // { version: '0.2.4', ver: 'mac地址限定功能' },
-        { version: '0.2.5', ver: 'mac地址数据库端限定功能' },
+        // { version: '0.2.5', ver: 'mac地址数据库端限定功能' },
+        { version: '0.2.6', ver: '时间段和设备的映射关系调整' },
     ]
 };
 

@@ -73,6 +73,9 @@ export function transfromDataTo2level(area12result) {
     return jsonList;
 }
 
+/**
+ * 根据当前时间段，查询对应的时间区间
+ */
 export function findDurtion(list) {
     let today = moment().format('YYYY-MM-DD ');
     let tomorrow = moment().add(1, 'day').format('YYYY-MM-DD ');

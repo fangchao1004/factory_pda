@@ -227,15 +227,21 @@ export default class MainView extends Component {
         let targetItem = findDurtion(allowTimeList);
         // console.log('targetItem:', targetItem);
         let devicesList = [];
-        if (targetItem.selected_devices && targetItem.selected_devices.length > 0) {
-            devicesList = JSON.parse(targetItem.selected_devices);
+        if (targetItem.select_map_device && targetItem.select_map_device.split(',').length > 0) {
+            devicesList = targetItem.select_map_device.split(',');
         }
+        // console.log('devicesList:', devicesList)
         return devicesList;
     }
 
     getAllowTimeInfo = () => {
         return new Promise((resolve, reject) => {
-            let sql = `select * from allow_time where effective = 1`;
+            // let sql = `select * from allow_time where effective = 1`;
+            let sql = `select a_t.id,a_t.begin,a_t.end,a_t.isCross,a_t.name,GROUP_CONCAT(a_m_d.device_id) as select_map_device from allow_time a_t
+            left join (select * from allowTime_map_device where effective = 1) a_m_d
+            on a_t.id = a_m_d.allow_time_id
+            where a_t.effective = 1
+            group by a_t.id`
             HttpApi.obs({ sql }, (res) => {
                 let result = [];
                 if (res.data.code === 0) {
