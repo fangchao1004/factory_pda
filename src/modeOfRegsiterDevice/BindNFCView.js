@@ -13,7 +13,7 @@ export default class BindNFCView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            nfc_type_data: [{ label: '设备', value: 2 }, { label: '人员', value: 1 }],
+            nfc_type_data: [{ label: '巡检点', value: 2 }, { label: '人员', value: 1 }],
             nfc_type_select: [],
             target_name: '',
             target_nfc: '',
@@ -37,7 +37,7 @@ export default class BindNFCView extends React.Component {
             let nfc_id_data;
             console.log('isEx', isExisted)
             if (isExisted) {
-                Modal.alert('注意！', '该名称的NFC标签已经被注册过，是否确定要覆盖此NFC信息？', [
+                Modal.alert('注意！', `该名称的${this.state.nfc_type_select[0] === 1 ? '员工' : '巡检点'}标签已注册过，是否要覆盖？原先标签将不再可用`, [
                     { text: '取消', onPress: () => { this.setState({ isLoading: false }); Portal.remove(key) } },
                     { text: '确定', onPress: () => { this.updateNFCInfoHandler(nfc_data, key) } }
                 ]);
