@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Dimensions } from 'react-native';
-import { List, Picker, Provider, Button, InputItem, Toast, TextareaItem, Portal } from '@ant-design/react-native';
+import { List, Picker, Provider, Button, InputItem, Toast, Modal, Portal } from '@ant-design/react-native';
 import HttpApi from '../util/HttpApi';
 
 const screenW = Dimensions.get('window').width;
@@ -30,23 +30,63 @@ export default class BindNFCView extends React.Component {
     upLoadHandler = async () => {
         if (this.state.nfc_type_select[0] && this.state.target_nfc && this.state.target_name) {
             this.setState({ isLoading: true })
-            var key = Toast.loading('正在注册...')
+            var key = Toast.loading('正在处理...')
             let nfc_data = { nfcid: this.state.target_nfc, name: this.state.target_name, type: this.state.nfc_type_select[0] }
-            let nfc_id_data = await this.insertNFCInfo(nfc_data); ///插入FNC表，生成自增的id。获取这个id
-            if (nfc_id_data !== 0) {
-                Portal.remove(key)
-                Toast.fail('NFC注册失败', 1); ///NFC 表插入失败
+            ///先去数据库查询，是否有重名的nfc记录，如果有，就提示是否要覆盖。如果没有就插入这条信息。
+            let isExisted = await this.findNFCbyName(this.state.target_name, this.state.nfc_type_select[0]);
+            let nfc_id_data;
+            console.log('isEx', isExisted)
+            if (isExisted) {
+                Modal.alert('注意！', '该名称的NFC标签已经被注册过，是否确定要覆盖此NFC信息？', [
+                    { text: '取消', onPress: () => { this.setState({ isLoading: false }); Portal.remove(key) } },
+                    { text: '确定', onPress: () => { this.updateNFCInfoHandler(nfc_data, key) } }
+                ]);
             } else {
+                nfc_id_data = await this.insertNFCInfo(nfc_data); ///插入FNC表，生成自增的id。获取这个id
                 Portal.remove(key)
-                Toast.success('NFC注册成功', 1); ///NFC 表插入失败
-                setTimeout(() => {
-                    this.props.navigation.goBack();
-                }, 500);
+                if (nfc_id_data !== 0) { Toast.fail('NFC注册失败', 1) } else {
+                    Toast.success('NFC注册成功', 1); ///NFC 表插入失败
+                    this.goBack();
+                }
+                this.setState({ isLoading: false })
             }
-            this.setState({ isLoading: false })
         } else {
             Toast.fail('请检查是否有未填项');
         }
+    }
+    updateNFCInfoHandler = async (nfc_data, key) => {
+        nfc_id_data = await this.updateNFCInfo(nfc_data); ///插入FNC表，生成自增的id。获取这个id
+        Portal.remove(key)
+        if (nfc_id_data === 0) {
+            Toast.success('NFC覆盖成功', 1)
+            this.goBack();
+        } else {
+            Toast.fail('NFC覆盖失败', 1)
+        }
+        this.setState({ isLoading: false })
+    }
+    goBack = () => {
+        setTimeout(() => {
+            this.props.navigation.goBack();
+        }, 500);
+    }
+    findNFCbyName = (name, type) => {
+        return new Promise((resolve, reject) => {
+            let sql = `select nfcs.id from nfcs where name = '${name}' and type = ${type} `
+            HttpApi.obs({ sql }, (res) => {
+                if (res.data.data.length === 1) {
+                    resolve(true)
+                } else { resolve(false) }
+            })
+        })
+    }
+    updateNFCInfo = (param) => {
+        return new Promise((resolve, reject) => {
+            let sql = `update nfcs set nfcid = '${param.nfcid}' where name = '${param.name}'`
+            HttpApi.obs({ sql }, (res) => {
+                resolve(res.data.code)
+            })
+        })
     }
     insertNFCInfo = (param) => {
         return new Promise((resolve, reject) => {

@@ -120,15 +120,15 @@ export default class LoginView1 extends Component {
             this.LoginHandler(tag)
         } else {
             console.log('已经登录，默认是设备的nfc');
-            let isAllowTime = await checkTimeAllow();
-            if (!isAllowTime) {
-                Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
-                return;
-            }
             if (AppData.isNetConnetion) {
                 ////这里要先去后台查询，如果是设备的NFC,就跳转到报表界面。否则就提示用户该NFC号码，不是设备的NFC号码
                 this.getDeviceInfoFromDB(tag.id)
             } else {
+                let isAllowTime = await checkTimeAllow();
+                if (!isAllowTime) {
+                    Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
+                    return;
+                }
                 console.log('检查到贴卡（巡检）操作。但是没有网络');
                 this.getSomeInfoFromLocalStorage();
             }
@@ -184,14 +184,17 @@ export default class LoginView1 extends Component {
                 }
             })
         })
-
-
     }
     getDeviceInfoFromDB = async (NFCId) => {
         let NFCinfo = await this.getNFCInfo(NFCId)
         // console.log("NFCinfo:::", NFCinfo);///nfc表中的信息
         if (NFCinfo) { ///如果这个NFC已经注册了
             if (NFCinfo.type === 2) {
+                let isAllowTime = await checkTimeAllow();
+                if (!isAllowTime) {
+                    Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
+                    return;
+                }
                 this.getDeviceInfoByNFC(NFCinfo);
             } else {
                 Alert.alert('此员工卡数据已经存在于NFC表中', NFCinfo.name);
