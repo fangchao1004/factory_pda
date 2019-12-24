@@ -31,7 +31,8 @@ export default object = {
         // { version: '0.2.4', ver: 'mac地址限定功能' },
         // { version: '0.2.5', ver: 'mac地址数据库端限定功能' },
         // { version: '0.2.6', ver: '时间段和设备的映射关系调整' },
-        { version: '0.2.7', ver: '支持NFC替换功能' },
+        // { version: '0.2.7', ver: '支持NFC替换功能' },
+        { version: '0.2.8', ver: '再次尝试解决-record缓存重复上传的问题（每次上传一个record记录时，就将本地缓存中的对应record记录的isUploaded置成true）' },
     ]
 };
 

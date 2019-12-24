@@ -24,6 +24,7 @@ class LoginView2 extends Component {
         this.checkUserInfoInStorageHandler();
     }
     componentWillUnmount() {
+        console.log('loginView1 卸载');
         NetInfo.removeEventListener('connectionChange', this.netHandler)
     }
     render() {

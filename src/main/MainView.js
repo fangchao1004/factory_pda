@@ -369,11 +369,12 @@ export default class MainView extends Component {
         })
     }
     checkLocalStorageAndUploadToDB = async () => {
+        console.log('连接上网络,并且检查本地缓存,上传至数据库,checkLocalStorageAndUploadToDB')
         let key;
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
-        let re = await DeviceStorage.get(LOCAL_RECORDS);
+        let records = await DeviceStorage.get(LOCAL_RECORDS);
         let newBugsArrhasBugId = [];
-        // if (bug || re) { key = Toast.loading('缓存信息上传中...'); }
+        if (bugs || records) { key = Toast.loading('缓存信息上传中,请勿断网,否则可能会产生问题...'); }
         if (bugs) {
             // key = Toast.loading('缓存信息上传中...');
             // console.log('本地的待上传的bugs', bugs.localBugs);
@@ -385,26 +386,43 @@ export default class MainView extends Component {
             ////缺陷都上传成功了。要删除本地缓存中的bugs数据
             await DeviceStorage.delete(LOCAL_BUGS)
         }
-        if (re) {
+        if (records) {
             // this.testHandler(newBugsArrhasBugId, re.localRecords);
             ////开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
-            let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, re.localRecords);
+            let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, records.localRecords);
             // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
-            await this.uploadRecordsToDB(newRecordsHasReallyBugId);
-            Portal.remove(key);
-            Toast.success('缓存信息上传成功', 1);
-            // DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
-            DeviceStorage.delete(LOCAL_RECORDS)
-        }
-    }
-
-    uploadRecordsToDB = async (finallyRecordsArr) => {
-        for (const oneRecord of finallyRecordsArr) {
-            if (!oneRecord.isUploaded) {
-                await this.upLoadRecordInfo(oneRecord);
+            // return
+            let result = await this.uploadRecordsToDB(newRecordsHasReallyBugId);
+            if (result) {
+                // let records = await DeviceStorage.get(LOCAL_RECORDS);
+                // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
+                Portal.remove(key);
+                Toast.success('缓存信息上传成功', 1);
+                await DeviceStorage.delete(LOCAL_RECORDS)
+                // let sss = await DeviceStorage.get(LOCAL_RECORDS);
+                // console.log('删除后的本地LOCAL_RECORDS缓存:', sss)
             }
         }
-        return null
+    }
+    uploadRecordsToDB = async (finallyRecordsArr) => {
+        let uploadResult = false;
+        for (const oneRecord of finallyRecordsArr) {
+            if (!oneRecord.isUploaded) {
+                uploadResult = await this.upLoadRecordInfo(oneRecord)///如果上传成功，就要立马改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
+                if (uploadResult) { await this.updateLocalRecordsInfo(oneRecord) }
+            }
+        }
+        return uploadResult;
+    }
+    ///改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
+    updateLocalRecordsInfo = async (oneRecord) => {
+        let records = await DeviceStorage.get(LOCAL_RECORDS);
+        let tempArr = JSON.parse(JSON.stringify(records.localRecords));
+        tempArr.forEach((item) => {
+            if (item.device_id === oneRecord.device_id && item.checkedAt === oneRecord.checkedAt) { item.isUploaded = true }
+        })
+        await DeviceStorage.update(LOCAL_RECORDS, { "localRecords": tempArr })
+        return true;
     }
     upLoadRecordInfo = async (oneRecord) => {
         let contentArr = JSON.parse(oneRecord.content);
@@ -430,9 +448,9 @@ export default class MainView extends Component {
             HttpApi.upLoadDeviceRecord(oneRecord, (res) => {
                 if (res.data.code === 0) {
                     HttpApi.updateDeviceStatus({ id: oneRecord.device_id }, { $set: { status: oneRecord.device_status, switch: oneRecord.switch } }, (res) => {
-                        if (res.data.code === 0) { resolve(1); }
+                        if (res.data.code === 0) { resolve(true) } else { resolve(false) }
                     })
-                }
+                } else { resolve(false) }
             })
         })
     }

@@ -104,6 +104,7 @@ export default class SelfView extends Component {
     doLogout = async () => {
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let records = await DeviceStorage.get(LOCAL_RECORDS);
+        let complete = true;
         if (bugs) {
             Toast.show('请先联网同步上传本地缓存的巡检记录', 2);
             return;
@@ -111,21 +112,23 @@ export default class SelfView extends Component {
         if (records) {
             records.localRecords.forEach(oneRecord => {
                 if (!oneRecord.isUploaded) {
-                    Toast.show('请先联网同步上传缓存的巡检记录');
-                    return;
+                    Toast.show('请先联网同步上传缓存的巡检记录', 2);
+                    complete = false;
                 }
             });
         }
-        //清除本地存储的card信息
-        DeviceStorage.delete(USER_CARD);
-        DeviceStorage.delete(USER_INFO);
-        DeviceStorage.delete(LOCAL_BUGS);
-        DeviceStorage.delete(LOCAL_RECORDS);
+        if (complete) {
+            //清除本地存储的card信息
+            DeviceStorage.delete(USER_CARD);
+            DeviceStorage.delete(USER_INFO);
+            DeviceStorage.delete(LOCAL_BUGS);
+            DeviceStorage.delete(LOCAL_RECORDS);
+            this.props.navigation.navigate('LoginView1')
+            AppData.loginFlag = false;
+            AppData.username = null;
+            AppData.userNFC = null
+        }
 
-        this.props.navigation.navigate('LoginView1')
-        AppData.loginFlag = false;
-        AppData.username = null;
-        AppData.userNFC = null
     }
 
 }
