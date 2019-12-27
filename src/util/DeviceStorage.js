@@ -1,4 +1,3 @@
-import React from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 
 export const USER_CARD = 'UserCard'

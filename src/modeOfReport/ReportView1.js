@@ -11,10 +11,9 @@ import SelectPhoto from '../modeOfPhoto/SelectPhoto';
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
 
+var AllData;
 var copyDataAll = [];
 var currentCollectIndex = null; /// 当前正在采集的是那个选项 所在的index 索引
-var originSampleList = [];///用于保存原始的渲染项目数据
-var originRecordList = [];///用于保存上次record的渲染项目数据
 export default class ReportView1 extends Component {
     constructor(props) {
         super(props)
@@ -24,12 +23,37 @@ export default class ReportView1 extends Component {
             titleData: null,
             isLoading: false,
             isConnectedDevice: false,
-            switch: 1,///当前设备是否运行 1为运行 0为停运（屏蔽测温测振）
+            switch: 0,///当前设备是否运行 1为运行 0为停运（屏蔽测温测振）
         }
     }
     componentDidMount() {
         AppData.checkedAt = moment().format('YYYY-MM-DD HH:mm:ss')
-        this.initFromData();
+        AllData = this.props.navigation.state.params
+        if (!AllData || !AllData.deviceInfo) {
+            return;
+        }
+        copyDataAll = JSON.parse(JSON.stringify(AllData))
+        let old_sample = JSON.parse(copyDataAll.deviceInfo.sp_content);
+        let old_record = JSON.parse(copyDataAll.deviceInfo.rt_content);
+        /// 因为 PC 端做了限制，只有在某类设备的所有设备个体都消缺后，即都是正常状态时，该类所有设备的最近一次record记录中都没有bug_id时，才允许变动表单。
+        /// 所有 sample 和 record 的元素组件基本一致。即使不一致，也是由于 运行 和 停运 造成的record 记录中缺少某些 测温测振组件元素。
+        /// 当 sample 大改后，那么就说明，这类设备都没有缺陷了，都是正常状态，那么就可以放心使用最新的大改后的sample。
+        /// 所以 需要 以sample 为基础，将record中的 bug_id项给填充到对应的元素中。
+        for (let index = 0; index < old_record.length; index++) {
+            const recordElement = old_record[index];
+            for (let index = 0; index < old_sample.length; index++) {
+                const sampleElement = old_sample[index];
+                if (sampleElement.key === recordElement.key && recordElement.bug_id) { /// key 值相同，且 bug_id存在，替换元素
+                    old_sample[index] = recordElement;
+                }
+            }
+        }
+        ///此时old_sample 中已经包含了 bug_id了
+        copyDataAll.deviceInfo.sp_content_with_bug = JSON.stringify(old_sample);///一个完整的，有bug_id的sample数据
+        ///初次进入该界面的时候，要先设定 运行 或 停运 状态。然后再进行后续界面的条件渲染
+        this.setState({ switch: copyDataAll.deviceInfo.switch }, () => {
+            this.initFromData();
+        })
         ToastExample.isConnected((isConnectedDevice) => {
             this.setState({ isConnectedDevice })
         })
@@ -52,104 +76,56 @@ export default class ReportView1 extends Component {
         DeviceEventEmitter.removeListener('vibEvent', this.setCollValue);
     }
     initFromData = () => {
-        originSampleList = []
-        originRecordList = []
-        let AllData = this.props.navigation.state.params
-        if (!AllData || !AllData.deviceInfo) {
-            return;
-        }
-        copyDataAll = JSON.parse(JSON.stringify(AllData))
         let needRenderContent = [];
-        let hasBugid = false;
+        let hasBugid = false; ///先判断，之前的record记录中有没有bug
         if (copyDataAll.deviceInfo.rt_content) {
             JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
-                // console.log('item:', item);
                 if (item.bug_id !== null) { hasBugid = true }
             })
         }
-        //先判断有没有网络   有网络且最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。
-        if (AppData.isNetConnetion && copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.rt_content !== '[]' && hasBugid) {
-            JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
-                item.value = ''
-                item.isChecked = false;
-                if (item.type_id === '10' || item.type_id === '11') {
-                    item.isCollecting = false;
-                } else if (item.type_id === '6') {
-                    item.value = []
-                }
-                if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 1) {
-                    needRenderContent.push(item);///初次渲染的界面
-                }
-                originRecordList.push(item);///原始的record记录
-            })
+        ///不管有没有网络  最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。 (其实渲染的应该是sp的基础上将bug_id给关联上的结果，因为record中，可能会缺少，因为是停运而屏蔽的测温测振组件)
+        if (copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.sp_content_with_bug && hasBugid) {
+            needRenderContent = this.getNeedRenderContent(JSON.parse(copyDataAll.deviceInfo.sp_content_with_bug), true)
+        } else {///没有最近一次的record，或是有record,但是没有缺陷，那么就渲染模版
             if (copyDataAll.deviceInfo.sp_content) {
-                JSON.parse(copyDataAll.deviceInfo.sp_content).forEach((item) => {
-                    item.value = '';
-                    item.bug_id = null;
-                    item.isChecked = false;
-                    if (item.type_id === '10' || item.type_id === '11') {
-                        item.isCollecting = false;
-                    } else if (item.type_id === '6') {
-                        item.value = [];
-                    }
-                    originSampleList.push(item);///原始的sample数据
-                })
-            }
-        } else {
-            // 如果没有网络。或是 有网络 但是没有最近一次的record。或者是有record,但是最近一次的record中没有缺陷 bug_id 都为null 那么就只渲染 sample 模版
-            if (copyDataAll.deviceInfo.sp_content) {
-                JSON.parse(copyDataAll.deviceInfo.sp_content).forEach((item) => {
-                    item.value = '';
-                    item.bug_id = null;
-                    item.isChecked = false;
-                    if (item.type_id === '10' || item.type_id === '11') {
-                        item.isCollecting = false;
-                    } else if (item.type_id === '6') {
-                        item.value = [];
-                    }
-                    if (item.type_id !== '10' && item.type_id !== '11' || (item.type_id === '10' || item.type_id === '11') && copyDataAll.deviceInfo.switch === 1) {
-                        needRenderContent.push(item);
-                    }
-                    originSampleList.push(item);
-                })
+                needRenderContent = this.getNeedRenderContent(JSON.parse(copyDataAll.deviceInfo.sp_content), false)
             } else { Toast.info('请配置表单模版'); return; }
         }
-        // console.log('初次渲染数据:', needRenderContent);
+        console.log('需要渲染的数据:', needRenderContent);
         this.setState({
-            switch: copyDataAll.deviceInfo.switch,
             data: needRenderContent,
             titleData: { title: copyDataAll.deviceInfo.sample_table_name, devicename: copyDataAll.deviceInfo.device_name }
         })
     }
-    ///利用switch开关 切换要渲染的数据
-    getTempData = (value) => {
-        ///首先要将 originRecordList 和 originSampleList 合并 以sample为本，record替换对应的元素 生成最终的数据
-        let copyRecordList = JSON.parse(JSON.stringify(originRecordList));
-        let copySampleList = JSON.parse(JSON.stringify(originSampleList));
-        for (let index = 0; index < copyRecordList.length; index++) {
-            const recordElement = copyRecordList[index];
-            for (let index = 0; index < copySampleList.length; index++) {
-                const sampleElement = copySampleList[index];
-                if (sampleElement.key === recordElement.key && recordElement.bug_id) {
-                    copySampleList[index] = recordElement;
-                }
-            }
-        }
-        let newList = [];
-        if (value) { newList = copySampleList }
-        else {
-            copySampleList.forEach((item) => {
-                if (item.type_id !== '10' && item.type_id !== '11') {
-                    newList.push(item);
-                }
-            })
-        }
-        // console.log('切换后的渲染数据：', newList);
-        this.setState({
-            data: newList
-        })
-    }
 
+    /**
+     * 获取需要渲染的内容 json
+     * @param {Array} contentList 内容json
+     * @param {Boolean} isRecord 是不是record
+     * @returns {Array} 返回最终的渲染界面 json
+     */
+    getNeedRenderContent = (contentList, isRecord) => {
+        let list = [];
+        contentList.forEach((item) => {
+            item.value = ''; /// 所以元素的值都置空
+            if (isRecord) { /// 如果是渲染之前的包含bug_id 的 reocrd 的情况
+                if (!item.bug_id) { item.isChecked = false } /// 如果没有bug_id 那么checked 都置 false
+            } else { /// 如果是渲染 sample
+                item.bug_id = null; /// 那么bug_id 都置null,isCheck都置false
+                item.isChecked = false;
+            }
+            if (item.type_id === '10' || item.type_id === '11') {
+                item.isCollecting = false;///测温 测振组件都置成 非采集状态
+            } else if (item.type_id === '6') {
+                item.value = [];///图片选择器 的值都为[]
+            }
+            if ((item.type_id !== '10' && item.type_id !== '11')
+                || ((item.type_id === '10' || item.type_id === '11') && this.state.switch === 1)) {
+                list.push(item);///初次渲染的界面  (只有当置成 运行状态时，测温测振组件才会渲染，其他组件不受运行停运的影响)
+            }
+        })
+        return list;///最终的渲染组件界面
+    }
     /**
      * 获取bugid 数值后 回调
      */
@@ -192,6 +168,7 @@ export default class ReportView1 extends Component {
      * 13 副标题组件（纯文本展示）-不计入检查范围
      */
     checkContentIsOk = () => {
+        console.log('当前待检数据:', this.state.data)
         let isOk = true;
         if (this.state.data && this.state.data.length > 0) {
             this.state.data.forEach((item) => {
@@ -367,6 +344,10 @@ export default class ReportView1 extends Component {
                 underlayColor='#EDEDED'
                 style={{ flex: 1, flexDirection: "row", alignItems: 'center', borderBottomColor: '#F0F0F0', borderBottomWidth: 1 }}
                 onPress={() => {
+                    if (!AppData.isNetConnetion && item.bug_id) {
+                        Toast.show('该缺陷已上传过');
+                        return;
+                    }
                     item.deviceInfo = copyDataAll.deviceInfo;
                     item.callBackBugId = this.callBackBugId;
                     item.callBackIsChecked = this.callBackIsChecked;
@@ -385,7 +366,7 @@ export default class ReportView1 extends Component {
             component = <View key={index} style={{ flex: 1, flexDirection: 'column', paddingBottom: 10, paddingTop: 10 }}>
                 <Text style={{ fontSize: 14 }}>{item.title_name}</Text>
                 <View>
-                    <InputItem type='number' placeholder='数字输入' extra={item.title_remark} onChange={(v) => {
+                    <InputItem type='number' placeholder='数字输入' value={this.state.data[index].value} extra={item.title_remark} onChange={(v) => {
                         this.state.data[index].value = v + '';
                         this.setState({ data: this.state.data })///修改输入数据
                     }} ></InputItem>
@@ -467,12 +448,10 @@ export default class ReportView1 extends Component {
                                     style={{ marginTop: 15, marginRight: 20 }}
                                     checked={this.state.switch === 1}
                                     onChange={(v) => {
-                                        this.setState({ switch: v ? 1 : 0 })
-                                        this.getTempData(v)
+                                        this.setState({ switch: v ? 1 : 0 }, () => { this.initFromData() })
                                     }}
                                 />
                             </View>
-                            {/* <Text style={{ margin: 10, marginTop: 30, fontSize: 16, color: '#FFFFFF' }}>{this.state.switch === 0 ? '运行' : '停运'}</Text> */}
                         </View>
                         <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
                             <Text style={{ margin: 10, fontSize: 18, color: '#000000' }}>{this.state.titleData ? this.state.titleData.devicename : ''}</Text>

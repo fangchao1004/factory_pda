@@ -10,7 +10,7 @@ import AreaView from '../modeOfArea/AreaView';
 import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA1_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
+import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
 import { transfromDataTo2level, findDurtion } from '../util/Tool'
 
 export default class MainView extends Component {
@@ -262,6 +262,9 @@ export default class MainView extends Component {
         })
     }
 
+    /**
+     * 所有设备最近一次的巡检记录
+     */
     getLastRecordsByAllDevices = () => {
         return new Promise((resolve, reject) => {
             let result = [];
