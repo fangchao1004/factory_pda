@@ -88,13 +88,13 @@ export default class SelfView extends Component {
      * 退出登录
      */
     logoutHandler = async () => {
-        ///打开对话框
-        Modal.alert('注意！', '是否确定要退出登录？如果再次登录，本地所有的设备状态都将被重置成待检状态', [
+        ///打开对话框 是否确定要退出登录？如果再次登录，本地所有的设备状态都将被重置成待检状态
+        Modal.alert('注意', '是否确定要退出？请确保检测记录已经上传，离线状态下请勿退出', [
             {
                 text: '取消'
             },
             {
-                text: '确定', onPress: () => {
+                text: '确定退出', onPress: () => {
                     this.doLogout();
                 }
             }

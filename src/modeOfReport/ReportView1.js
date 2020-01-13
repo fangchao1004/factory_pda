@@ -80,7 +80,7 @@ export default class ReportView1 extends Component {
         let hasBugid = false; ///先判断，之前的record记录中有没有bug
         if (copyDataAll.deviceInfo.rt_content) {
             JSON.parse(copyDataAll.deviceInfo.rt_content).forEach((item) => {
-                if (item.bug_id !== null) { hasBugid = true }
+                if (item.bug_id) { hasBugid = true }
             })
         }
         ///不管有没有网络  最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。 (其实渲染的应该是sp的基础上将bug_id给关联上的结果，因为record中，可能会缺少，因为是停运而屏蔽的测温测振组件)
@@ -150,6 +150,7 @@ export default class ReportView1 extends Component {
         let tempArr = JSON.parse(JSON.stringify(this.state.data));
         tempArr.forEach((item) => {
             if (item.key === key + '') {
+                item.bug_id = null; ///补充上bug_id字段
                 item.isChecked = true;
             }
         })

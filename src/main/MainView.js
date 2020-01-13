@@ -10,7 +10,7 @@ import AreaView from '../modeOfArea/AreaView';
 import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
+import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
 import { transfromDataTo2level, findDurtion } from '../util/Tool'
 var isreadyOut = false;///准备退出
 export default class MainView extends Component {
@@ -139,14 +139,20 @@ export default class MainView extends Component {
         // }
         if (this.props.navigation.isFocused()) {
             if (!isreadyOut) {
-                Modal.alert('注意', '是否确定要退出应用', [
+                Modal.alert('注意', '是否确定要退出？请确保检测记录已经上传，离线状态下请勿退出', [
                     {
                         text: '取消', onPress: () => { isreadyOut = false; return; }
                     },
                     {
-                        text: '确定', onPress: () => {
-                            isreadyOut = false
-                            AppData.loginFlag = false
+                        text: '确定退出', onPress: () => {
+                            isreadyOut = false;
+                            AppData.loginFlag = false;
+                            AppData.username = null;
+                            AppData.userNFC = null;
+                            DeviceStorage.delete(USER_CARD);
+                            DeviceStorage.delete(USER_INFO);
+                            DeviceStorage.delete(LOCAL_BUGS);
+                            DeviceStorage.delete(LOCAL_RECORDS);
                             BackHandler.exitApp();
                             return;
                         }
