@@ -33,7 +33,8 @@ export default object = {
         // { version: '0.2.6', ver: '时间段和设备的映射关系调整' },
         // { version: '0.2.7', ver: '支持NFC替换功能' },
         // { version: '0.2.8', ver: '再次尝试解决-record缓存重复上传的问题（每次上传一个record记录时，就将本地缓存中的对应record记录的isUploaded置成true）' },
-        { version: '0.2.9', ver: '离线功能重新开发,可以渲染前一次的record中的bug_id，防止同一个缺陷多次上传' },
+        // { version: '0.2.9', ver: '离线功能重新开发,可以渲染前一次的record中的bug_id，防止同一个缺陷多次上传' },
+        { version: '0.3.0', ver: '修改返回退出应用的操作' },
     ]
 };
 

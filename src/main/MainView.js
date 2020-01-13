@@ -4,7 +4,7 @@ import { View, Platform, BackHandler, ToastAndroid, Image, StyleSheet, DeviceEve
 import DeviceView from '../modeOfDevice/DeviceView'
 import SelfView from '../modeOfSelf/SelfView';
 import BindDeviceView from '../modeOfBindDevice/BindDeviceView';
-import { Badge, Toast, Provider, Portal } from '@ant-design/react-native'
+import { Badge, Toast, Provider, Portal, Modal } from '@ant-design/react-native'
 import AppData, { UPDATE_DEVICE_INFO, NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
 import AreaView from '../modeOfArea/AreaView';
 import ReportIndependentView from "../modeOfReport/ReportIndependentView";
@@ -12,7 +12,7 @@ import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
 import { transfromDataTo2level, findDurtion } from '../util/Tool'
-
+var isreadyOut = false;///准备退出
 export default class MainView extends Component {
     constructor(props) {
         super(props)
@@ -26,6 +26,7 @@ export default class MainView extends Component {
         }
     }
     componentDidMount() {
+        isreadyOut = false;
         // console.log('登录成功。主界面加入节点');
         ///开启网络状态的监控功能。NetInfo
         this.startMonitorNet();
@@ -33,6 +34,7 @@ export default class MainView extends Component {
         this.localDataSave();
     }
     componentWillUnmount() {
+        isreadyOut = false;
         console.log('mainview 卸载');
         if (Platform.OS === 'android') {
             BackHandler.removeEventListener('hardwareBackPress', this.onBackAndroid);
@@ -125,15 +127,34 @@ export default class MainView extends Component {
     }
 
     onBackAndroid = () => {
+        // if (this.props.navigation.isFocused()) {
+        //     if (this.lastBackPressed && this.lastBackPressed + 2000 >= Date.now()) {
+        //         //最近2秒内按过back键，可以退出应用。
+        //         AppData.loginFlag = false
+        //         BackHandler.exitApp();
+        //     }
+        //     this.lastBackPressed = Date.now();
+        //     ToastAndroid.show('再按一次退出应用', ToastAndroid.SHORT);
+        //     return true;
+        // }
         if (this.props.navigation.isFocused()) {
-            if (this.lastBackPressed && this.lastBackPressed + 2000 >= Date.now()) {
-                //最近2秒内按过back键，可以退出应用。
-                AppData.loginFlag = false
-                BackHandler.exitApp();
+            if (!isreadyOut) {
+                Modal.alert('注意', '是否确定要退出应用', [
+                    {
+                        text: '取消', onPress: () => { isreadyOut = false; return; }
+                    },
+                    {
+                        text: '确定', onPress: () => {
+                            isreadyOut = false
+                            AppData.loginFlag = false
+                            BackHandler.exitApp();
+                            return;
+                        }
+                    }
+                ]);
             }
-            this.lastBackPressed = Date.now();
-            ToastAndroid.show('再按一次退出应用', ToastAndroid.SHORT);
-            return true;
+            isreadyOut = true;
+            return true
         }
     }
 
