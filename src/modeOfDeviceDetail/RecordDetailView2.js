@@ -32,8 +32,8 @@ class RecordDetailView2 extends Component {
         copyDataAll = JSON.parse(JSON.stringify(AllData))
         let copyDataTable = JSON.parse(copyDataAll.recordData.content);
         // console.log("fromdata 数据：", copyDataTable);
-        let bugsArr = copyDataTable.filter((item) => item.bug_id !== null)
-        // console.log(bugsArr); ////{key: "9", title_name: "油位是否正常9", type_id: "4",bug_id:9999 …}
+        let bugsArr = copyDataTable.filter((item) => item.bug_id)
+        // console.log("bugsArr", bugsArr); ////{key: "9", title_name: "油位是否正常9", type_id: "4",bug_id:9999 …}
         ///将所有bug_id都整理出来
         let bug_id_arr = [];
         bugsArr.forEach((item) => { bug_id_arr.push(item.bug_id); })

@@ -131,6 +131,7 @@ class DeviceDetailView extends Component {
         return <Text style={{ marginLeft: 32, color: colorValue }}>{str}</Text>
     }
     goToRecordDetailView = (record) => {
+        // console.log('record:', record)
         if (record.device_status === 1) { Toast.success('设备状态正常', 1); return }
         this.props.navigation.navigate('RecordDetailView2', { "recordData": record, "deviceInfo": { name: AllData.data.name } })
     }
