@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, Image, Alert, StatusBar, DeviceEventEmitter } f
 import { Button, Provider, Toast } from '@ant-design/react-native';
 import NfcManager from 'react-native-nfc-manager';
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO } from '../util/DeviceStorage'
+import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO, SAMPLE_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
-import { checkTimeAllow } from '../util/Tool'
+import { checkTimeAllow, bindWithSchemeInfo } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
 import NetInfo from '@react-native-community/netinfo'
 
@@ -233,11 +233,12 @@ export default class LoginView1 extends Component {
             where d.effective = 1
             order by d.id) nt
             where nt.nfc_id = '${NFCinfo.id}'`
-        HttpApi.obs({ sql }, (res) => {
+        HttpApi.obs({ sql }, async (res) => {
             if (res.data.code === 0) {
                 result = res.data.data;
-                // console.log('查询到：', result[0]);
-                this.props.navigation.navigate('ReportView1', { "deviceInfo": result[0] })
+                let sampleData = await DeviceStorage.get(SAMPLE_INFO);
+                let tempResult = bindWithSchemeInfo(result, sampleData.sampleInfo);///完成方案到设备的关联绑定
+                this.props.navigation.navigate('ReportView1', { "deviceInfo": tempResult[0] })
             } else {
                 let notice = '此设备射频卡数据已经存在于NFC表中' + NFCinfo.name
                 Toast.info(notice, 2);

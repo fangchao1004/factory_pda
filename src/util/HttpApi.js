@@ -2,8 +2,8 @@ import Axios from 'axios';
 
 const Testuri1 = 'http://192.168.1.118:3009/' ///本地服务器 安徽芯未来 5g
 const Testuri2 = 'http://ixiaomu.cn:3008/'///小木服务器数据库
+const Testuri3 = 'http://192.168.0.9:3008/'/// home网络
 const Testuri = Testuri2;
-
 export const SERVER_URL = Testuri;
 
 class HttpApi {
@@ -320,6 +320,14 @@ class HttpApi {
             headers: { 'Content-Type': 'multipart/form-data;boundary=' + new Date().getTime() }
         }
         Axios.post(Testuri + 'upload_file', params, config).then(res => {
+            if (f1) { f1(res) }
+        }).catch(res => {
+            if (f2) { f2(res) }
+        })
+    }
+
+    static getSampleWithSchemeInfo(params, f1, f2) {
+        Axios.post(Testuri + 'getSampleWithSchemeInfo', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }

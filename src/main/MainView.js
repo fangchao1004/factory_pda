@@ -11,7 +11,7 @@ import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
-import { transfromDataTo2level, findDurtion } from '../util/Tool'
+import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo } from '../util/Tool'
 var isreadyOut = false;///准备退出
 export default class MainView extends Component {
     constructor(props) {
@@ -201,19 +201,21 @@ export default class MainView extends Component {
 
         let needTimeDevicesList = this.getNeedDeviceList(allow_time_info);
         let deviceInfo = await this.getDeviceInfo(needTimeDevicesList);
+        // console.log('deviceInfo: 哈哈哈', deviceInfo)
+        let deviceInfoFilter = filterDevicesByDateScheme(deviceInfo);
         ////状态先重置成待检 存在本地缓存中
-        deviceInfo.forEach((oneDevice) => { oneDevice.status = 3 })
+        deviceInfoFilter.forEach((oneDevice) => { oneDevice.status = 3 })
         //////////////////////////////
         let device_info = await DeviceStorage.get(DEVICE_INFO);
-        if (device_info) { await DeviceStorage.update(DEVICE_INFO, { "deviceInfo": deviceInfo }) }
-        else { await DeviceStorage.save(DEVICE_INFO, { "deviceInfo": deviceInfo }) }
+        if (device_info) { await DeviceStorage.update(DEVICE_INFO, { "deviceInfo": deviceInfoFilter }) }
+        else { await DeviceStorage.save(DEVICE_INFO, { "deviceInfo": deviceInfoFilter }) }
 
         let nfcInfo = await this.getNfcInfo();
         let nfc_info = await DeviceStorage.get(NFC_INFO);
         if (nfc_info) { await DeviceStorage.update(NFC_INFO, { "nfcInfo": nfcInfo }) }
         else { await DeviceStorage.save(NFC_INFO, { "nfcInfo": nfcInfo }) }
 
-        let sampleInfo = await this.getSampleInfo();
+        let sampleInfo = await this.getSampleWithSchemeInfo();///所有的 包含了对应的方案的 模版数据
         let sample_info = await DeviceStorage.get(SAMPLE_INFO);
         if (sample_info) { await DeviceStorage.update(SAMPLE_INFO, { "sampleInfo": sampleInfo }) }
         else { await DeviceStorage.save(SAMPLE_INFO, { "sampleInfo": sampleInfo }) }
@@ -235,9 +237,10 @@ export default class MainView extends Component {
         else { await DeviceStorage.save(AREA12_INFO, { "area12Info": area12Info }) }
 
         let last_devices_info = await this.getLastRecordsByAllDevices();
+        let tempResult = bindWithSchemeInfo(last_devices_info, sampleInfo);///给每个设备的相关数据中，对应的某类sample,绑定上对应的方案数据scheme_data
         let result = await DeviceStorage.get(LAST_DEVICES_INFO)
-        if (result) { await DeviceStorage.update(LAST_DEVICES_INFO, { "lastDevicesInfo": last_devices_info }); }
-        else { await DeviceStorage.save(LAST_DEVICES_INFO, { "lastDevicesInfo": last_devices_info }); }
+        if (result) { await DeviceStorage.update(LAST_DEVICES_INFO, { "lastDevicesInfo": tempResult }); }
+        else { await DeviceStorage.save(LAST_DEVICES_INFO, { "lastDevicesInfo": tempResult }); }
 
         let bug_level_info = await this.getBuglevelInfo();
         let buglevelInfo = await DeviceStorage.get(BUG_LEVEL_INFO)
@@ -290,7 +293,7 @@ export default class MainView extends Component {
     }
 
     /**
-     * 所有设备最近一次的巡检记录
+     * 所有设备最近一次的巡检记录-还有sample模版
      */
     getLastRecordsByAllDevices = () => {
         return new Promise((resolve, reject) => {
@@ -364,14 +367,20 @@ export default class MainView extends Component {
             let result = [];
             let sql1 = needTimeDevicesList && needTimeDevicesList.length > 0 ? `and d.id in (${needTimeDevicesList.join(',')})` : ``;
             let sql = `select d.*,n.name as nfc_name,dt.name as type_name,
-            concat_ws('/',area_1.name,area_2.name,area_3.name) as area_name
+            concat_ws('/',area_1.name,area_2.name,area_3.name) as area_name,
+            group_concat(distinct date_value) as date_value_list,group_concat(distinct title) as scheme_title,group_concat(distinct scheme_of_cycleDate.id) as sche_cyc_id,group_concat(distinct scheme_of_cycleDate.cycleDate_id) as cycleDate_id
             from devices d 
             left join (select * from nfcs where nfcs.effective = 1) n on n.id=d.nfc_id 
             left join (select * from device_types where device_types.effective = 1) dt on d.type_id = dt.id 
             left join (select * from area_3 where effective = 1) area_3 on area_3.id = d.area_id 
             left join (select * from area_2 where effective = 1) area_2 on area_2.id = area_3.area2_id 
-            left join (select * from area_1 where effective = 1) area_1 on area_1.id = area_2.area1_id 
-            where d.effective = 1 ${sql1}`
+            left join (select * from area_1 where effective = 1) area_1 on area_1.id = area_2.area1_id
+            left join (select * from sche_cyc_map_device where effective = 1) sche_cyc_map_device on sche_cyc_map_device.device_id = d.id
+            left join (select * from scheme_of_cycleDate where effective = 1) scheme_of_cycleDate on scheme_of_cycleDate.id = sche_cyc_map_device.scheme_id
+            left join (select * from sche_cyc_map_date where effective = 1) sche_cyc_map_date on sche_cyc_map_date.scheme_id = sche_cyc_map_device.scheme_id
+            where d.effective = 1 ${sql1}
+            group by d.id`
+            // console.log('sql:', sql)
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code === 0) {
                     result = res.data.data
@@ -380,15 +389,24 @@ export default class MainView extends Component {
             })
         })
     }
-    getSampleInfo = () => {
+    getSampleWithSchemeInfo = () => {
         return new Promise((resolve, reject) => {
             let result = [];
-            HttpApi.getDeviceSampleByTypeId({ effective: 1 }, (res) => {
+            HttpApi.getSampleWithSchemeInfo([], (res) => {
                 if (res.data.code == 0) { result = res.data.data }
                 resolve(result);
             })
         })
     }
+    // getSampleInfo = () => {
+    //     return new Promise((resolve, reject) => {
+    //         let result = [];
+    //         HttpApi.getDeviceSampleByTypeId({ effective: 1 }, (res) => {
+    //             if (res.data.code == 0) { result = res.data.data }
+    //             resolve(result);
+    //         })
+    //     })
+    // }
     getMajorInfo = () => {
         return new Promise((resolve, reject) => {
             let result = [];

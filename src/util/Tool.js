@@ -108,3 +108,135 @@ export function findDurtion(list) {
     }
     return result;
 }
+
+export function filterDevicesByDateScheme(deviceList) {
+    let todayDateNum = moment().toDate().getDate();///多少号
+    let todayDayNum = moment().toDate().getDay() === 0 ? 7 : moment().toDate().getDay();///周几
+    // console.log('todayDateNum:', todayDateNum, 'todayDayNum:', todayDayNum)
+    let resultList = [];
+    if (deviceList) {
+        deviceList.forEach((item) => {
+            if (item.date_value_list && item.sche_cyc_id && item.cycleDate_id) {
+                if ((String(item.cycleDate_id) === "1" && item.date_value_list.split(',').indexOf(String(todayDayNum)) !== -1)
+                    || (String(item.cycleDate_id) === "2" && item.date_value_list.split(',').indexOf(String(todayDateNum)) !== -1)) { ///当
+                    resultList.push(item);
+                }
+            } else {
+                resultList.push(item);
+            }
+        })
+    }
+    return resultList;
+}
+
+/**
+ * 将设备信息和这个设备所属类的模版绑定上方案数据
+ */
+export function bindWithSchemeInfo(last_devices_info, sampleInfo) {
+    last_devices_info.forEach((item) => {
+        sampleInfo.forEach((element) => {
+            if (item.device_type_id === element.device_type_id && element.scheme_data) {
+                item.scheme_data = element.scheme_data;
+            } else { item.scheme_data = null }
+        })
+    })
+    return last_devices_info;
+}
+/**
+ * 根据方案数据-过滤模版数据
+ * sampleList:
+ * [{key: "0", title_name: "标题3", type_id: "12", default_values: "", title_remark: ""}
+ * {key: "4", title_name: "标题5", type_id: "12", default_values: "", title_remark: ""}]
+ * 
+ * schemeData:
+ * [
+ * {key_id:0,
+ * scheme_info:[
+ * {cyc_scheme_id: 13, atm_scheme_id: 6, date_title: "每月15,20号", cycleDate_id: 2, date_value: 15, allowTime_title: "13点到15点半",begin: "13:00:00",end: "15:30:00",isCross: 0,atm_type_name: "白班"},
+ * {cyc_scheme_id: 13, atm_scheme_id: 6, date_title: "每月15,20号", cycleDate_id: 2, date_value: 20, allowTime_title: "13点到15点半",begin: "13:00:00",end: "15:30:00",isCross: 0,atm_type_name: "白班"}
+ * ]},
+ * {key_id: 4,
+ * scheme_info:[
+ * {cyc_scheme_id: 14, atm_scheme_id: null, date_title: "每个周六", cycleDate_id: 1, date_value: 6,allowTime_title: null,begin: null,end: null,isCross: null,atm_type_name: null}
+ * ]}
+ * ]
+ * 
+ */
+export function filterSampleInfoBySchemeData(sampleList, schemeData) {
+    // console.log('schemeData:', schemeData)
+    let todayDateNum = moment().toDate().getDate();///多少号
+    let todayDayNum = moment().toDate().getDay() === 0 ? 7 : moment().toDate().getDay();///周几
+    let currentTime = moment().format('YYYY-MM-DD HH:mm:ss');
+    let todayStr = moment().format('YYYY-MM-DD ');
+    let tomorrowStr = moment().add('day', 1).format('YYYY-MM-DD ')
+    let finaResult = [];
+    if (schemeData && sampleList) {
+        ///循环遍历schemeData 先判断cyc_scheme_id日期方案，如果不为null,就继续判断周期是星期还是月，再根据date_value，判断今天（周几or多少号）再等不等于它的值。
+        schemeData.forEach((item) => {
+            let todayIsInDate = false;///今天是否在日期方案中有对应的值相等 -- 针对每一题
+            let currentTimeIsInAtm = false;///当前时间是否在时间段方案的区间中 -- 针对每一题
+            item.needRemove = true;///先默认所有题都需要移除。即 它所属的方案当前日期时刻都不满足
+            ///先知道 每一项 它所对应的 cyc_scheme_id 和 atm_scheme_id 分别是什么 是否都存在
+            const scheme_info = item.scheme_info;
+            const cyc_scheme_id = scheme_info[0].cyc_scheme_id;
+            const atm_scheme_id = scheme_info[0].atm_scheme_id;
+            // console.log('key_id:', item.key_id)
+            if (cyc_scheme_id && atm_scheme_id) {/// 某些日期+某些时间段
+                scheme_info.forEach((cell) => {///对每一个日期与时间段方案的组合情况 如（a,b）*（1,2）=> {a,1},{a,2},{b,1},{b,2}
+                    /// cell 代表某一种 天+时间段 的组合情况
+                    if (cell.cycleDate_id === 1) {///星期
+                        todayIsInDate = cell.date_value === todayDayNum
+                    } else if (cell.cycleDate_id === 2) {///月
+                        todayIsInDate = cell.date_value === todayDateNum
+                    }
+                    if (cell.isCross === 0) {///如果不跨天
+                        if (currentTime > (todayStr + cell.begin) && currentTime < (todayStr + cell.end)) {
+                            currentTimeIsInAtm = true;
+                        }
+                    } else {
+                        if (currentTime > (todayStr + cell.begin) && currentTime < (tomorrowStr + cell.end)) {
+                            currentTimeIsInAtm = true;
+                        }
+                    }
+                    if (todayIsInDate && currentTimeIsInAtm) {///如果当前日期和时刻，有一种方案的组合情况满足那么这题就要存在，否则就要过滤
+                        item.needRemove = false;///有对应的日期和时间段类 不需要移除了
+                    }
+                })
+            } else if (!cyc_scheme_id && atm_scheme_id) {///每一天的某些时间段
+                scheme_info.forEach((cell) => {
+                    if (cell.isCross === 0) {///如果不跨天
+                        if (currentTime > (todayStr + cell.begin) && currentTime < (todayStr + cell.end)) { currentTimeIsInAtm = true; }
+                    } else {
+                        if (currentTime > (todayStr + cell.begin) && currentTime < (tomorrowStr + cell.end)) { currentTimeIsInAtm = true; }
+                    }
+                    if (currentTimeIsInAtm) { item.needRemove = false; }
+                })
+            } else if (cyc_scheme_id && !atm_scheme_id) {///某些天所有时间段
+                scheme_info.forEach((cell) => {
+                    if (cell.cycleDate_id === 1) {///星期
+                        todayIsInDate = cell.date_value === todayDayNum
+                    } else if (cell.cycleDate_id === 2) {///月
+                        todayIsInDate = cell.date_value === todayDateNum
+                    }
+                    if (todayIsInDate) { item.needRemove = false; }
+                })
+            }
+
+        })
+        // console.log('处理以后的schemeData:', schemeData)
+        /// 到此已经知道 schemeData 哪些题需要移除。再把schemeData和sampleList根据key的值来对应上
+        sampleList.forEach((sampleItem) => {
+            schemeData.forEach((schemeItem) => {
+                if (sampleItem.key === String(schemeItem.key_id)) {
+                    sampleItem.needRemove = schemeItem.needRemove;
+                }
+            })
+        })
+        sampleList.forEach((item) => {
+            if (!item.needRemove) {
+                finaResult.push(item);
+            }
+        })
+    }
+    return finaResult
+}

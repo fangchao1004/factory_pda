@@ -7,6 +7,7 @@ import DeviceStorage, { LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage
 import ToastExample from '../util/ToastExample'
 import moment from 'moment'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';
+import { filterSampleInfoBySchemeData } from '../util/Tool'
 
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
@@ -33,7 +34,11 @@ export default class ReportView1 extends Component {
             return;
         }
         copyDataAll = JSON.parse(JSON.stringify(AllData))
-        let old_sample = JSON.parse(copyDataAll.deviceInfo.sp_content);
+        let scheme_data = copyDataAll.deviceInfo.scheme_data;
+        ///这里的old_sample需要先进过方案的筛选，再进行后续的bug_id的填充
+        let old_sample = filterSampleInfoBySchemeData(JSON.parse(copyDataAll.deviceInfo.sp_content), scheme_data);///原始的sample 进过方案的筛选过滤后最新的结果
+        // console.log("old_sample:", old_sample)
+        copyDataAll.deviceInfo.sp_content = JSON.stringify(old_sample);
         let old_record = JSON.parse(copyDataAll.deviceInfo.rt_content);
         /// 因为 PC 端做了限制，只有在某类设备的所有设备个体都消缺后，即都是正常状态时，该类所有设备的最近一次record记录中都没有bug_id时，才允许变动表单。
         /// 所有 sample 和 record 的元素组件基本一致。即使不一致，也是由于 运行 和 停运 造成的record 记录中缺少某些 测温测振组件元素。
@@ -83,6 +88,7 @@ export default class ReportView1 extends Component {
                 if (item.bug_id) { hasBugid = true }
             })
         }
+        // console.log('copyDataAll.deviceInfo.sp_content_with_bug:', copyDataAll.deviceInfo.sp_content_with_bug)
         ///不管有没有网络  最近一次有record提交。且record中 有缺陷 bug_id 那么就将record 渲染。 (其实渲染的应该是sp的基础上将bug_id给关联上的结果，因为record中，可能会缺少，因为是停运而屏蔽的测温测振组件)
         if (copyDataAll.deviceInfo.rt_content && copyDataAll.deviceInfo.sp_content_with_bug && hasBugid) {
             needRenderContent = this.getNeedRenderContent(JSON.parse(copyDataAll.deviceInfo.sp_content_with_bug), true)
