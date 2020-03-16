@@ -200,8 +200,10 @@ export default class MainView extends Component {
         else { await DeviceStorage.save(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
 
         let needTimeDevicesList = this.getNeedDeviceList(allow_time_info);
+        // console.log('当前时间段内默认需要渲染的设备id列表:', needTimeDevicesList)
         let deviceInfo = await this.getDeviceInfo(needTimeDevicesList);
-        let deviceInfoFilter = filterDevicesByDateScheme(deviceInfo);
+        let deviceInfoFilter = filterDevicesByDateScheme(deviceInfo);///通过日期方案筛选后的设备列表
+        // console.log('通过日期方案筛选后的设备信息列表:', deviceInfoFilter)
         ////状态先重置成待检 存在本地缓存中
         deviceInfoFilter.forEach((oneDevice) => { oneDevice.status = 3 })
         //////////////////////////////
@@ -258,7 +260,7 @@ export default class MainView extends Component {
 
     getNeedDeviceList = (allowTimeList) => {
         let targetItem = findDurtion(allowTimeList);
-        // console.log('targetItem:', targetItem);
+        console.log('targetItem:', targetItem);
         let devicesList = [];
         if (targetItem.select_map_device && targetItem.select_map_device.split(',').length > 0) {
             devicesList = targetItem.select_map_device.split(',');
