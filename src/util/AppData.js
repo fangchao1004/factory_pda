@@ -35,7 +35,10 @@ export default object = {
         // { version: '0.2.8', ver: '再次尝试解决-record缓存重复上传的问题（每次上传一个record记录时，就将本地缓存中的对应record记录的isUploaded置成true）' },
         // { version: '0.2.9', ver: '离线功能重新开发,可以渲染前一次的record中的bug_id，防止同一个缺陷多次上传' },
         // { version: '0.3.0', ver: '修改返回退出应用的操作' },
-        { version: '0.3.1', ver: '巡检表单中的项目和设备个体会根据对应的方案做过滤' },
+        // { version: '0.3.1', ver: '巡检表单中的项目和设备个体会根据对应的方案做过滤' },
+        // { version: '0.3.1_test', ver: '测试环境' },
+        // { version: '0.3.2_test', ver: '0.3.2测试版本,0.3.1测试版本的bug修复,同时设备区域会根据须检查的巡检点所属三级区域进行过滤' },
+        { version: '0.3.2', ver: '0.3.2正式版本' },
     ]
 };
 

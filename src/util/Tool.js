@@ -133,13 +133,16 @@ export function filterDevicesByDateScheme(deviceList) {
  * 将设备信息和这个设备所属类的模版绑定上方案数据
  */
 export function bindWithSchemeInfo(last_devices_info, sampleInfo) {
-    last_devices_info.forEach((item) => {
-        sampleInfo.forEach((element) => {
-            if (item.device_type_id === element.device_type_id && element.scheme_data) {
+    for (let i = 0; i < last_devices_info.length; i++) {
+        let item = last_devices_info[i];
+        for (let j = 0; j < sampleInfo.length; j++) {
+            let element = sampleInfo[j];
+            if ((item.device_type_id === element.device_type_id) && element.scheme_data) {
                 item.scheme_data = element.scheme_data;
+                break;
             } else { item.scheme_data = null }
-        })
-    })
+        }
+    }
     return last_devices_info;
 }
 /**
@@ -163,13 +166,17 @@ export function bindWithSchemeInfo(last_devices_info, sampleInfo) {
  * 
  */
 export function filterSampleInfoBySchemeData(sampleList, schemeData) {
-    // console.log('schemeData:', schemeData)
+    console.log('原始sampleList:', sampleList)
+    console.log('原始schemeData:', schemeData)
     let todayDateNum = moment().toDate().getDate();///多少号
     let todayDayNum = moment().toDate().getDay() === 0 ? 7 : moment().toDate().getDay();///周几
     let currentTime = moment().format('YYYY-MM-DD HH:mm:ss');
     let todayStr = moment().format('YYYY-MM-DD ');
     let tomorrowStr = moment().add('day', 1).format('YYYY-MM-DD ')
     let finaResult = [];
+    if (!schemeData) {
+        return sampleList
+    }
     if (schemeData && sampleList) {
         ///循环遍历schemeData 先判断cyc_scheme_id日期方案，如果不为null,就继续判断周期是星期还是月，再根据date_value，判断今天（周几or多少号）再等不等于它的值。
         schemeData.forEach((item) => {
@@ -238,5 +245,6 @@ export function filterSampleInfoBySchemeData(sampleList, schemeData) {
             }
         })
     }
+    console.log('finaResult:', finaResult)
     return finaResult
 }

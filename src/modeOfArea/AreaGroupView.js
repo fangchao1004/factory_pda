@@ -59,7 +59,6 @@ class AreaGroupView extends Component {
                             // this.props.navigation.navigate("AreaDeviceView", { 'areaid': item.id });
                             this.filterDeviceInfoByAreaId(item);
                         }} />
-
                 </ScrollView>
             </View >
         );

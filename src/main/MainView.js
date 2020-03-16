@@ -201,7 +201,6 @@ export default class MainView extends Component {
 
         let needTimeDevicesList = this.getNeedDeviceList(allow_time_info);
         let deviceInfo = await this.getDeviceInfo(needTimeDevicesList);
-        // console.log('deviceInfo: 哈哈哈', deviceInfo)
         let deviceInfoFilter = filterDevicesByDateScheme(deviceInfo);
         ////状态先重置成待检 存在本地缓存中
         deviceInfoFilter.forEach((oneDevice) => { oneDevice.status = 3 })
@@ -210,12 +209,15 @@ export default class MainView extends Component {
         if (device_info) { await DeviceStorage.update(DEVICE_INFO, { "deviceInfo": deviceInfoFilter }) }
         else { await DeviceStorage.save(DEVICE_INFO, { "deviceInfo": deviceInfoFilter }) }
 
+        let allArea3ArrDistinct = Array.from(new Set(deviceInfoFilter.map((item) => item.area_id)))///当前须检设备的所属三级区域id(去重复)
+
         let nfcInfo = await this.getNfcInfo();
         let nfc_info = await DeviceStorage.get(NFC_INFO);
         if (nfc_info) { await DeviceStorage.update(NFC_INFO, { "nfcInfo": nfcInfo }) }
         else { await DeviceStorage.save(NFC_INFO, { "nfcInfo": nfcInfo }) }
 
         let sampleInfo = await this.getSampleWithSchemeInfo();///所有的 包含了对应的方案的 模版数据
+        // console.log('sampleInfo:', sampleInfo)
         let sample_info = await DeviceStorage.get(SAMPLE_INFO);
         if (sample_info) { await DeviceStorage.update(SAMPLE_INFO, { "sampleInfo": sampleInfo }) }
         else { await DeviceStorage.save(SAMPLE_INFO, { "sampleInfo": sampleInfo }) }
@@ -225,7 +227,7 @@ export default class MainView extends Component {
         if (major_info) { await DeviceStorage.update(MAJOR_INFO, { "majorInfo": majorInfo }) }
         else { await DeviceStorage.save(MAJOR_INFO, { "majorInfo": majorInfo }) }
 
-        let areaInfo = await this.getAreaInfoInfo(); /// 这里的areaInfo 默认是查第三级区域 后期整改
+        let areaInfo = await this.getAreaInfoInfo(allArea3ArrDistinct); /// 这里的areaInfo 默认是查第三级区域 后期可能会调整
         let area_info = await DeviceStorage.get(AREA_INFO);
         if (area_info) { await DeviceStorage.update(AREA_INFO, { "areaInfo": areaInfo }) }
         else { await DeviceStorage.save(AREA_INFO, { "areaInfo": areaInfo }) }
@@ -238,6 +240,7 @@ export default class MainView extends Component {
 
         let last_devices_info = await this.getLastRecordsByAllDevices();
         let tempResult = bindWithSchemeInfo(last_devices_info, sampleInfo);///给每个设备的相关数据中，对应的某类sample,绑定上对应的方案数据scheme_data
+        // console.log('tempResult:', tempResult)
         let result = await DeviceStorage.get(LAST_DEVICES_INFO)
         if (result) { await DeviceStorage.update(LAST_DEVICES_INFO, { "lastDevicesInfo": tempResult }); }
         else { await DeviceStorage.save(LAST_DEVICES_INFO, { "lastDevicesInfo": tempResult }); }
@@ -320,10 +323,14 @@ export default class MainView extends Component {
             })
         })
     }
-    getAreaInfoInfo = () => {
+    getAreaInfoInfo = (area3Idlist = []) => {
+        let tempSql = ''
+        if (area3Idlist.length > 0) {
+            tempSql = `and id in (${area3Idlist.join(',')})`
+        }
         return new Promise((resolve, reject) => {
             let result = [];
-            let sql = `select * from area_3 where effective = 1`
+            let sql = `select * from area_3 where effective = 1 ${tempSql} order by id`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
                 resolve(result);

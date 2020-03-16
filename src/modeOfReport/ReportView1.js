@@ -30,13 +30,15 @@ export default class ReportView1 extends Component {
     componentDidMount() {
         AppData.checkedAt = moment().format('YYYY-MM-DD HH:mm:ss')
         AllData = this.props.navigation.state.params
+        // console.log('AllData:', AllData)
         if (!AllData || !AllData.deviceInfo) {
             return;
         }
         copyDataAll = JSON.parse(JSON.stringify(AllData))
-        let scheme_data = copyDataAll.deviceInfo.scheme_data;
+        let tempData = JSON.parse(JSON.stringify(AllData))
+        let scheme_data_copy = copyDataAll.deviceInfo.scheme_data;
         ///这里的old_sample需要先进过方案的筛选，再进行后续的bug_id的填充
-        let old_sample = filterSampleInfoBySchemeData(JSON.parse(copyDataAll.deviceInfo.sp_content), scheme_data);///原始的sample 进过方案的筛选过滤后最新的结果
+        let old_sample = filterSampleInfoBySchemeData(JSON.parse(tempData.deviceInfo.sp_content), scheme_data_copy);///原始的sample 进过方案的筛选过滤后最新的结果
         // console.log("old_sample:", old_sample)
         copyDataAll.deviceInfo.sp_content = JSON.stringify(old_sample);
         let old_record = JSON.parse(copyDataAll.deviceInfo.rt_content);
@@ -44,12 +46,16 @@ export default class ReportView1 extends Component {
         /// 所有 sample 和 record 的元素组件基本一致。即使不一致，也是由于 运行 和 停运 造成的record 记录中缺少某些 测温测振组件元素。
         /// 当 sample 大改后，那么就说明，这类设备都没有缺陷了，都是正常状态，那么就可以放心使用最新的大改后的sample。
         /// 所以 需要 以sample 为基础，将record中的 bug_id项给填充到对应的元素中。
-        for (let index = 0; index < old_record.length; index++) {
-            const recordElement = old_record[index];
-            for (let index = 0; index < old_sample.length; index++) {
-                const sampleElement = old_sample[index];
-                if (sampleElement.key === recordElement.key && recordElement.bug_id) { /// key 值相同，且 bug_id存在，替换元素
-                    old_sample[index] = recordElement;
+        // console.log("old_sample:", old_sample)
+        // console.log("old_record:", old_record)
+        if (old_record && old_sample) {
+            for (let index = 0; index < old_record.length; index++) {
+                const recordElement = old_record[index];
+                for (let index = 0; index < old_sample.length; index++) {
+                    const sampleElement = old_sample[index];
+                    if (sampleElement.key === recordElement.key && recordElement.bug_id) { /// key 值相同，且 bug_id存在，替换元素
+                        old_sample[index] = recordElement;
+                    }
                 }
             }
         }
