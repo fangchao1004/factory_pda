@@ -120,7 +120,7 @@ class LoginView2 extends Component {
                             this.props.navigation.navigate('MainView')
                             this.saveUserInfoInStorageHandler();
                             this.saveUserInfoInGloabel(data.data.data[0]);
-                            checkTimeAllow();
+                            // checkTimeAllow();
                         } else {
                             Toast.fail('用户名密码错误', 1)
                         }

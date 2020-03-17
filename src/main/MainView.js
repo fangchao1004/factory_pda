@@ -260,7 +260,7 @@ export default class MainView extends Component {
 
     getNeedDeviceList = (allowTimeList) => {
         let targetItem = findDurtion(allowTimeList);
-        console.log('targetItem:', targetItem);
+        // console.log('targetItem:', targetItem);
         let devicesList = [];
         if (targetItem.select_map_device && targetItem.select_map_device.split(',').length > 0) {
             devicesList = targetItem.select_map_device.split(',');

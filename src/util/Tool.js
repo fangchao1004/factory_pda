@@ -21,17 +21,26 @@ export async function checkTimeAllow() {
     return new Promise(async (resolve, reject) => {
         let flag = false;
         let time = moment().format('YYYY-MM-DD HH:mm:ss');
+        // let time = '2020-03-17 00:30:00';
         let result = await DeviceStorage.get(ALLOW_TIME);///从本地缓存中获取允许上传的时间段数据
         let timeList = result.allowTimeInfo;
+        if (timeList[timeList.length - 1].isCross === 1) {
+            let newCell = { ...timeList[timeList.length - 1], isCross: -1 };
+            timeList.unshift(newCell);
+        }
+        // console.log('timeList:', timeList)
         for (let index = 0; index < timeList.length; index++) {
             const item = timeList[index];
-            let bgt = moment().format('YYYY-MM-DD ') + item.begin;
-            let edt = item.isCross === 0 ? moment().format('YYYY-MM-DD ') + item.end : moment().add(1, 'day').format('YYYY-MM-DD ') + item.end;
+            let bgt = item.isCross === -1 ? moment().add(-1, 'day').format('YYYY-MM-DD ') + item.begin : moment().format('YYYY-MM-DD ') + item.begin;
+            let edt = item.isCross === 1 ? moment().add(1, 'day').format('YYYY-MM-DD ') + item.end : moment().format('YYYY-MM-DD ') + item.end;
             if (time > bgt && time < edt) {
-                flag = true;
+                // console.log('bgt:', bgt)
+                // console.log('edt:', edt)
+                flag = true;///只要有一个时间段符合，就可以了
                 break;
             }
         }
+        // console.log('flag:', flag)
         resolve(flag)
     })
 }
