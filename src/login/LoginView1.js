@@ -8,7 +8,7 @@ import AppData, { NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
 import { checkTimeAllow, bindWithSchemeInfo } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
 import NetInfo from '@react-native-community/netinfo'
-
+import moment from 'moment'
 export default class LoginView1 extends Component {
     constructor(props) {
         super(props);
@@ -161,18 +161,19 @@ export default class LoginView1 extends Component {
                 if (res.data.code == 0 && res.data.data.length > 0) {
                     AppData.mac_address = res.data.data[0].address;
                     AppData.tool_address = res.data.data[0].tool_address;
+                    AppData.pda_name = res.data.data[0].des;
                     if (tag && tag.id) {
                         HttpApi.loginByNFC({ nfcid: tag.id, type: 1 }, (response) => {
                             if (response.status == 200) {
                                 if (response.data.code == 0) {
-                                    // console.log("数据LLL：",response.data.data);
-                                    // ToastAndroid.show('允许登录' + tag.id, ToastAndroid.SHORT);
                                     this.props.navigation.navigate('MainView') ///登录成功
                                     this.saveUserNFCInStorageHandler(tag)
                                     AppData.userNFC = tag.id;
                                     AppData.loginFlag = true;
                                     AppData.username = response.data.data.username;
                                     AppData.user_id = response.data.data.id;
+                                    let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',1,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.username}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
+                                    HttpApi.obs({ sql }) ///添加登录日志记录
                                 } else {
                                     console.log('cardid不存在，不允许登录');
                                 }

@@ -257,3 +257,18 @@ export function filterSampleInfoBySchemeData(sampleList, schemeData) {
     console.log('finaResult:', finaResult)
     return finaResult
 }
+
+/**
+ * 数组，根据某些字段分组
+ */
+export function groupBy(array, f) {
+    var groups = {};
+    array.forEach(function (o) {
+        var group = JSON.stringify(f(o));
+        groups[group] = groups[group] || [];
+        groups[group].push(o);
+    });
+    return Object.keys(groups).map(function (group) {
+        return groups[group];
+    });
+}

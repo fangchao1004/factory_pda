@@ -4,6 +4,7 @@
 export default object = {
     mac_address: null,
     tool_addres: null,
+    pda_name: null,
     user_id: null,
     username: null,
     userNFC: null,
@@ -39,7 +40,8 @@ export default object = {
         // { version: '0.3.1_test', ver: '测试环境' },
         // { version: '0.3.2_test', ver: '0.3.2测试版本,0.3.1测试版本的bug修复,同时设备区域会根据须检查的巡检点所属三级区域进行过滤' },
         // { version: '0.3.2', ver: '0.3.2正式版本' },
-        { version: '0.3.2.1', ver: '解决跨天打点问题' },
+        // { version: '0.3.2.1', ver: '解决跨天打点问题' },
+        { version: '0.3.3_test', ver: '设备区域颜色变动，添加登录日志功能' },
     ]
 };
 

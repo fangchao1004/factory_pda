@@ -7,6 +7,8 @@ import AppData, { NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
 import { checkTimeAllow } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
 import NetInfo from '@react-native-community/netinfo'
+import moment from 'moment';
+
 const screenW = Dimensions.get('window').width;
 /**
  * 账户密码登录
@@ -110,6 +112,7 @@ class LoginView2 extends Component {
                 if (res.data.code == 0 && res.data.data.length > 0) {
                     AppData.mac_address = res.data.data[0].address;
                     AppData.tool_address = res.data.data[0].tool_address;
+                    AppData.pda_name = res.data.data[0].des;
                     let sql = `select users.*,levels.name as levelname from users 
                     left join (select * from levels where effective = 1) levels on levels.id = users.level_id
                     where users.username = '${this.state.username}' 
@@ -120,7 +123,8 @@ class LoginView2 extends Component {
                             this.props.navigation.navigate('MainView')
                             this.saveUserInfoInStorageHandler();
                             this.saveUserInfoInGloabel(data.data.data[0]);
-                            // checkTimeAllow();
+                            let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',0,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.username}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
+                            HttpApi.obs({ sql }) ///添加登录日志记录
                         } else {
                             Toast.fail('用户名密码错误', 1)
                         }
