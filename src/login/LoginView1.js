@@ -120,10 +120,10 @@ export default class LoginView1 extends Component {
             this.LoginHandler(tag)
         } else {
             console.log('已经登录，默认是设备的nfc');
-            if (AppData.isNetConnetion) {
+            if (AppData.isNetConnetion) {///在线
                 ////这里要先去后台查询，如果是设备的NFC,就跳转到报表界面。否则就提示用户该NFC号码，不是设备的NFC号码
                 this.getDeviceInfoFromDB(tag.id)
-            } else {
+            } else {///离线
                 let isAllowTime = await checkTimeAllow();
                 if (!isAllowTime) {
                     Toast.show('当前不是巡检时间，请在规定时间内进行巡检工作');
@@ -249,7 +249,7 @@ export default class LoginView1 extends Component {
 
     getNFCInfo = (param) => {
         let p = new Promise((resolve, reject) => {
-            HttpApi.getNFCInfo({ nfcid: param }, (res) => {
+            HttpApi.getNFCInfo({ nfcid: param, effective: 1 }, (res) => {
                 if (res.data.code === 0) {
                     resolve(res.data.data[0]);
                 } else {

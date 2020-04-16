@@ -333,6 +333,17 @@ class HttpApi {
             if (f2) { f2(res) }
         })
     }
+
+    /**
+     * app推送消息接口
+     */
+    static pushnotice(params, f1, f2) {
+        Axios.post(Testuri + 'push_notice', params).then(res => {
+            if (f1) { f1(res) }
+        }).catch(res => {
+            if (f2) { f2(res) }
+        })
+    }
 }
 
 export default HttpApi;

@@ -11,7 +11,7 @@ import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
-import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo } from '../util/Tool'
+import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo, pickUpMajorFromBugsAndPushNotice } from '../util/Tool'
 var isreadyOut = false;///准备退出
 export default class MainView extends Component {
     constructor(props) {
@@ -435,6 +435,8 @@ export default class MainView extends Component {
         if (bugs) {
             // key = Toast.loading('缓存信息上传中...');
             // console.log('本地的待上传的bugs', bugs.localBugs);
+            ///将这些缺陷中专业都提取出来。
+            pickUpMajorFromBugsAndPushNotice(bugs.localBugs);
             ///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
             let newBugsArrhasNetImgUri = await this.changeImgsValue(bugs.localBugs);
             ////先将bugs依次上传到数据库，获取bugid。

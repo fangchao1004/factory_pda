@@ -5,6 +5,7 @@ import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto'
 import HttpApi, { SERVER_URL } from '../util/HttpApi';
 import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, BUG_LEVEL_INFO } from '../util/DeviceStorage';
+import { pushNoticeHandler } from '../util/Tool'
 const CheckboxItem = Checkbox.CheckboxItem;
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
@@ -325,7 +326,6 @@ class ReportView2 extends Component {
             obj.device_id = device_obj.device_id;///设备id
             obj.major_id = this.state.majorValue[0];///专业id
             obj.checkedAt = AppData.checkedAt;///检查的时间点 YYYY-MM-DD HH:mm:ss
-            obj.remark = JSON.stringify({ '0': [], '1': [], '2': [], '3': [] });///默认 处理步骤描述数据
             obj.buglevel = this.state.levelValue[0];///等级id
             HttpApi.uploadBugs(obj, (res) => {
                 if (res.data.code === 0) {
@@ -334,6 +334,7 @@ class ReportView2 extends Component {
                     Toast.success('缺陷记录上传成功', 1);
                     setTimeout(() => {
                         this.props.navigation.goBack();
+                        pushNoticeHandler(this.state.majorValue);
                         AllData.callBackBugId(res.data.data.id, AllData.key);
                     }, 1100);
                 } else {
@@ -366,7 +367,6 @@ class ReportView2 extends Component {
         obj.major_id = this.state.majorValue[0];
         obj.key = AllData.key;
         obj.checkedAt = AppData.checkedAt;
-        obj.remark = JSON.stringify({ '0': [], '1': [], '2': [], '3': [] });///默认 处理步骤描述数据
         obj.buglevel = this.state.levelValue[0];///等级id
         // console.log("本地存储的bug数据：", obj);
         AllData.callBackBugId(-1, AllData.key);

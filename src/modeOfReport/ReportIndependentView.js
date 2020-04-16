@@ -7,6 +7,7 @@ import HttpApi from '../util/HttpApi';
 import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, AREA12_INFO, BUG_LEVEL_INFO } from '../util/DeviceStorage'
 import ToastExample from '../util/ToastExample'
 import moment from 'moment'
+import { pushNoticeHandler } from '../util/Tool'
 
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
@@ -284,21 +285,22 @@ class ReportIndependentView extends Component {
                 area_remark: this.state.areaId_select[this.state.areaId_select.length - 1],
                 major_id: this.state.majorValue[0],
                 checkedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
-                remark: JSON.stringify({ '0': [], '1': [], '2': [], '3': [] })
             }
             HttpApi.uploadBugs(resultData, (res) => {
                 Portal.remove(key)
+                this.setState({ isLoading: false })
                 if (res.data.code === 0) {
                     Toast.success('上传成功', 1);
+                    pushNoticeHandler(this.state.majorValue);
                 } else {
                     Toast.fail('上传失败,请检查网络或文本只能包含文字', 1);
                 }
-                this.setState({ isLoading: false })
             })
         } else {
             this.saveBugInfoInLocal();
         }
     }
+
     saveBugInfoInLocal = async () => {
         let reportData = { select: '', majorId: this.state.majorValue[0], text: this.state.descripTxt, imgs: imgLocalPathArr }
         let resultData = {

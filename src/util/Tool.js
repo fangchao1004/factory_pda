@@ -21,7 +21,6 @@ export async function checkTimeAllow() {
     return new Promise(async (resolve, reject) => {
         let flag = false;
         let time = moment().format('YYYY-MM-DD HH:mm:ss');
-        // let time = '2020-03-17 00:30:00';
         let result = await DeviceStorage.get(ALLOW_TIME);///从本地缓存中获取允许上传的时间段数据
         let timeList = result.allowTimeInfo;
         if (timeList[timeList.length - 1].isCross === 1) {
@@ -34,6 +33,7 @@ export async function checkTimeAllow() {
             let bgt = item.isCross === -1 ? moment().add(-1, 'day').format('YYYY-MM-DD ') + item.begin : moment().format('YYYY-MM-DD ') + item.begin;
             let edt = item.isCross === 1 ? moment().add(1, 'day').format('YYYY-MM-DD ') + item.end : moment().format('YYYY-MM-DD ') + item.end;
             if (time > bgt && time < edt) {
+                // console.log('符合的是')
                 // console.log('bgt:', bgt)
                 // console.log('edt:', edt)
                 flag = true;///只要有一个时间段符合，就可以了
@@ -271,4 +271,24 @@ export function groupBy(array, f) {
     return Object.keys(groups).map(function (group) {
         return groups[group];
     });
+}
+export function pickUpMajorFromBugsAndPushNotice(bugList) {
+    // console.log('bugList:', bugList)
+    let tempList = bugList.map((item) => { return item.major_id })
+    let distictMajorList = Array.from(new Set(tempList)) ///专业id去重复
+    // console.log('distictMajorList:', distictMajorList)
+    if (distictMajorList) { pushNoticeHandler(distictMajorList); }
+}
+
+export function pushNoticeHandler(major_id_list) {
+    console.log('推送操作', major_id_list)
+    ///根据 major_id_list 多个专业 找到这些专业都有什么人
+    let sql = `select distinct user_id from user_map_major where mj_id in (${major_id_list.join(',')}) and effective = 1`
+    HttpApi.obs({ sql }, (res) => {
+        if (res.data.code === 0 && res.data.data.length > 0) {
+            let useridList = res.data.data.map((item) => { return item.user_id })
+            // console.log('useridList:', useridList)
+            HttpApi.pushnotice({ user_id: useridList, title: '缺陷通知', text: '您有最新的相关缺陷,请注意查看' })
+        }
+    })
 }
