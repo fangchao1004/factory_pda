@@ -145,13 +145,13 @@ class ReportIndependentView extends Component {
                 <Picker
                     data={this.state.majorArr}
                     cols={1}
-                    itemStyle={{ height: 30, marginTop: 8, fontSize: 15 }}
+                    itemStyle={styles.itemStyle}
                     value={this.state.majorValue}
                     onChange={(v) => {
                         this.setState({ majorValue: v })
                     }}
                 >
-                    <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>缺陷专业</Text></List.Item>
+                    <List.Item arrow="horizontal" wrap><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>缺陷专业</Text></List.Item>
                 </Picker>
             </List>
         </View>)
@@ -215,7 +215,7 @@ class ReportIndependentView extends Component {
                         this.setState({ areaId_select: v })
                     }}
                 >
-                    <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>所在区域</Text></List.Item>
+                    <List.Item arrow="horizontal" wrap><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>所在区域</Text></List.Item>
                 </Picker>
             </List>
         </View>)
@@ -395,5 +395,10 @@ const styles = StyleSheet.create({
     },
     scrollView: {
         width: screenW,
+    },
+    itemStyle: {
+        height: 30,
+        marginTop: 8,
+        fontSize: 15,
     }
 })

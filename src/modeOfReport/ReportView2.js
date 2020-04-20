@@ -191,7 +191,7 @@ class ReportView2 extends Component {
                     })
                 }}
             >
-                <List.Item arrow="horizontal"><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>缺陷专业</Text></List.Item>
+                <List.Item arrow="horizontal" wrap><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>缺陷专业</Text></List.Item>
             </Picker>
         </View>)
     }
