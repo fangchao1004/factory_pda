@@ -42,7 +42,7 @@ export default object = {
         // { version: '0.3.2', ver: '0.3.2正式版本' },
         // { version: '0.3.2.1', ver: '解决跨天打点问题' },
         // { version: '0.3.3_test', ver: '设备区域颜色变动，添加登录日志功能' },
-        { version: '0.3.4_test', ver: '支持缺陷上传时，app推送信息' },
+        { version: '0.3.5', ver: '支持缺陷上传时，app推送信息' },
     ]
 };
 

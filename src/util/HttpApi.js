@@ -1,8 +1,6 @@
 import Axios from 'axios';
 
-const Testuri1 = 'http://192.168.1.118:3009/' ///本地服务器 安徽芯未来 5g
-const Testuri2 = 'http://ixiaomu.cn:3010/'///小木服务器地址 3010测试环境 3008正式环境
-const Testuri3 = 'http://192.168.0.9:3008/'/// home网络
+const Testuri2 = 'http://ixiaomu.cn:3008/'///小木服务器地址 3010测试环境 3008正式环境
 const Testuri = Testuri2;
 export const SERVER_URL = Testuri;
 
