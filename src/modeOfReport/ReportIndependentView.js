@@ -261,7 +261,7 @@ class ReportIndependentView extends Component {
             return;
         }
         if (!this.state.majorValue || this.state.warning_level_select.length === 0 || this.state.descripTxt.length === 0 || this.state.areaId_select.length === 0) {
-            Toast.fail('请完善信息：缺陷专业、紧急类型、所在区域、问题描述', 1);
+            Toast.fail('请完善信息：缺陷专业、紧急类型、所在区域、问题描述', 2);
             return;
         }
         if (AppData.isNetConnetion) {
@@ -290,10 +290,11 @@ class ReportIndependentView extends Component {
                 Portal.remove(key)
                 this.setState({ isLoading: false })
                 if (res.data.code === 0) {
-                    Toast.success('上传成功', 1);
+                    Toast.success('上传成功!注意不要重复上传相同的缺陷', 3);
+                    this.cleanHandler()
                     pushNoticeHandler(this.state.majorValue);
                 } else {
-                    Toast.fail('上传失败,请检查网络或文本只能包含文字', 1);
+                    Toast.fail('上传失败,请检查网络或文本只能包含文字', 2);
                 }
             })
         } else {
@@ -318,7 +319,8 @@ class ReportIndependentView extends Component {
         } else {
             await DeviceStorage.save(LOCAL_BUGS, { "localBugs": [resultData] })
         }
-        Toast.success('缺陷记录本地缓存成功', 1);
+        Toast.success('缓存成功!注意不要重复上传相同的缺陷', 3);
+        this.cleanHandler()
     }
     uploadImage = (formData) => {
         return new Promise((resolve, reject) => {
