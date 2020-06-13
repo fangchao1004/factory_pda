@@ -77,7 +77,7 @@ export default class AreaTabs extends Component {
         return new Promise((resolve, reject) => {
             let result = [];
             let sql = `select d.*,a.name as area_name from devices d 
-            left join (select * from areas where effective = 1) a on d.area_id = a.id 
+            left join (select * from area_3 where effective = 1) a on d.area_id = a.id 
             where d.effective = 1
             order by d.area_id`
             HttpApi.obs({ sql }, (res) => {

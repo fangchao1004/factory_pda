@@ -113,6 +113,7 @@ class LoginView2 extends Component {
                     AppData.mac_address = res.data.data[0].address;
                     AppData.tool_address = res.data.data[0].tool_address;
                     AppData.pda_name = res.data.data[0].des;
+                    AppData.area0_id = res.data.data[0].area0_id;
                     let sql = `select users.*,levels.name as levelname from users 
                     left join (select * from levels where effective = 1) levels on levels.id = users.level_id
                     where users.username = '${this.state.username}' 

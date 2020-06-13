@@ -2,6 +2,7 @@
  * 全局数据
  */
 export default object = {
+    area0_id: null,
     mac_address: null,
     tool_addres: null,
     pda_name: null,

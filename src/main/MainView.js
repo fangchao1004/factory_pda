@@ -195,6 +195,7 @@ export default class MainView extends Component {
         // console.log('所有的缓存进本地的设备状态   都有重置成 待检');
 
         let allow_time_info = await this.getAllowTimeInfo();
+        // console.log('allow_time_info:', allow_time_info)
         let allowTimeInfo = await DeviceStorage.get(ALLOW_TIME)
         if (allowTimeInfo) { await DeviceStorage.update(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
         else { await DeviceStorage.save(ALLOW_TIME, { "allowTimeInfo": allow_time_info }); }
@@ -212,7 +213,6 @@ export default class MainView extends Component {
         else { await DeviceStorage.save(DEVICE_INFO, { "deviceInfo": deviceInfoFilter }) }
 
         let allArea3ArrDistinct = Array.from(new Set(deviceInfoFilter.map((item) => item.area_id)))///当前须检设备的所属三级区域id(去重复)
-
         let nfcInfo = await this.getNfcInfo();
         let nfc_info = await DeviceStorage.get(NFC_INFO);
         if (nfc_info) { await DeviceStorage.update(NFC_INFO, { "nfcInfo": nfcInfo }) }
@@ -229,7 +229,7 @@ export default class MainView extends Component {
         if (major_info) { await DeviceStorage.update(MAJOR_INFO, { "majorInfo": majorInfo }) }
         else { await DeviceStorage.save(MAJOR_INFO, { "majorInfo": majorInfo }) }
 
-        let areaInfo = await this.getAreaInfoInfo(allArea3ArrDistinct); /// 这里的areaInfo 默认是查第三级区域 后期可能会调整
+        let areaInfo = await this.getAreaInfoInfo(allArea3ArrDistinct); /// 这里的areaInfo 默认是查第三级区域 后期可能会调整 用于设备区域模块的显示
         let area_info = await DeviceStorage.get(AREA_INFO);
         if (area_info) { await DeviceStorage.update(AREA_INFO, { "areaInfo": areaInfo }) }
         else { await DeviceStorage.save(AREA_INFO, { "areaInfo": areaInfo }) }
@@ -262,7 +262,7 @@ export default class MainView extends Component {
         let targetItem = findDurtion(allowTimeList);
         // console.log('targetItem:', targetItem);
         let devicesList = [];
-        if (targetItem.select_map_device && targetItem.select_map_device.split(',').length > 0) {
+        if (targetItem && targetItem.select_map_device && targetItem.select_map_device.split(',').length > 0) {
             devicesList = targetItem.select_map_device.split(',');
         }
         // console.log('devicesList:', devicesList)
@@ -275,7 +275,7 @@ export default class MainView extends Component {
             let sql = `select a_t.id,a_t.begin,a_t.end,a_t.isCross,a_t.name,GROUP_CONCAT(a_m_d.device_id) as select_map_device from allow_time a_t
             left join (select * from allowTime_map_device where effective = 1) a_m_d
             on a_t.id = a_m_d.allow_time_id
-            where a_t.effective = 1
+            where a_t.effective = 1 and a_t.area0_id = ${AppData.area0_id}
             group by a_t.id`
             HttpApi.obs({ sql }, (res) => {
                 let result = [];
@@ -326,12 +326,14 @@ export default class MainView extends Component {
         })
     }
     getAreaInfoInfo = (area3Idlist = []) => {
-        let tempSql = ''
-        if (area3Idlist.length > 0) {
-            tempSql = `and id in (${area3Idlist.join(',')})`
-        }
         return new Promise((resolve, reject) => {
             let result = [];
+            let tempSql = ''
+            if (area3Idlist.length > 0) {
+                tempSql = `and id in (${area3Idlist.join(',')})`
+            } else {
+                resolve(result);
+            }
             let sql = `select * from area_3 where effective = 1 ${tempSql} order by id`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
@@ -354,7 +356,7 @@ export default class MainView extends Component {
             let result = [];
             let sql = `select area_1.id as area1_id , area_1.name as area1_name, area_2.id as area2_id ,area_2.name as area2_name from area_1
             left join (select * from area_2 where effective = 1)area_2 on area_1.id = area_2.area1_id
-            where area_1.effective = 1
+            where area_1.effective = 1 and area0_id = ${AppData.area0_id}
             order by area_1.id`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
@@ -374,7 +376,7 @@ export default class MainView extends Component {
     getDeviceInfo = (needTimeDevicesList) => {
         return new Promise((resolve, reject) => {
             let result = [];
-            let sql1 = needTimeDevicesList && needTimeDevicesList.length > 0 ? `and d.id in (${needTimeDevicesList.join(',')})` : ``;
+            let sql1 = needTimeDevicesList && needTimeDevicesList.length > 0 ? `and d.id in (${needTimeDevicesList.join(',')})` : resolve(result);;
             let sql = `select d.*,n.name as nfc_name,dt.name as type_name,
             concat_ws('/',area_1.name,area_2.name,area_3.name) as area_name,
             group_concat(distinct date_value) as date_value_list,group_concat(distinct title) as scheme_title,group_concat(distinct scheme_of_cycleDate.id) as sche_cyc_id,group_concat(distinct scheme_of_cycleDate.cycleDate_id) as cycleDate_id
@@ -387,7 +389,7 @@ export default class MainView extends Component {
             left join (select * from sche_cyc_map_device where effective = 1) sche_cyc_map_device on sche_cyc_map_device.device_id = d.id
             left join (select * from scheme_of_cycleDate where effective = 1) scheme_of_cycleDate on scheme_of_cycleDate.id = sche_cyc_map_device.scheme_id
             left join (select * from sche_cyc_map_date where effective = 1) sche_cyc_map_date on sche_cyc_map_date.scheme_id = sche_cyc_map_device.scheme_id
-            where d.effective = 1 ${sql1}
+            where d.effective = 1 ${sql1} and d.area0_id = ${AppData.area0_id}
             group by d.id`
             // console.log('sql:', sql)
             HttpApi.obs({ sql }, (res) => {
@@ -401,7 +403,7 @@ export default class MainView extends Component {
     getSampleWithSchemeInfo = () => {
         return new Promise((resolve, reject) => {
             let result = [];
-            HttpApi.getSampleWithSchemeInfo([], (res) => {
+            HttpApi.getSampleWithSchemeInfo({ area0_id: AppData.area0_id }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
                 resolve(result);
             })
@@ -456,11 +458,14 @@ export default class MainView extends Component {
                 // let records = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
                 Portal.remove(key);
-                Toast.success('缓存信息上传成功', 1);
+                Modal.alert('缓存的巡检数据上传成功', null, [{ text: '确定' }])
                 await DeviceStorage.delete(LOCAL_RECORDS)
                 // let sss = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('删除后的本地LOCAL_RECORDS缓存:', sss)
             }
+        } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
+            Portal.remove(key);
+            Modal.alert('缓存的缺陷数据上传成功', null, [{ text: '确定' }])
         }
     }
     uploadRecordsToDB = async (finallyRecordsArr) => {

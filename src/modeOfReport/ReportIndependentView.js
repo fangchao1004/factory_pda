@@ -24,7 +24,7 @@ class ReportIndependentView extends Component {
             warning_level_select: [],
             descripTxt: '',
             areaArr: [], ///暂时只支持一级区域选择
-            areaId_select: [],///选择的areaId [x]
+            areaId_select: [], ///选择的areaId [x]
             majorArr: [],
             majorValue: [],
             isLoading: false,
@@ -290,11 +290,11 @@ class ReportIndependentView extends Component {
                 Portal.remove(key)
                 this.setState({ isLoading: false })
                 if (res.data.code === 0) {
-                    Toast.success('上传成功!注意不要重复上传相同的缺陷', 3);
+                    Toast.success(<Text style={{ fontSize: 18 }}>上传成功!注意不要重复上传相同的缺陷</Text>, 5);
                     this.cleanHandler()
                     pushNoticeHandler(this.state.majorValue);
                 } else {
-                    Toast.fail('上传失败,请检查网络或文本只能包含文字', 2);
+                    Toast.fail(<Text style={{ fontSize: 18 }}>上传失败!请检查网络或文本只能包含文字</Text>, 5);
                 }
             })
         } else {
@@ -319,7 +319,7 @@ class ReportIndependentView extends Component {
         } else {
             await DeviceStorage.save(LOCAL_BUGS, { "localBugs": [resultData] })
         }
-        Toast.success('缓存成功!注意不要重复上传相同的缺陷', 3);
+        Toast.success(<Text style={{ fontSize: 18 }}>缓存成功!注意不要重复上传相同的缺陷</Text>, 5);
         this.cleanHandler()
     }
     uploadImage = (formData) => {

@@ -23,6 +23,7 @@ class AreaGroupView extends Component {
     init = async () => {
         ///获取设备信息，并且根据区域分组，判断该区域中的设备是否有待检的
         device_info = await DeviceStorage.get(DEVICE_INFO);
+        console.log('device_info:', device_info)
         let sorted_arr = groupBy(device_info.deviceInfo, (item) => {
             return [item.area_id];
         })
@@ -45,6 +46,7 @@ class AreaGroupView extends Component {
         console.log('temp_result:', temp_result)
         ///获取（第三级）区域信息
         let area_info = await DeviceStorage.get(AREA_INFO);
+        console.log('area_info:', area_info)
         if (area_info) {
             let tempArr = [];
             area_info.areaInfo.forEach(element => {

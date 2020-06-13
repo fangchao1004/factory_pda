@@ -119,6 +119,7 @@ export default class ReportView1 extends Component {
     getNeedRenderContent = (contentList, isRecord) => {
         let list = [];
         contentList.forEach((item) => {
+            // console.log('item:', item)
             item.value = ''; /// 所以元素的值都置空
             if (isRecord) { /// 如果是渲染之前的包含bug_id 的 reocrd 的情况
                 if (!item.bug_id) { item.isChecked = false } /// 如果没有bug_id 那么checked 都置 false
@@ -131,9 +132,12 @@ export default class ReportView1 extends Component {
             } else if (item.type_id === '6') {
                 item.value = [];///图片选择器 的值都为[]
             }
-            if ((item.type_id !== '10' && item.type_id !== '11')
-                || ((item.type_id === '10' || item.type_id === '11') && this.state.switch === 1)) {
-                list.push(item);///初次渲染的界面  (只有当置成 运行状态时，测温测振组件才会渲染，其他组件不受运行停运的影响)
+            // if ((item.type_id !== '10' && item.type_id !== '11')
+            //     || ((item.type_id === '10' || item.type_id === '11') && this.state.switch === 1)) {
+            //     list.push(item);///初次渲染的界面  (只有当置成 运行状态时，测温测振组件才会渲染，其他组件不受运行停运的影响)
+            // }
+            if (this.state.switch === 0 && (!item.stopIsFilter || item.stopIsFilter === '0') || this.state.switch === 1) {
+                list.push(item);
             }
         })
         return list;///最终的渲染组件界面
@@ -181,7 +185,7 @@ export default class ReportView1 extends Component {
      * 13 副标题组件（纯文本展示）-不计入检查范围
      */
     checkContentIsOk = () => {
-        console.log('当前待检数据:', this.state.data)
+        // console.log('当前待检数据:', this.state.data)
         let isOk = true;
         if (this.state.data && this.state.data.length > 0) {
             this.state.data.forEach((item) => {
@@ -189,8 +193,8 @@ export default class ReportView1 extends Component {
                     (item.type_id === '11' && item.value === '') ||
                     (item.type_id === '2' && item.value === '') ||
                     (item.type_id === '6' && item.value.length === 0) ||
-                    (item.type_id === '4' && item.isChecked === false && item.bug_id === null) ||
-                    (item.type_id === '12' && item.isChecked === false && item.bug_id === null)) {
+                    (item.type_id === '4' && item.isChecked === false && !item.bug_id) ||
+                    (item.type_id === '12' && item.isChecked === false && !item.bug_id)) {
                     isOk = false
                 }
             })
@@ -203,6 +207,7 @@ export default class ReportView1 extends Component {
     ///点击上传按钮  上传记录
     upLoadRecordHandler = async () => {
         if (this.checkContentIsOk() === false) { Toast.fail('请检查是否有数据遗漏'); return; }
+        // return;
         this.setState({ isLoading: true })
         let status = 1;///1正常，2故障
         this.state.data.forEach((item) => {
