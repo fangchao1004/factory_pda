@@ -252,7 +252,7 @@ export default class MainView extends Component {
         if (buglevelInfo) { await DeviceStorage.update(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
         else { await DeviceStorage.save(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
 
-        Toast.info('设备数据本地备份完成', 1);
+        Modal.alert('设备数据字典本地备份完成', '可以进行离线打点操作', [{ text: '确定' }])
         ///设备信息 重置好后，通知 DeviceTabs 去获取。
         // console.log('设备信息 重置好后，通知 DeviceTabs 去获取。111'); ///这里没执行。上方代码有误
         DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
@@ -458,14 +458,14 @@ export default class MainView extends Component {
                 // let records = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
                 Portal.remove(key);
-                Modal.alert('缓存的巡检数据上传成功', null, [{ text: '确定' }])
+                Modal.alert('缓存的巡检数据上传成功', '此次离线打点操作完成', [{ text: '确定' }])
                 await DeviceStorage.delete(LOCAL_RECORDS)
                 // let sss = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('删除后的本地LOCAL_RECORDS缓存:', sss)
             }
         } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
             Portal.remove(key);
-            Modal.alert('缓存的缺陷数据上传成功', null, [{ text: '确定' }])
+            Modal.alert('缓存的缺陷数据上传成功', '此此离线打点操作完成', [{ text: '确定' }])
         }
     }
     uploadRecordsToDB = async (finallyRecordsArr) => {

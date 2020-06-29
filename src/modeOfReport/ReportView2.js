@@ -294,18 +294,20 @@ class ReportView2 extends Component {
     uploadBugsHandler = async () => {
         if (this.state.levelValue.length === 0) {
             Toast.fail('请选择紧急类型', 1);
+            this.setState({ isLoading: false })
             return;
         }
         if (this.state.majorValue.length === 0) {
             Toast.fail('请选择缺陷专业', 1);
+            this.setState({ isLoading: false })
             return;
         }
         if (this.state.fromData.text === '') {
             Toast.fail('请填写必要的问题描述', 1);
+            this.setState({ isLoading: false })
             return;
         }
         if (AppData.isNetConnetion) {///如果网络连接正常，则按原先流程进行。上传bug，获取到bugid,再回调
-            this.setState({ isLoading: true })
             var key = Toast.loading('数据上传中...')
             let imgLocalPathArr = this.state.fromData.imgs;
             let netUriArr = [];
@@ -381,6 +383,7 @@ class ReportView2 extends Component {
         // let result = await DeviceStorage.get(LOCAL_BUGS)
         // console.log('再尝试获取：', result.localBugs);
         Toast.success('缺陷信息本地暂存成功', 1);
+        this.setState({ isLoading: false })
         setTimeout(() => {
             this.props.navigation.goBack();
         }, 1300);
@@ -430,7 +433,11 @@ class ReportView2 extends Component {
                         <Button
                             loading={this.state.isLoading} disabled={this.state.isLoading}
                             style={{ display: this.state.isBugReview ? 'none' : 'flex', marginTop: 10, width: screenW * 0.4, alignSelf: 'center' }}
-                            type="warning" onPress={this.uploadBugsHandler}>
+                            type="warning" onPress={() => {
+                                this.setState({ isLoading: true }, () => {
+                                    this.uploadBugsHandler()
+                                })
+                            }}>
                             {this.state.isLoading ? '正在上传缺陷' : '确定上传缺陷'}
                         </Button>
                         <Button
