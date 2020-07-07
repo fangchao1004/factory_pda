@@ -162,6 +162,7 @@ export default class LoginView1 extends Component {
                     AppData.mac_address = res.data.data[0].address;
                     AppData.tool_address = res.data.data[0].tool_address;
                     AppData.pda_name = res.data.data[0].des;
+                    AppData.area0_id = res.data.data[0].area0_id;
                     if (tag && tag.id) {
                         HttpApi.loginByNFC({ nfcid: tag.id, type: 1 }, (response) => {
                             if (response.status == 200) {

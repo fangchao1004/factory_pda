@@ -165,7 +165,7 @@ export default class DeviceTabs extends Component {
                     ///这里要根据record.status的值 判断到底是进入设备详情界面还是故障详情界面
                     this.props.navigation.navigate('DeviceDetailView', { data: record })
                 }}>
-                <View key={record.index} style={{ borderBottomWidth: 2, borderColor: '#FFFFFF', padding: 5, backgroundColor: bgColor, borderRadius: 10 }}>
+                <View key={record.index} style={{ borderBottomWidth: 2, borderColor: '#FFFFFF', padding: 5, backgroundColor: bgColor, borderRadius: 5 }}>
                     <Text style={{ color: '#ffffff' }}>设备类型: {record.type_name}</Text>
                     <Text style={{ color: '#ffffff' }}>设备名称: {record.name}</Text>
                     <Text style={{ color: '#ffffff' }}>所在区域: {record.area_name}</Text>

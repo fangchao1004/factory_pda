@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import TabNavigator from 'react-native-tab-navigator'
-import { View, Platform, BackHandler, ToastAndroid, Image, StyleSheet, DeviceEventEmitter } from 'react-native'
+import { View, Platform, BackHandler, Image, StyleSheet, DeviceEventEmitter } from 'react-native'
 import DeviceView from '../modeOfDevice/DeviceView'
 import SelfView from '../modeOfSelf/SelfView';
 import BindDeviceView from '../modeOfBindDevice/BindDeviceView';
@@ -202,6 +202,7 @@ export default class MainView extends Component {
 
         let needTimeDevicesList = this.getNeedDeviceList(allow_time_info);
         // console.log('当前时间段内默认需要渲染的设备id列表:', needTimeDevicesList)
+        // if (needTimeDevicesList.length === 0) { }
         let deviceInfo = await this.getDeviceInfo(needTimeDevicesList);
         let deviceInfoFilter = filterDevicesByDateScheme(deviceInfo);///通过日期方案筛选后的设备列表
         // console.log('通过日期方案筛选后的设备信息列表:', deviceInfoFilter)
@@ -252,7 +253,10 @@ export default class MainView extends Component {
         if (buglevelInfo) { await DeviceStorage.update(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
         else { await DeviceStorage.save(BUG_LEVEL_INFO, { "bugLevelInfo": bug_level_info }); }
 
-        Modal.alert('设备数据字典本地备份完成', '可以进行离线打点操作', [{ text: '确定' }])
+        if (deviceInfoFilter.length === 0) { Modal.alert('当前时间段内需要巡检的设备列表为空', '如确认数据缺失，则可点击重新获取按钮后等待数秒；若仍为空或无反应则请检查网络环境或重新启动应用', [{ text: '重新获取', onPress: () => { this.localDataSave() } }, { text: '取消' }]) }
+        else {
+            Modal.alert('设备数据字典本地备份完成', '可以进行离线打点操作', [{ text: '确定' }])
+        }
         ///设备信息 重置好后，通知 DeviceTabs 去获取。
         // console.log('设备信息 重置好后，通知 DeviceTabs 去获取。111'); ///这里没执行。上方代码有误
         DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
@@ -335,16 +339,6 @@ export default class MainView extends Component {
                 resolve(result);
             }
             let sql = `select * from area_3 where effective = 1 ${tempSql} order by id`
-            HttpApi.obs({ sql }, (res) => {
-                if (res.data.code == 0) { result = res.data.data }
-                resolve(result);
-            })
-        })
-    }
-    getArea1InfoInfo = () => {
-        return new Promise((resolve, reject) => {
-            let result = [];
-            let sql = `select * from area_1 where effective = 1`
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
                 resolve(result);
