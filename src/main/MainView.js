@@ -442,9 +442,14 @@ export default class MainView extends Component {
             await DeviceStorage.delete(LOCAL_BUGS)
         }
         if (records) {
+            ///将reocrds里面的bug_id，都去查一遍，去除那些在我巡检过程中就被消缺的bug
+            // console.log('records.localRecords:', records.localRecords)
+            let localRecordsAfterFilter = await this.removeRecordsExistBugId(records.localRecords);///去除那些在我巡检过程中就被消缺的bug
+            // console.log('localRecordsAfterFilter:', localRecordsAfterFilter)
+            // return
             // this.testHandler(newBugsArrhasBugId, re.localRecords);
             ////开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
-            let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, records.localRecords);
+            let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);
             // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
             // return
             let result = await this.uploadRecordsToDB(newRecordsHasReallyBugId);
@@ -523,7 +528,23 @@ export default class MainView extends Component {
             })
         })
     }
-
+    removeRecordsExistBugId = async (recordsArr) => {
+        for (const oneRecord of recordsArr) {
+            let contentObj = JSON.parse(oneRecord.content);////json解析。得到content的json对象（数组）
+            for (const item of contentObj) {
+                if (item.bug_id && item.bug_id !== -1) {
+                    item.bug_id = await this.checkBugIsRemove(item.bug_id);///检查之前副本中的缺陷有没有被消缺 status=4 或 effecitve = 0
+                }
+            }
+            oneRecord.content = JSON.stringify(contentObj);///json序列化。恢复原样
+            ///再检查一次查看是否还有bug_id存在，如果还有bug_id，就把devices_status至成2
+            oneRecord.device_status = 1;
+            for (const item of contentObj) {
+                if (item.bug_id || item.bug_id === -1) { oneRecord.device_status = 2 }
+            }
+        }
+        return recordsArr;////到此。bug_id 替换(过滤)成功。返回新的recordArr
+    }
     linkBugsAndRecords = async (newBugsArr, recordsArr) => {
         // console.log('linkBugsAndRecords');
         for (const oneRecord of recordsArr) {
@@ -541,7 +562,19 @@ export default class MainView extends Component {
         }
         return recordsArr;////到此。bug_id 替换成功。返回新的recordArr
     }
-
+    checkBugIsRemove = (bug_id) => {
+        return new Promise((resolve, reject) => {
+            HttpApi.getBugs({ id: bug_id }, (res) => {
+                if (res.data.code === 0) {
+                    let obj = res.data.data[0]
+                    if (obj.status === 4) {
+                        resolve(null)
+                    } else if (obj.effective === 0) { resolve(null) }
+                    else { resolve(bug_id) }
+                }
+            })
+        })
+    }
     ///这里会有一个问题。如果用户离线情况下。对同一个设备上传了多次record。都是两次都对同一个key(问题)，做出了提交。那么后面的就会覆盖之前的。
     findReallyBugId = (device_id, key, newBugsArr) => {
         return new Promise((resolve, reject) => {

@@ -202,6 +202,7 @@ export default class LoginView1 extends Component {
                 Alert.alert('此员工卡数据已经存在于NFC表中', NFCinfo.name);
             }
         } else { ///没有注册
+            // console.log('AppData:', AppData)
             if (AppData.username === 'admin') {
                 Alert.alert(
                     '注意!',
