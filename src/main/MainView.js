@@ -427,7 +427,7 @@ export default class MainView extends Component {
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let records = await DeviceStorage.get(LOCAL_RECORDS);
         let newBugsArrhasBugId = [];
-        if (bugs || records) { key = Toast.loading('缓存信息上传中,请勿断网,否则可能会产生问题...'); }
+        if (bugs || records) { key = Toast.loading('缓存信息上传中,请勿断网,否则可能会产生问题...', 0); }
         if (bugs) {
             // key = Toast.loading('缓存信息上传中...');
             // console.log('本地的待上传的bugs', bugs.localBugs);
@@ -447,7 +447,6 @@ export default class MainView extends Component {
             let localRecordsAfterFilter = await this.removeRecordsExistBugId(records.localRecords);///去除那些在我巡检过程中就被消缺的bug
             // console.log('localRecordsAfterFilter:', localRecordsAfterFilter)
             // return
-            // this.testHandler(newBugsArrhasBugId, re.localRecords);
             ////开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
             let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);
             // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
@@ -567,10 +566,12 @@ export default class MainView extends Component {
             HttpApi.getBugs({ id: bug_id }, (res) => {
                 if (res.data.code === 0) {
                     let obj = res.data.data[0]
-                    if (obj.status === 4) {
+                    if (obj.status === 4 || obj.effective === 0) {
                         resolve(null)
-                    } else if (obj.effective === 0) { resolve(null) }
-                    else { resolve(bug_id) }
+                    }
+                    else if (obj.status !== 4 && obj.effective === 1) {
+                        resolve(bug_id)
+                    }
                 }
             })
         })

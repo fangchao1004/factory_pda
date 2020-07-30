@@ -292,3 +292,11 @@ export function pushNoticeHandler(major_id_list) {
         }
     })
 }
+
+export function copyArrayItem(array, times = 1) {
+    let temp = [];
+    for (let index = 0; index < times; index++) {
+        temp = [...temp, ...array]
+    }
+    return temp
+}
