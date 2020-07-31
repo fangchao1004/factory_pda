@@ -11,7 +11,7 @@ import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
-import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo, pickUpMajorFromBugsAndPushNotice } from '../util/Tool'
+import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo, pickUpMajorFromBugsAndPushNotice, logHandler } from '../util/Tool'
 import moment from 'moment';
 var isreadyOut = false;///准备退出
 export default class MainView extends Component {
@@ -433,36 +433,47 @@ export default class MainView extends Component {
             // key = Toast.loading('缓存信息上传中...');
             // console.log('本地的待上传的bugs', bugs.localBugs);
             ///将这些缺陷中专业都提取出来。
+            logHandler('1连接上网络,并且检查本地缓存发现有bugs,上传至数据库', AppData.username)
             pickUpMajorFromBugsAndPushNotice(bugs.localBugs);
+            logHandler('2pickUpMajorFromBugsAndPushNotice', AppData.username)
             ///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
             let newBugsArrhasNetImgUri = await this.changeImgsValue(bugs.localBugs);
+            logHandler('3先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri', AppData.username)
             ////先将bugs依次上传到数据库，获取bugid。
             newBugsArrhasBugId = await this.uploadbugsToDB(newBugsArrhasNetImgUri);
+            logHandler('4先将bugs依次上传到数据库，获取bugid', AppData.username)
             // console.log('上传后的bugs包含bugid：', newBugsArrhasBugId); ///到这一步正常。获取到bugsid 的数组。
             ////缺陷都上传成功了。要删除本地缓存中的bugs数据
             await DeviceStorage.delete(LOCAL_BUGS)
+            logHandler('5缺陷都上传成功了。要删除本地缓存中的bugs数据', AppData.username)
         }
         if (records && records.localRecords.length > 0) {
             ///将reocrds里面的bug_id，都去查一遍，去除那些在我巡检过程中就被消缺的bug
             // console.log('records.localRecords:', records.localRecords)
+            logHandler('1连接上网络,并且检查本地缓存发现有records,上传至数据库', AppData.username)
             let localRecordsAfterFilter = await this.removeRecordsExistBugId(records.localRecords);///去除那些在我巡检过程中就被消缺的bug
+            logHandler('2去除那些在巡检过程中就被消缺的bug', AppData.username)
             // console.log('localRecordsAfterFilter:', localRecordsAfterFilter)
             // return
             ////开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
             let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);
+            logHandler('3开始bugs和records的整合', AppData.username)
             // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
             // return
             let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
+            logHandler(`4isOver: ${isOver}`, AppData.username)
             if (isOver) {
                 // let records = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
                 Portal.remove(key);
                 Modal.alert('缓存的巡检数据上传完毕', '此次离线打点操作完成', [{ text: '确定' }])
                 await DeviceStorage.delete(LOCAL_RECORDS)
+                logHandler(`5缓存的巡检数据上传完毕`, AppData.username)
                 // let sss = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('删除后的本地LOCAL_RECORDS缓存:', sss)
             }
         } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
+            logHandler(`此次上传只有缺陷数据,没有巡检数据`, AppData.username)
             Portal.remove(key);
             Modal.alert('缓存的缺陷数据上传完毕', '此此离线打点操作完成', [{ text: '确定' }])
         }
@@ -479,12 +490,12 @@ export default class MainView extends Component {
                 }
                 else {
                     console.log('上传失败的对象是：', oneRecord, uploadResult.error)///这里可以想办法，上传到后台
-                    let sql = `insert into bug_log (createdAt,content,error) values ('${moment().format('YYYY-MM-DD HH:mm:ss')}','${JSON.stringify(oneRecord)}','${JSON.stringify(uploadResult.error || [])}')`
-                    HttpApi.obs({ sql })
+                    logHandler(JSON.stringify(oneRecord), JSON.stringify(uploadResult.error || []))
                 }
             }
         }
         if (count === finallyRecordsArr.length - 1) {
+            logHandler(`finallyRecordsArr 全部上传【可能有上传失败的】`, AppData.username)
             console.log('count:', count, '; finallyRecordsArr 全部上传【可能有上传失败的】')
             return true
         } else { return false }
@@ -577,14 +588,20 @@ export default class MainView extends Component {
     checkBugIsRemove = (bug_id) => {
         return new Promise((resolve, reject) => {
             HttpApi.getBugs({ id: bug_id }, (res) => {
-                if (res.data.code === 0) {
+                if (res.data.code === 0 && res.data.data.length > 0) {
                     let obj = res.data.data[0]
-                    if (obj.status === 4 || obj.effective === 0) {
+                    if (obj.effective === 1) {
+                        if (obj.status === 4) {
+                            resolve(null)
+                        } else {
+                            resolve(obj.id)
+                        }
+                    } else {
                         resolve(null)
                     }
-                    else if (obj.status !== 4 && obj.effective === 1) {
-                        resolve(bug_id)
-                    }
+                } else {
+                    logHandler(`bug查询失败`, AppData.username)
+                    resolve(null)
                 }
             })
         })

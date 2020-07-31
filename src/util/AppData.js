@@ -2,6 +2,7 @@
  * 全局数据
  */
 export default object = {
+    is_all_time: 0,
     area0_id: null,
     mac_address: null,
     tool_addres: null,
@@ -50,7 +51,8 @@ export default object = {
         // { version: '0.3.6.2 test', ver: '卡片登录无法获取设备列表问题解决' },
         // { version: '0.3.6.3 test', ver: '解决离线巡检时间差造成的缺陷记录重复覆盖的问题' },
         // { version: '0.3.6.4', ver: '0.3.6.4 正式环境版' },
-        { version: '0.3.6.5', ver: '0.3.6.5 正式环境版' },
+        // { version: '0.3.6.5', ver: '0.3.6.5 正式环境版' },
+        { version: '0.3.6.6', ver: '0.3.6.6 正式环境版' },
     ]
 };
 
