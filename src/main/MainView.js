@@ -12,6 +12,7 @@ import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
 import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo, pickUpMajorFromBugsAndPushNotice } from '../util/Tool'
+import moment from 'moment';
 var isreadyOut = false;///准备退出
 export default class MainView extends Component {
     constructor(props) {
@@ -428,7 +429,7 @@ export default class MainView extends Component {
         let records = await DeviceStorage.get(LOCAL_RECORDS);
         let newBugsArrhasBugId = [];
         if (bugs || records) { key = Toast.loading('缓存信息上传中,请勿断网,否则可能会产生问题...', 0); }
-        if (bugs) {
+        if (bugs && bugs.localBugs.length > 0) {
             // key = Toast.loading('缓存信息上传中...');
             // console.log('本地的待上传的bugs', bugs.localBugs);
             ///将这些缺陷中专业都提取出来。
@@ -441,7 +442,7 @@ export default class MainView extends Component {
             ////缺陷都上传成功了。要删除本地缓存中的bugs数据
             await DeviceStorage.delete(LOCAL_BUGS)
         }
-        if (records) {
+        if (records && records.localRecords.length > 0) {
             ///将reocrds里面的bug_id，都去查一遍，去除那些在我巡检过程中就被消缺的bug
             // console.log('records.localRecords:', records.localRecords)
             let localRecordsAfterFilter = await this.removeRecordsExistBugId(records.localRecords);///去除那些在我巡检过程中就被消缺的bug
@@ -451,30 +452,42 @@ export default class MainView extends Component {
             let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);
             // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
             // return
-            let result = await this.uploadRecordsToDB(newRecordsHasReallyBugId);
-            if (result) {
+            let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
+            if (isOver) {
                 // let records = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
                 Portal.remove(key);
-                Modal.alert('缓存的巡检数据上传成功', '此次离线打点操作完成', [{ text: '确定' }])
+                Modal.alert('缓存的巡检数据上传完毕', '此次离线打点操作完成', [{ text: '确定' }])
                 await DeviceStorage.delete(LOCAL_RECORDS)
                 // let sss = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('删除后的本地LOCAL_RECORDS缓存:', sss)
             }
         } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
             Portal.remove(key);
-            Modal.alert('缓存的缺陷数据上传成功', '此此离线打点操作完成', [{ text: '确定' }])
+            Modal.alert('缓存的缺陷数据上传完毕', '此此离线打点操作完成', [{ text: '确定' }])
         }
     }
     uploadRecordsToDB = async (finallyRecordsArr) => {
-        let uploadResult = false;
-        for (const oneRecord of finallyRecordsArr) {
+        let count = 0;
+        for (let index = 0; index < finallyRecordsArr.length; index++) {
+            count = index;
+            const oneRecord = finallyRecordsArr[index];
             if (!oneRecord.isUploaded) {
-                uploadResult = await this.upLoadRecordInfo(oneRecord)///如果上传成功，就要立马改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
-                if (uploadResult) { await this.updateLocalRecordsInfo(oneRecord) }
+                let uploadResult = await this.upLoadRecordInfo(oneRecord)///如果上传成功，就要立马改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
+                if (uploadResult.flag) {
+                    await this.updateLocalRecordsInfo(oneRecord)
+                }
+                else {
+                    console.log('上传失败的对象是：', oneRecord, uploadResult.error)///这里可以想办法，上传到后台
+                    let sql = `insert into bug_log (createdAt,content,error) values ('${moment().format('YYYY-MM-DD HH:mm:ss')}','${JSON.stringify(oneRecord)}','${JSON.stringify(uploadResult.error || [])}')`
+                    HttpApi.obs({ sql })
+                }
             }
         }
-        return uploadResult;
+        if (count === finallyRecordsArr.length - 1) {
+            console.log('count:', count, '; finallyRecordsArr 全部上传【可能有上传失败的】')
+            return true
+        } else { return false }
     }
     ///改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
     updateLocalRecordsInfo = async (oneRecord) => {
@@ -510,9 +523,9 @@ export default class MainView extends Component {
             HttpApi.upLoadDeviceRecord(oneRecord, (res) => {
                 if (res.data.code === 0) {
                     HttpApi.updateDeviceStatus({ id: oneRecord.device_id }, { $set: { status: oneRecord.device_status, switch: oneRecord.switch } }, (res) => {
-                        if (res.data.code === 0) { resolve(true) } else { resolve(false) }
+                        if (res.data.code === 0) { resolve({ flag: true }) } else { resolve({ flag: false, error: res.data }) }
                     })
-                } else { resolve(false) }
+                } else { resolve({ flag: false, error: res.data }) }
             })
         })
     }
