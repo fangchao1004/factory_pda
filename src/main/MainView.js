@@ -600,7 +600,7 @@ export default class MainView extends Component {
                         resolve(null)
                     }
                 } else {
-                    logHandler(`bug查询失败`, AppData.username)
+                    logHandler(`bug查询失败:${bug_id}`, AppData.username)
                     resolve(null)
                 }
             })
