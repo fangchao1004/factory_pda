@@ -304,6 +304,6 @@ export function copyArrayItem(array, times = 1) {
 export function logHandler(content = '', error = '') {
     let sql = `insert into bug_log (createdAt,content,error) values ('${moment().format('YYYY-MM-DD HH:mm:ss')}','${content}','${error}')`
     HttpApi.obs({ sql }, (res) => {
-        console.log('logHandler res:', res)
+        // console.log('logHandler res:', res)
     })
 }
