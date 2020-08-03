@@ -240,8 +240,7 @@ export default class SelfView extends Component {
             this.setState({ percent: parseInt(((count + 1) / finallyRecordsArr.length) * 100) })
         }
         if (count === finallyRecordsArr.length - 1) {
-            logHandler(`finallyRecordsArr 全部上传【可能有上传失败的】`, AppData.name)
-            console.log('count:', count, '; finallyRecordsArr 全部上传【可能有上传失败的】')
+            logHandler(`finallyRecordsArr 全部上传`, AppData.name)
             return true
         } else { return false }
     }
