@@ -224,51 +224,53 @@ export default class ReportView1 extends Component {
         recordData.isUploaded = false;
         recordData.checkedAt = AppData.checkedAt;
         recordData.switch = this.state.switch;
-        if (AppData.isNetConnetion) { ///在线情况下
-            var key = Toast.loading('数据上传中...')
-            ///判断 整个表单中 有没有 图片选择器组件。
-            for (let index = 0; index < this.state.data.length; index++) {
-                const element = this.state.data[index];
-                if (element.type_id === '6') {///有图片选择器组件 有的话 将
-                    let imgLocalPathArr = element.value;///这里的值 是本地的文件路径
-                    if (imgLocalPathArr.length > 0) {
-                        let netUriArr = [];
-                        for (const imgPath of imgLocalPathArr) {
-                            let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
-                            let formData = new FormData()
-                            formData.append('file', imgfile)
-                            let netUri = await this.uploadImage(formData)///上传图片
-                            netUriArr.push(netUri);
-                        }
-                        element.value = netUriArr;///这里的值，是服务器上文件的uuid
-                    }
-                }
-            }
-            recordData.content = JSON.stringify(this.state.data);///直接修改了 this.state.data 和 recordData.content
-            // console.log(this.state.data);
-            // console.log('recordData:', recordData);
-            // return;
-            HttpApi.upLoadDeviceRecord(recordData, (res) => {
-                if (res.data.code === 0) {
-                    HttpApi.updateDeviceStatus({ id: recordData.device_id }, { $set: { status: recordData.device_status, switch: recordData.switch } }, (res) => {
-                        if (res.data.code === 0) {
-                            Portal.remove(key)
-                            Toast.success('设备巡检记录上传成功', 1);
-                            ///把record 存本地。
-                            recordData.isUploaded = true;
-                            this.saveReportDataToLocalStorage(recordData);
-                        }
-                        this.setState({ isLoading: false })
-                    })
-                } else {
-                    Portal.remove(key)
-                    Toast.fail('设备巡检记录上传失败', 1);
-                    this.setState({ isLoading: false })
-                }
-            })
-        } else {
-            this.saveReportDataToLocalStorage(recordData);
-        }
+        // if (AppData.isNetConnetion) { ///在线情况下
+        //     var key = Toast.loading('数据上传中...')
+        //     ///判断 整个表单中 有没有 图片选择器组件。
+        //     for (let index = 0; index < this.state.data.length; index++) {
+        //         const element = this.state.data[index];
+        //         if (element.type_id === '6') {///有图片选择器组件 有的话 将
+        //             let imgLocalPathArr = element.value;///这里的值 是本地的文件路径
+        //             if (imgLocalPathArr.length > 0) {
+        //                 let netUriArr = [];
+        //                 for (const imgPath of imgLocalPathArr) {
+        //                     let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
+        //                     let formData = new FormData()
+        //                     formData.append('file', imgfile)
+        //                     let netUri = await this.uploadImage(formData)///上传图片
+        //                     netUriArr.push(netUri);
+        //                 }
+        //                 element.value = netUriArr;///这里的值，是服务器上文件的uuid
+        //             }
+        //         }
+        //     }
+        //     recordData.content = JSON.stringify(this.state.data);///直接修改了 this.state.data 和 recordData.content
+        //     // console.log(this.state.data);
+        //     // console.log('recordData:', recordData);
+        //     // return;
+        //     HttpApi.upLoadDeviceRecord(recordData, (res) => {
+        //         if (res.data.code === 0) {
+        //             HttpApi.updateDeviceStatus({ id: recordData.device_id }, { $set: { status: recordData.device_status, switch: recordData.switch } }, (res) => {
+        //                 if (res.data.code === 0) {
+        //                     Portal.remove(key)
+        //                     Toast.success('设备巡检记录上传成功', 1);
+        //                     ///把record 存本地。
+        //                     recordData.isUploaded = true;
+        //                     this.saveReportDataToLocalStorage(recordData);
+        //                 }
+        //                 this.setState({ isLoading: false })
+        //             })
+        //         } else {
+        //             Portal.remove(key)
+        //             Toast.fail('设备巡检记录上传失败', 1);
+        //             this.setState({ isLoading: false })
+        //         }
+        //     })
+        // } else {
+        //     this.saveReportDataToLocalStorage(recordData);
+        // }
+        ///统一走缓存方式
+        this.saveReportDataToLocalStorage(recordData);
     }
     uploadImage = (formData) => {
         return new Promise((resolve, reject) => {

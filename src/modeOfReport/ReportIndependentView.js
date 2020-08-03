@@ -264,42 +264,44 @@ class ReportIndependentView extends Component {
             Toast.fail('请完善信息：缺陷专业、紧急类型、所在区域、问题描述', 2);
             return;
         }
-        if (AppData.isNetConnetion) {
-            this.setState({ isLoading: true })
-            var key = Toast.loading('数据上传中...')
-            let netUriArr = [];
-            if (imgLocalPathArr.length > 0) {
-                for (const imgPath of imgLocalPathArr) {
-                    let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
-                    let formData = new FormData()
-                    formData.append('file', imgfile)
-                    let netUri = await this.uploadImage(formData)
-                    netUriArr.push(netUri);
-                }
-            }
-            let reportData = { select: '', majorId: this.state.majorValue[0], text: this.state.descripTxt, imgs: netUriArr }
-            let resultData = {
-                user_id: AppData.user_id,
-                content: JSON.stringify(reportData),
-                buglevel: this.state.warning_level_select[0],
-                area_remark: this.state.areaId_select[this.state.areaId_select.length - 1],
-                major_id: this.state.majorValue[0],
-                checkedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
-            }
-            HttpApi.uploadBugs(resultData, (res) => {
-                Portal.remove(key)
-                this.setState({ isLoading: false })
-                if (res.data.code === 0) {
-                    Toast.success(<Text style={{ fontSize: 18 }}>上传成功!注意不要重复上传相同的缺陷</Text>, 5);
-                    this.cleanHandler()
-                    pushNoticeHandler(this.state.majorValue);
-                } else {
-                    Toast.fail(<Text style={{ fontSize: 18 }}>上传失败!请检查网络或文本只能包含文字</Text>, 5);
-                }
-            })
-        } else {
-            this.saveBugInfoInLocal();
-        }
+        // if (AppData.isNetConnetion) {
+        //     this.setState({ isLoading: true })
+        //     var key = Toast.loading('数据上传中...')
+        //     let netUriArr = [];
+        //     if (imgLocalPathArr.length > 0) {
+        //         for (const imgPath of imgLocalPathArr) {
+        //             let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
+        //             let formData = new FormData()
+        //             formData.append('file', imgfile)
+        //             let netUri = await this.uploadImage(formData)
+        //             netUriArr.push(netUri);
+        //         }
+        //     }
+        //     let reportData = { select: '', majorId: this.state.majorValue[0], text: this.state.descripTxt, imgs: netUriArr }
+        //     let resultData = {
+        //         user_id: AppData.user_id,
+        //         content: JSON.stringify(reportData),
+        //         buglevel: this.state.warning_level_select[0],
+        //         area_remark: this.state.areaId_select[this.state.areaId_select.length - 1],
+        //         major_id: this.state.majorValue[0],
+        //         checkedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+        //     }
+        //     HttpApi.uploadBugs(resultData, (res) => {
+        //         Portal.remove(key)
+        //         this.setState({ isLoading: false })
+        //         if (res.data.code === 0) {
+        //             Toast.success(<Text style={{ fontSize: 18 }}>上传成功!注意不要重复上传相同的缺陷</Text>, 5);
+        //             this.cleanHandler()
+        //             pushNoticeHandler(this.state.majorValue);
+        //         } else {
+        //             Toast.fail(<Text style={{ fontSize: 18 }}>上传失败!请检查网络或文本只能包含文字</Text>, 5);
+        //         }
+        //     })
+        // } else {
+        //     this.saveBugInfoInLocal();
+        // }
+        ///统一走缓存方式
+        this.saveBugInfoInLocal();
     }
 
     saveBugInfoInLocal = async () => {

@@ -307,48 +307,50 @@ class ReportView2 extends Component {
             this.setState({ isLoading: false })
             return;
         }
-        if (AppData.isNetConnetion) {///如果网络连接正常，则按原先流程进行。上传bug，获取到bugid,再回调
-            var key = Toast.loading('数据上传中...')
-            let imgLocalPathArr = this.state.fromData.imgs;
-            let netUriArr = [];
-            for (const imgPath of imgLocalPathArr) {
-                let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
-                let formData = new FormData()
-                formData.append('file', imgfile)
-                let netUri = await this.uploadImage(formData)
-                netUriArr.push(netUri);
-            }
-            let content = JSON.parse(JSON.stringify(this.state.fromData));
-            content.imgs = netUriArr;
-            let obj = {}
-            obj.title_name = AllData.title_name;///标题
-            obj.title_remark = AllData.title_remark; /// 标题备注
-            obj.content = JSON.stringify(content);///内容
-            obj.user_id = AppData.user_id;///上传者id
-            obj.device_id = device_obj.device_id;///设备id
-            obj.major_id = this.state.majorValue[0];///专业id
-            obj.checkedAt = AppData.checkedAt;///检查的时间点 YYYY-MM-DD HH:mm:ss
-            obj.buglevel = this.state.levelValue[0];///等级id
-            HttpApi.uploadBugs(obj, (res) => {
-                if (res.data.code === 0) {
-                    // console.log('bug_id', res.data.data.id);
-                    Portal.remove(key)
-                    Toast.success('缺陷记录上传成功', 1);
-                    setTimeout(() => {
-                        this.props.navigation.goBack();
-                        pushNoticeHandler(this.state.majorValue);
-                        AllData.callBackBugId(res.data.data.id, AllData.key);
-                    }, 1100);
-                } else {
-                    Portal.remove(key)
-                    Toast.fail('缺陷记录上传失败', 1);
-                }
-                this.setState({ isLoading: false })
-            })
-        } else {
-            ////如果没网。要把数据先存在本地的变量中，再同步更新到本地的缓存中。 
-            this.saveBugInfoInLocal();
-        }
+        // if (AppData.isNetConnetion) {///如果网络连接正常，则按原先流程进行。上传bug，获取到bugid,再回调
+        //     var key = Toast.loading('数据上传中...')
+        //     let imgLocalPathArr = this.state.fromData.imgs;
+        //     let netUriArr = [];
+        //     for (const imgPath of imgLocalPathArr) {
+        //         let imgfile = { uri: imgPath, type: 'multipart/form-data', name: 'image.jpg' }
+        //         let formData = new FormData()
+        //         formData.append('file', imgfile)
+        //         let netUri = await this.uploadImage(formData)
+        //         netUriArr.push(netUri);
+        //     }
+        //     let content = JSON.parse(JSON.stringify(this.state.fromData));
+        //     content.imgs = netUriArr;
+        //     let obj = {}
+        //     obj.title_name = AllData.title_name;///标题
+        //     obj.title_remark = AllData.title_remark; /// 标题备注
+        //     obj.content = JSON.stringify(content);///内容
+        //     obj.user_id = AppData.user_id;///上传者id
+        //     obj.device_id = device_obj.device_id;///设备id
+        //     obj.major_id = this.state.majorValue[0];///专业id
+        //     obj.checkedAt = AppData.checkedAt;///检查的时间点 YYYY-MM-DD HH:mm:ss
+        //     obj.buglevel = this.state.levelValue[0];///等级id
+        //     HttpApi.uploadBugs(obj, (res) => {
+        //         if (res.data.code === 0) {
+        //             // console.log('bug_id', res.data.data.id);
+        //             Portal.remove(key)
+        //             Toast.success('缺陷记录上传成功', 1);
+        //             setTimeout(() => {
+        //                 this.props.navigation.goBack();
+        //                 pushNoticeHandler(this.state.majorValue);
+        //                 AllData.callBackBugId(res.data.data.id, AllData.key);
+        //             }, 1100);
+        //         } else {
+        //             Portal.remove(key)
+        //             Toast.fail('缺陷记录上传失败', 1);
+        //         }
+        //         this.setState({ isLoading: false })
+        //     })
+        // } else {
+        //     ////如果没网。要把数据先存在本地的变量中，再同步更新到本地的缓存中。 
+        //     this.saveBugInfoInLocal();
+        // }
+        ///统一走缓存方式
+        this.saveBugInfoInLocal();
     }
     /**
      * 确认检查过 是那个项
