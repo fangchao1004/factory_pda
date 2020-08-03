@@ -163,12 +163,10 @@ export default class SelfView extends Component {
     }
     checkLocalStorageAndUploadToDB = async () => {
         console.log('连接上网络,并且检查本地缓存,上传至数据库,checkLocalStorageAndUploadToDB')
-        let key;
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let records = await DeviceStorage.get(LOCAL_RECORDS);
         let newBugsArrhasBugId = [];
         if (!bugs && !records) { Toast.info('缓存中暂无数据'); return }
-        // if (bugs || records) { key = Toast.loading(`正在上传:${this.state.progress}%`, 0); }
         if (bugs && bugs.localBugs.length > 0) {
             // key = Toast.loading('缓存信息上传中...');
             // console.log('本地的待上传的bugs', bugs.localBugs);
