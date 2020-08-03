@@ -206,7 +206,7 @@ export default class SelfView extends Component {
                 // let records = await DeviceStorage.get(LOCAL_RECORDS);
                 // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
                 // Portal.remove(key);
-                Modal.alert('缓存的巡检数据上传完毕', '此次离线打点操作完成', [{
+                Modal.alert('缓存的巡检数据上传完毕', null, [{
                     text: '确定', onPress: () => {
                         this.setState({ showProgress: false })
                     }
@@ -219,7 +219,7 @@ export default class SelfView extends Component {
         } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
             logHandler(`此次上传只有缺陷数据,没有巡检数据`, AppData.name)
             // Portal.remove(key);
-            Modal.alert('缓存的缺陷数据上传完毕', '此此离线打点操作完成', [{ text: '确定' }])
+            Modal.alert('缓存的缺陷数据上传完毕', null, [{ text: '确定' }])
         }
     }
     uploadRecordsToDB = async (finallyRecordsArr) => {
