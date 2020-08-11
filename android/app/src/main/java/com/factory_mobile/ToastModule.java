@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -27,10 +28,20 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.inuker.bluetooth.library.Code;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
+import java.io.Reader;
 import java.net.NetworkInterface;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -68,8 +79,8 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         Toast.makeText(getReactApplicationContext(), message, duration).show();
     }
 
-    private final String MAC_ADDRESS_1 = "DC:0D:30:70:3F:46";///工厂测试一
-    private final String MAC_ADDRESS_2 = "DC:0D:30:70:3F:0C";///wdf测试一
+    private final String MAC_ADDRESS_1 = "DC:0D:30:70:3F:46";/// 工厂测试一
+    private final String MAC_ADDRESS_2 = "DC:0D:30:70:3F:0C";/// wdf测试一
 
     @ReactMethod
     public void bindDevice(String tool_address) {
@@ -86,14 +97,13 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         }
         Log.i("coco", String.valueOf(ClientManager.getClientManager().isConnected(getReactApplicationContext())));
         if (ClientManager.getClientManager().isConnected(getReactApplicationContext())) {
-            //断开
+            // 断开
             Toast.makeText(getReactApplicationContext(), "正在断开", Toast.LENGTH_SHORT).show();
             ClientManager.getClientManager().disconnectBle(getReactApplicationContext(), bleAddress);
         } else {
-            //连接
+            // 连接
             Toast.makeText(getReactApplicationContext(), "开始连接。。。", Toast.LENGTH_SHORT).show();
-            ClientManager.getClientManager().connectBle(getReactApplicationContext(), bleAddress,
-                    ToastModule.this);
+            ClientManager.getClientManager().connectBle(getReactApplicationContext(), bleAddress, ToastModule.this);
         }
 
     }
@@ -115,7 +125,7 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         tmpCallback = callback;
         tag = "1";
         Sensor sensor = Sensor.getCurrentSensor(getReactApplicationContext());
-        //第二个参数为发射率，如果使用的是EWG01p传感器和设定发射率
+        // 第二个参数为发射率，如果使用的是EWG01p传感器和设定发射率
         SenSorOrder order = collectionUtil.getTmpOrder(sensor.getSensorType(), ConstantCollect.TMP_EMISSIVITY);
         collectionUtil.startCheck(sensor, order);
     }
@@ -125,7 +135,8 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         tmpCallback = callback;
         tag = "2";
         Sensor sensor = Sensor.getCurrentSensor(getReactApplicationContext());
-        SenSorOrder order = collectionUtil.getVibOrder(sensor.getSensorType(), ConstantCollect.COLLECTION_TYPE_DISPLACEMENT, ConstantCollect.COLLECTION_FREQUENCY_5120);
+        SenSorOrder order = collectionUtil.getVibOrder(sensor.getSensorType(),
+                ConstantCollect.COLLECTION_TYPE_DISPLACEMENT, ConstantCollect.COLLECTION_FREQUENCY_5120);
         collectionUtil.startCheck(sensor, order);
     }
 
@@ -138,7 +149,6 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
     public void isConnected(Callback callback) {
         callback.invoke(ClientManager.getClientManager().isConnected(getReactApplicationContext()));
     }
-
 
     /**
      * 数据采集回调
@@ -170,18 +180,13 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         Toast.makeText(getReactApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
-    private void sendEvent(ReactContext reactContext,
-                           String eventName,
-                           @Nullable WritableMap params) {
-        reactContext
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit(eventName, params);
+    private void sendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
+        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, params);
     }
 
-
     /**
-     * Android 6.0 之前（不包括6.0）获取mac地址
-     * 必须的权限 <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
+     * Android 6.0 之前（不包括6.0）获取mac地址 必须的权限 <uses-permission android:name=
+     * "android.permission.ACCESS_WIFI_STATE"></uses-permission>
      *
      * @param context * @return
      */
@@ -223,7 +228,7 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
             while (null != str) {
                 str = input.readLine();
                 if (str != null) {
-                    macSerial = str.trim();//去空格
+                    macSerial = str.trim();// 去空格
                     break;
                 }
             }
@@ -236,21 +241,21 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
     }
 
     /**
-     * Android 7.0之后获取Mac地址
-     * 遍历循环所有的网络接口，找到接口是 wlan0
-     * 必须的权限 <uses-permission android:name="android.permission.INTERNET"></uses-permission>
+     * Android 7.0之后获取Mac地址 遍历循环所有的网络接口，找到接口是 wlan0 必须的权限
+     * <uses-permission android:name=
+     * "android.permission.INTERNET"></uses-permission>
      *
      * @return
      */
     public static String getMacFromHardware() {
         try {
-            List<NetworkInterface> all =
-                    Collections.list(NetworkInterface.getNetworkInterfaces());
+            List<NetworkInterface> all = Collections.list(NetworkInterface.getNetworkInterfaces());
             for (NetworkInterface item : all) {
                 if (!item.getName().equalsIgnoreCase("wlan0"))
                     continue;
                 byte[] macBytes = item.getHardwareAddress();
-                if (macBytes == null) return "";
+                if (macBytes == null)
+                    return "";
                 StringBuilder res1 = new StringBuilder();
                 for (Byte b : macBytes) {
                     res1.append(String.format("%02X:", b));
@@ -285,4 +290,58 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         callbacks.invoke(mac);
     }
 
+    ////////////////////////////////////////////
+    public static String rootXMLPath = Environment.getExternalStorageDirectory().getPath() + "/巡检记录";
+
+    @ReactMethod
+    public boolean writeToTxt(String content, String fileName, Callback callback) {
+        FileOutputStream fileOutputStream;
+        BufferedWriter bufferedWriter;
+        createDirectory(rootXMLPath);
+        File file = new File(rootXMLPath + "/" + fileName + ".txt");
+        try {
+            file.createNewFile();
+            fileOutputStream = new FileOutputStream(file);
+            bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+            bufferedWriter.write(content);
+            bufferedWriter.close();
+            callback.invoke(true);
+        } catch (IOException e) {
+            callback.invoke(false);
+            Log.e("报错:", "。。。。。");
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 创建文件夹
+     *
+     * @param fileDirectory
+     */
+    public static void createDirectory(String fileDirectory) {
+        File file = new File(fileDirectory);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+    }
+
+    @ReactMethod
+    public void readFromTxt(String fileName, Callback callback) {
+        try {
+            FileInputStream fis = new FileInputStream(rootXMLPath + "/" + fileName + ".txt");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+            StringBuilder sb = new StringBuilder("");
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            br.close();
+            callback.invoke(sb.toString());
+        } catch (Exception e) {
+            callback.invoke("");
+            e.printStackTrace();
+        }
+    }
 }

@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Dimensions, DeviceEventEmitter, Image, TouchableOpacity } from 'react-native'
-import { InputItem, Toast, Modal, Button, Progress } from '@ant-design/react-native'
+import { InputItem, Toast, Modal, Button, Progress, Portal, WhiteSpace, WingBlank } from '@ant-design/react-native'
 import DeviceStorage, { USER_CARD, USER_INFO, LOCAL_BUGS, LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT } from '../util/AppData'
 import HttpApi from '../util/HttpApi'
 import { logHandler, pickUpMajorFromBugsAndPushNotice, copyArrayItem } from '../util/Tool';
+import ToastExample from '../util/ToastExample'
 
 const screenW = Dimensions.get('window').width;
 
@@ -15,6 +16,9 @@ export default class SelfView extends Component {
             userInfo: null,
             percent: 0,
             showProgress: false,
+            writing: false,
+            reading: false,
+            popVisible: false,
         }
     }
     componentWillReceiveProps() {
@@ -83,12 +87,16 @@ export default class SelfView extends Component {
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.levelname : ''}>{'所属部门:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={AppData.record[0].version || ''}>{'版本:'}</InputItem>
                     {this.state.showProgress ?
-                        <View>
-                            <View style={{ height: 20, flex: 1 }}>
+                        <View style={{ height: 30 }}>
+                            <View style={{ height: 4 }}>
                                 <Progress percent={this.state.percent} />
                             </View>
-                            <Text style={{ marginTop: 10 }}>当前进度: {this.state.percent}%</Text>
-                        </View> : null}
+                            <View style={{ marginTop: 6 }}>
+                                <Text>当前进度: {this.state.percent}%</Text>
+                            </View>
+                        </View> :
+                        <View style={{ height: 30 }}></View>
+                    }
                     <Button
                         style={{ marginTop: 10 }}
                         type='primary'
@@ -108,67 +116,142 @@ export default class SelfView extends Component {
                             }
                         }}
                     >
-                        上传本地缓存数据
+                        上传缓存数据
                     </Button>
+                    <Button type="ghost" style={{ marginTop: 100 }} onPress={() => { this.setState({ popVisible: true }) }}>存储操作</Button>
+                    <Modal
+                        popup
+                        maskClosable={true}
+                        closable={true}
+                        visible={this.state.popVisible}
+                        animationType="slide-up"
+                        onClose={() => { this.setState({ popVisible: false }) }}
+                    >
+                        <WingBlank>
+                            <View style={{ marginTop: 16 }}>
+                                <Text style={{ color: '#1890ff' }}>注意：当设备需要重启时，此时可以先点击①按钮，将缓存的巡检数据存储为文件；设备重启后再点击②按钮，将数据从文件提取到缓存中，最后点击上传。（上传完成后会清空本地缓存和文件）</Text>
+                            </View>
+                            <Button type="ghost" style={{ marginTop: 32 }} loading={this.state.writing} onPress={() => {
+                                Modal.alert('注意', '确定将当前缓存中的数据存储为文件吗?(会覆盖原有文件中的数据)', [
+                                    {
+                                        text: '取消'
+                                    },
+                                    {
+                                        text: '写入', onPress: () => {
+                                            this.setState({ popVisible: false })
+                                            this.getDataStorageAndWirteToTxt();
+                                        }
+                                    }])
+                            }}>① 缓存写入文件</Button>
+                            <Button type="ghost" style={{ marginTop: 16, marginBottom: 32 }} loading={this.state.reading} onPress={() => {
+                                Modal.alert('注意', '确定从本地文件中提取数据到缓存中吗?', [
+                                    {
+                                        text: '取消'
+                                    },
+                                    {
+                                        text: '提取', onPress: () => {
+                                            this.setState({ popVisible: false })
+                                            this.readDataFromTxt()
+                                        }
+                                    }])
+                            }}>② 文件提取缓存</Button>
+                        </WingBlank>
+                    </Modal>
+
                 </View>
-            </View>
+            </View >
         );
     }
-
+    ////////////
     /**
-     * 退出登录
+     *将数据写入文本中
      */
-    logoutHandler = async () => {
-        ///打开对话框 是否确定要退出登录？如果再次登录，本地所有的设备状态都将被重置成待检状态
-        Modal.alert('注意', '是否确定要退出？请确保检测记录已经上传，离线状态下请勿退出', [
-            {
-                text: '取消'
-            },
-            {
-                text: '确定退出', onPress: () => {
-                    this.doLogout();
-                }
-            }
-        ]);
-    }
-
-    doLogout = async () => {
+    getDataStorageAndWirteToTxt = async () => {
+        this.setState({ writing: true })
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let records = await DeviceStorage.get(LOCAL_RECORDS);
-        let complete = true;
-        if (bugs) {
-            Toast.show('请先联网同步上传本地缓存的巡检记录', 2);
-            return;
-        }
-        if (records) {
-            records.localRecords.forEach(oneRecord => {
-                if (!oneRecord.isUploaded) {
-                    Toast.show('请先联网同步上传缓存的巡检记录', 2);
-                    complete = false;
+        if (!bugs && !records) { Toast.info('缓存中暂无数据,不需要写入文件', 5); this.setState({ writing: false }); return }
+        if (bugs && bugs.localBugs.length > 0) {
+            ///将 bugs.localBugs 写入本地文件中；
+            let bugsTxt = JSON.stringify(bugs.localBugs);
+            ToastExample.writeToTxt(bugsTxt, "bugs", (res) => {
+                if (res) {
+                    Toast.success('缺陷写入成功', 5);
+                    DeviceStorage.delete(LOCAL_BUGS);
+                } else {
+                    Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
+                    this.setState({ writing: false });
+                    return;
                 }
-            });
+            })
         }
-        if (complete) {
-            //清除本地存储的card信息
-            DeviceStorage.delete(USER_CARD);
-            DeviceStorage.delete(USER_INFO);
-            DeviceStorage.delete(LOCAL_BUGS);
-            DeviceStorage.delete(LOCAL_RECORDS);
-            this.props.navigation.navigate('LoginView1')
-            AppData.loginFlag = false;
-            AppData.username = null;
-            AppData.userNFC = null
+        if (records && records.localRecords.length > 0) {
+            let recordsTxt = JSON.stringify(records.localRecords);
+            ToastExample.writeToTxt(recordsTxt, "records", (res) => {
+                if (res) {
+                    Toast.success('巡检写入成功', 5);
+                    DeviceStorage.delete(LOCAL_RECORDS);
+                } else {
+                    Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
+                    this.setState({ writing: false });
+                    return;
+                }
+            })
         }
-
+        this.setState({ writing: false });
     }
+    /**
+     *从文本中读取数据
+     */
+    readDataFromTxt = () => {
+        this.setState({ reading: true })
+        ///先从文件中读取数据，写进缓存
+        ToastExample.readFromTxt('bugs', async (bugsTxt) => {
+            if (bugsTxt) {
+                let storageBugs = await DeviceStorage.get(LOCAL_BUGS);///使用场景，机子重启后，缓存没了 storageBugs 不存在 null 理论上只会执行 save()
+                let tempArr1 = [];
+                tempArr1 = JSON.parse(bugsTxt);
+                if (storageBugs) {
+                    await DeviceStorage.update(LOCAL_BUGS, { "localBugs": tempArr1 })
+                } else {
+                    await DeviceStorage.save(LOCAL_BUGS, { "localBugs": tempArr1 })
+                }
+            }
+            ///先从文件中读取数据，写进缓存
+            ToastExample.readFromTxt('records', async (recordsTxt) => {
+                if (recordsTxt) {
+                    let storageRecords = await DeviceStorage.get(LOCAL_RECORDS)///使用场景，机子重启后，缓存没了 storageRecords 不存在 null 理论上只会执行 save()
+                    let tempArr2 = [];
+                    tempArr2 = JSON.parse(recordsTxt);
+                    if (storageRecords) {
+                        await DeviceStorage.update(LOCAL_RECORDS, { "localRecords": tempArr2 })
+                    } else {
+                        await DeviceStorage.save(LOCAL_RECORDS, { "localRecords": tempArr2 })
+                    }
+                }
+                if (!bugsTxt && !recordsTxt) {
+                    Toast.info('文件中没有数据', 5);
+                } else if (bugsTxt || recordsTxt) {
+                    Toast.success('缓存恢复成功,可以点击上传缓存数据', 5);
+                }
+                this.setState({ reading: false })
+            });
+        });
+    }
+    cleanTxt = () => {
+        // console.log('cleanTxt')
+        ToastExample.writeToTxt('', "bugs", (_) => { })
+        ToastExample.writeToTxt('', "records", (_) => { })
+    }
+    /////////////////////////////////////////////////////
     checkLocalStorageAndUploadToDB = async () => {
         console.log('连接上网络,并且检查本地缓存,上传至数据库,checkLocalStorageAndUploadToDB')
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let records = await DeviceStorage.get(LOCAL_RECORDS);
         let newBugsArrhasBugId = [];
-        if (!bugs && !records) { Toast.info('缓存中暂无数据'); return }
-        if (bugs && bugs.localBugs.length > 0) {
-            // key = Toast.loading('缓存信息上传中...');
+        if (!bugs && !records) { Toast.info('缓存中暂无数据', 5); return }
+        if (bugs && bugs.localBugs && bugs.localBugs.length > 0) {
+            // key = Toast.loading('缓存信息上传中...', 0);
             // console.log('本地的待上传的bugs', bugs.localBugs);
             ///将这些缺陷中专业都提取出来。
             logHandler('1连接上网络,并且检查本地缓存发现有bugs,上传至数据库', AppData.name)
@@ -185,7 +268,7 @@ export default class SelfView extends Component {
             await DeviceStorage.delete(LOCAL_BUGS)
             logHandler('5缺陷都上传成功了。要删除本地缓存中的bugs数据', AppData.name)
         }
-        if (records && records.localRecords.length > 0) {
+        if (records && records.localRecords && records.localRecords.length > 0) {
             this.setState({ showProgress: true, percent: 0 })
             ///将reocrds里面的bug_id，都去查一遍，去除那些在我巡检过程中就被消缺的bug
             // console.log('records.localRecords:', records.localRecords)
@@ -209,6 +292,7 @@ export default class SelfView extends Component {
                 Modal.alert('缓存的巡检数据上传完毕', null, [{
                     text: '确定', onPress: () => {
                         this.setState({ showProgress: false })
+                        this.cleanTxt();
                     }
                 }])
                 await DeviceStorage.delete(LOCAL_RECORDS)
@@ -219,7 +303,11 @@ export default class SelfView extends Component {
         } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
             logHandler(`此次上传只有缺陷数据,没有巡检数据`, AppData.name)
             // Portal.remove(key);
-            Modal.alert('缓存的缺陷数据上传完毕', null, [{ text: '确定' }])
+            Modal.alert('缓存的缺陷数据上传完毕', null, [{
+                text: '确定', onPress: () => {
+                    this.cleanTxt();
+                }
+            }])
         }
     }
     uploadRecordsToDB = async (finallyRecordsArr) => {
@@ -382,14 +470,12 @@ export default class SelfView extends Component {
             })
         })
     }
-
     uploadbugsToDB = async (localbugs) => {
         for (const oneBug of localbugs) {
             oneBug.bug_id = await this.uploadHandler(oneBug);
         }
         return localbugs
     }
-
     uploadHandler = (oneBug) => {
         return new Promise((resolve, reject) => {
             let result = null;
@@ -401,7 +487,54 @@ export default class SelfView extends Component {
             })
         })
     }
-
+    //////////////////////////////////////
+    //////////////////////////////////////
+    //////////////////////////////////////
+    //////////////////////////////////////
+    /**
+     * 退出登录
+     */
+    logoutHandler = async () => {
+        ///打开对话框 是否确定要退出登录？如果再次登录，本地所有的设备状态都将被重置成待检状态
+        Modal.alert('注意', '是否确定要退出？请确保检测记录已经上传，离线状态下请勿退出', [
+            {
+                text: '取消'
+            },
+            {
+                text: '确定退出', onPress: () => {
+                    this.doLogout();
+                }
+            }
+        ]);
+    }
+    doLogout = async () => {
+        let bugs = await DeviceStorage.get(LOCAL_BUGS);
+        let records = await DeviceStorage.get(LOCAL_RECORDS);
+        let complete = true;
+        if (bugs) {
+            Toast.show('请先联网同步上传本地缓存的巡检记录', 2);
+            return;
+        }
+        if (records) {
+            records.localRecords.forEach(oneRecord => {
+                if (!oneRecord.isUploaded) {
+                    Toast.show('请先联网同步上传缓存的巡检记录', 2);
+                    complete = false;
+                }
+            });
+        }
+        if (complete) {
+            //清除本地存储的card信息
+            DeviceStorage.delete(USER_CARD);
+            DeviceStorage.delete(USER_INFO);
+            DeviceStorage.delete(LOCAL_BUGS);
+            DeviceStorage.delete(LOCAL_RECORDS);
+            this.props.navigation.navigate('LoginView1')
+            AppData.loginFlag = false;
+            AppData.username = null;
+            AppData.userNFC = null
+        }
+    }
 }
 
 const styles = StyleSheet.create({

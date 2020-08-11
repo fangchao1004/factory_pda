@@ -9,6 +9,7 @@ import { checkTimeAllow, bindWithSchemeInfo } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
 import NetInfo from '@react-native-community/netinfo'
 import moment from 'moment'
+
 export default class LoginView1 extends Component {
     constructor(props) {
         super(props);
