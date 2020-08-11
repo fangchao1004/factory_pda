@@ -56,8 +56,13 @@ class DeviceDetailView extends Component {
     }
     getRecordInfo = (device_id) => {
         let p = new Promise((resolve, reject) => {
-            HttpApi.getRecordInfo({ device_id: device_id }, (res) => {
-                resolve(res.data.data);
+            let sql = `select * from records where effective = 1 and device_id = ${device_id} limit 100`
+            HttpApi.obs({ sql }, (res) => {
+                let result = [];
+                if (res.data.code === 0) {
+                    result = res.data.data;
+                }
+                resolve(result);
             })
         })
         return p;
