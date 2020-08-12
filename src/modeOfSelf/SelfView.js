@@ -81,11 +81,7 @@ export default class SelfView extends Component {
                         <Image style={{ width: 26, height: 26, marginRight: 10, marginTop: 28 }} source={require('../../assets/logout.png')} />
                     </TouchableOpacity>
                 </View>
-                <View style={{ marginTop: 20, width: screenW * 0.9 }}>
-                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.name : ''}>{'名称:'}</InputItem>
-                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.username : ''}>{'登录账号:'}</InputItem>
-                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.levelname : ''}>{'所属部门:'}</InputItem>
-                    <InputItem type={'text'} labelNumber={6} editable={false} value={AppData.record[0].version || ''}>{'版本:'}</InputItem>
+                <View style={{ marginTop: 10, width: screenW * 0.9 }}>
                     {this.state.showProgress ?
                         <View style={{ height: 30 }}>
                             <View style={{ height: 4 }}>
@@ -95,10 +91,14 @@ export default class SelfView extends Component {
                                 <Text>当前进度: {this.state.percent}%</Text>
                             </View>
                         </View> :
-                        <View style={{ height: 30 }}></View>
+                        null
                     }
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.name : ''}>{'名称:'}</InputItem>
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.username : ''}>{'登录账号:'}</InputItem>
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.levelname : ''}>{'所属部门:'}</InputItem>
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={AppData.record[0].version || ''}>{'版本:'}</InputItem>
                     <Button
-                        style={{ marginTop: 10 }}
+                        style={{ marginTop: 20 }}
                         type='primary'
                         onPress={() => {
                             if (AppData.isNetConnetion) {
@@ -230,7 +230,7 @@ export default class SelfView extends Component {
                     }
                 }
                 if (!bugsTxt && !recordsTxt) {
-                    Toast.info('文件中没有数据', DURINGTIME);
+                    Toast.info('文件中没有数据\n(请检查【存储空间】权限是否开启)', DURINGTIME);
                 } else if (bugsTxt || recordsTxt) { ///缓存恢复成功,可以点击上传缓存数据
                     if (AppData.isNetConnetion) {
                         this.checkLocalStorageAndUploadToDB();
