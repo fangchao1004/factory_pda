@@ -8,7 +8,7 @@ import { logHandler, pickUpMajorFromBugsAndPushNotice, copyArrayItem } from '../
 import ToastExample from '../util/ToastExample'
 
 const screenW = Dimensions.get('window').width;
-
+const DURINGTIME = 3;///toast 显示时长
 export default class SelfView extends Component {
     constructor(props) {
         super(props)
@@ -118,7 +118,7 @@ export default class SelfView extends Component {
                     >
                         上传缓存数据
                     </Button>
-                    <Button type="ghost" style={{ marginTop: 100 }} onPress={() => { this.setState({ popVisible: true }) }}>存储操作</Button>
+                    <Button type="ghost" style={{ marginTop: 20 }} onPress={() => { this.setState({ popVisible: true }) }}>保存到本地</Button>
                     <Modal
                         popup
                         maskClosable={true}
@@ -128,33 +128,33 @@ export default class SelfView extends Component {
                         onClose={() => { this.setState({ popVisible: false }) }}
                     >
                         <WingBlank>
-                            <View style={{ marginTop: 16 }}>
+                            {/* <View style={{ marginTop: 16 }}>
                                 <Text style={{ color: '#1890ff' }}>注意：当设备需要重启时，此时可以先点击①按钮，将缓存的巡检数据存储为文件；设备重启后再点击②按钮，将数据从文件提取到缓存中，最后点击上传。（上传完成后会清空本地缓存和文件）</Text>
-                            </View>
-                            <Button type="ghost" style={{ marginTop: 32 }} loading={this.state.writing} onPress={() => {
-                                Modal.alert('注意', '确定将当前缓存中的数据存储为文件吗?(会覆盖原有文件中的数据)', [
+                            </View> */}
+                            <Button type="primary" style={{ marginTop: 32 }} loading={this.state.writing} onPress={() => {
+                                Modal.alert('注意', '确定将当前缓存中的数据存储为文件吗?\n(会覆盖原有文件中的数据)', [
                                     {
                                         text: '取消'
                                     },
                                     {
-                                        text: '写入', onPress: () => {
+                                        text: '确定', onPress: () => {
                                             this.setState({ popVisible: false })
                                             this.getDataStorageAndWirteToTxt();
                                         }
                                     }])
-                            }}>① 缓存写入文件</Button>
-                            <Button type="ghost" style={{ marginTop: 16, marginBottom: 32 }} loading={this.state.reading} onPress={() => {
-                                Modal.alert('注意', '确定从本地文件中提取数据到缓存中吗?', [
+                            }}>保存到本地</Button>
+                            <Button type="warning" style={{ marginTop: 16, marginBottom: 32 }} loading={this.state.reading} onPress={() => {
+                                Modal.alert('注意', '确定上传本地文件数据吗?\n(上传后会清空本地文件和缓存)', [
                                     {
                                         text: '取消'
                                     },
                                     {
-                                        text: '提取', onPress: () => {
+                                        text: '确定', onPress: () => {
                                             this.setState({ popVisible: false })
                                             this.readDataFromTxt()
                                         }
                                     }])
-                            }}>② 文件提取缓存</Button>
+                            }}>上传本地文件</Button>
                         </WingBlank>
                     </Modal>
 
@@ -170,13 +170,13 @@ export default class SelfView extends Component {
         this.setState({ writing: true })
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let records = await DeviceStorage.get(LOCAL_RECORDS);
-        if (!bugs && !records) { Toast.info('缓存中暂无数据,不需要写入文件', 5); this.setState({ writing: false }); return }
+        if (!bugs && !records) { Toast.info('缓存中暂无数据,不需要写入文件', DURINGTIME); this.setState({ writing: false }); return }
         if (bugs && bugs.localBugs.length > 0) {
             ///将 bugs.localBugs 写入本地文件中；
             let bugsTxt = JSON.stringify(bugs.localBugs);
             ToastExample.writeToTxt(bugsTxt, "bugs", (res) => {
                 if (res) {
-                    Toast.success('缺陷写入成功', 5);
+                    Toast.success('缺陷写入成功', DURINGTIME);
                     DeviceStorage.delete(LOCAL_BUGS);
                 } else {
                     Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
@@ -189,7 +189,7 @@ export default class SelfView extends Component {
             let recordsTxt = JSON.stringify(records.localRecords);
             ToastExample.writeToTxt(recordsTxt, "records", (res) => {
                 if (res) {
-                    Toast.success('巡检写入成功', 5);
+                    Toast.success('巡检写入成功', DURINGTIME);
                     DeviceStorage.delete(LOCAL_RECORDS);
                 } else {
                     Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
@@ -230,9 +230,13 @@ export default class SelfView extends Component {
                     }
                 }
                 if (!bugsTxt && !recordsTxt) {
-                    Toast.info('文件中没有数据', 5);
-                } else if (bugsTxt || recordsTxt) {
-                    Toast.success('缓存恢复成功,可以点击上传缓存数据', 5);
+                    Toast.info('文件中没有数据', DURINGTIME);
+                } else if (bugsTxt || recordsTxt) { ///缓存恢复成功,可以点击上传缓存数据
+                    if (AppData.isNetConnetion) {
+                        this.checkLocalStorageAndUploadToDB();
+                    } else {
+                        Toast.info('请先连接网络再点击上传');
+                    }
                 }
                 this.setState({ reading: false })
             });
@@ -249,7 +253,7 @@ export default class SelfView extends Component {
         let bugs = await DeviceStorage.get(LOCAL_BUGS);
         let records = await DeviceStorage.get(LOCAL_RECORDS);
         let newBugsArrhasBugId = [];
-        if (!bugs && !records) { Toast.info('缓存中暂无数据', 5); return }
+        if (!bugs && !records) { Toast.info('缓存中暂无数据', DURINGTIME); return }
         if (bugs && bugs.localBugs && bugs.localBugs.length > 0) {
             // key = Toast.loading('缓存信息上传中...', 0);
             // console.log('本地的待上传的bugs', bugs.localBugs);
