@@ -293,9 +293,13 @@ export default class ReportView1 extends Component {
             tempArr.push(recordData);
             await DeviceStorage.save(LOCAL_RECORDS, { "localRecords": tempArr })
         }
-        // let re = await DeviceStorage.get(LOCAL_RECORDS);
-        // console.log('保存后1：', re.localRecords);
-        Toast.success('设备点检记录本地缓存成功', 1);
+        ToastExample.pushDataToTxt("records", JSON.stringify(recordData), (res) => {
+            if (res) {
+                Toast.success('本次点检记录本地存储成功', 1);
+            } else {
+                Toast.fail('本地存储失败，请检查是否开启存储权限', 3);
+            }
+        })
         ///缓存成功以后，。要根据tempArr（存储了各个设备的record的数组数据）去改变本地的设备信息副本中的设备状态。
         if (tempArr.length > 0) {
             this.changeLocalDeviceStatusByTempRecordArry(tempArr);

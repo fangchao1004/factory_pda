@@ -2,6 +2,7 @@
  * 全局数据
  */
 export default object = {
+    last_devices_info: [],
     is_all_time: 0,
     area0_id: null,
     mac_address: null,
@@ -55,10 +56,16 @@ export default object = {
         // { version: '0.3.6.6', ver: '0.3.6.6 正式环境版' },
         // { version: '0.3.6.7', ver: '0.3.6.7 正式环境版' },
         // { version: '0.3.6.8 test', ver: '0.3.6.8 test 测试环境，支持缓存数据的文件存储' },
-        { version: '0.3.6.8', ver: '0.3.6.8 正式环境，支持缓存数据的文件存储' },
+        // { version: '0.3.6.8', ver: '0.3.6.8 正式环境，支持缓存数据的文件存储' },
+        // { version: '0.3.6.9 test', ver: '0.3.6.9 测试环境，巡检记录自动存储为文件' },
+        { version: '0.3.6.9', ver: '0.3.6.9 正式环境，巡检记录自动存储为文件' },
     ]
 };
 
 export const UPDATE_DEVICE_INFO = 'updateDeviceInfo'
 export const NET_CONNECT = 'netConnect'///网络已连接
 export const NET_DISCONNECT = 'netDisconnect'///网络已断开
+
+
+
+export const TESTLIST = { "name": "张三", "age": "10岁" }

@@ -140,7 +140,7 @@ export default class MainView extends Component {
         // }
         if (this.props.navigation.isFocused()) {
             if (!isreadyOut) {
-                Modal.alert('注意', '是否确定要退出？请确保检测记录已经上传，离线状态下请勿退出', [
+                Modal.alert('注意', '是否确定要退出？请确保巡检记录已经上传，离线状态下请勿退出', [
                     {
                         text: '取消', onPress: () => { isreadyOut = false; return; }
                     },
@@ -248,6 +248,7 @@ export default class MainView extends Component {
         let result = await DeviceStorage.get(LAST_DEVICES_INFO)
         if (result) { await DeviceStorage.update(LAST_DEVICES_INFO, { "lastDevicesInfo": tempResult }); }
         else { await DeviceStorage.save(LAST_DEVICES_INFO, { "lastDevicesInfo": tempResult }); }
+        AppData.last_devices_info = tempResult;
 
         let bug_level_info = await this.getBuglevelInfo();
         let buglevelInfo = await DeviceStorage.get(BUG_LEVEL_INFO)

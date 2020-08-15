@@ -6,6 +6,8 @@ import SelectPhoto from '../modeOfPhoto/SelectPhoto'
 import HttpApi, { SERVER_URL } from '../util/HttpApi';
 import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, BUG_LEVEL_INFO } from '../util/DeviceStorage';
 import { pushNoticeHandler } from '../util/Tool'
+import ToastExample from '../util/ToastExample'
+
 const CheckboxItem = Checkbox.CheckboxItem;
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
@@ -384,7 +386,13 @@ class ReportView2 extends Component {
         // console.log('本地存储成功');
         // let result = await DeviceStorage.get(LOCAL_BUGS)
         // console.log('再尝试获取：', result.localBugs);
-        Toast.success('缺陷信息本地暂存成功', 1);
+        ToastExample.pushDataToTxt("bugs", JSON.stringify(obj), (res) => {
+            if (res) {
+                Toast.success('此条缺陷信息本地存储成功', 1);
+            } else {
+                Toast.fail('本地存储失败，请检查是否开启存储权限', 3);
+            }
+        })
         this.setState({ isLoading: false })
         setTimeout(() => {
             this.props.navigation.goBack();

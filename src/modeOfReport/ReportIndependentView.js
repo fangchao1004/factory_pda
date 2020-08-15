@@ -215,7 +215,7 @@ class ReportIndependentView extends Component {
                         this.setState({ areaId_select: v })
                     }}
                 >
-                    <List.Item arrow="horizontal" wrap><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>所在区域</Text></List.Item>
+                    <List.Item arrow="horizontal" wrap><Text style={{ marginLeft: -15, color: '#000000', fontSize: 15 }}>所属区域</Text></List.Item>
                 </Picker>
             </List>
         </View>)
@@ -321,7 +321,14 @@ class ReportIndependentView extends Component {
         } else {
             await DeviceStorage.save(LOCAL_BUGS, { "localBugs": [resultData] })
         }
-        Toast.success(<Text style={{ fontSize: 18 }}>缓存成功!注意不要重复上传相同的缺陷</Text>, 5);
+        ToastExample.pushDataToTxt("bugs", JSON.stringify(resultData), (res) => {
+            if (res) {
+                Toast.success('此条缺陷信息本地存储成功\n注意不要重复上传相同的缺陷', 2);
+            } else {
+                Toast.fail('本地存储失败，请检查是否开启存储权限', 3);
+            }
+        })
+        // Toast.success(<Text style={{ fontSize: 18 }}>缓存成功!注意不要重复上传相同的缺陷</Text>, 3);
         this.cleanHandler()
     }
     uploadImage = (formData) => {

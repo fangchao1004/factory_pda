@@ -168,7 +168,7 @@ export default class DeviceTabs extends Component {
                 <View key={record.index} style={{ borderBottomWidth: 2, borderColor: '#FFFFFF', padding: 5, backgroundColor: bgColor, borderRadius: 5 }}>
                     <Text style={{ color: '#ffffff' }}>设备类型: {record.type_name}</Text>
                     <Text style={{ color: '#ffffff' }}>设备名称: {record.name}</Text>
-                    <Text style={{ color: '#ffffff' }}>所在区域: {record.area_name}</Text>
+                    <Text style={{ color: '#ffffff' }}>所属区域: {record.area_name}</Text>
                     {/* <Text style={{ color: '#555555' }}>NFC编码: {record.nfc_name}</Text> */}
                 </View>
             </TouchableHighlight>

@@ -17,7 +17,7 @@ export default class SelfView extends Component {
             percent: 0,
             showProgress: false,
             writing: false,
-            reading: false,
+            uploading: false,
             popVisible: false,
         }
     }
@@ -97,67 +97,18 @@ export default class SelfView extends Component {
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.username : ''}>{'登录账号:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.levelname : ''}>{'所属部门:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={AppData.record[0].version || ''}>{'版本:'}</InputItem>
-                    <Button
-                        style={{ marginTop: 20 }}
-                        type='primary'
-                        onPress={() => {
-                            if (AppData.isNetConnetion) {
-                                Modal.alert('注意', '确定上传本地的缓存数据吗？', [
-                                    {
-                                        text: '取消'
-                                    },
-                                    {
-                                        text: '确定上传', onPress: () => {
-                                            this.checkLocalStorageAndUploadToDB();
-                                        }
-                                    }])
-                            } else {
-                                Toast.info('请先连接网络再点击上传');
-                            }
-                        }}
-                    >
-                        上传缓存数据
-                    </Button>
-                    <Button type="ghost" style={{ marginTop: 20 }} onPress={() => { this.setState({ popVisible: true }) }}>保存到本地</Button>
-                    <Modal
-                        popup
-                        maskClosable={true}
-                        closable={true}
-                        visible={this.state.popVisible}
-                        animationType="slide-up"
-                        onClose={() => { this.setState({ popVisible: false }) }}
-                    >
-                        <WingBlank>
-                            {/* <View style={{ marginTop: 16 }}>
-                                <Text style={{ color: '#1890ff' }}>注意：当设备需要重启时，此时可以先点击①按钮，将缓存的巡检数据存储为文件；设备重启后再点击②按钮，将数据从文件提取到缓存中，最后点击上传。（上传完成后会清空本地缓存和文件）</Text>
-                            </View> */}
-                            <Button type="primary" style={{ marginTop: 32 }} loading={this.state.writing} onPress={() => {
-                                Modal.alert('注意', '确定将当前缓存中的数据存储为文件吗?\n(会覆盖原有文件中的数据)', [
-                                    {
-                                        text: '取消'
-                                    },
-                                    {
-                                        text: '确定', onPress: () => {
-                                            this.setState({ popVisible: false })
-                                            this.getDataStorageAndWirteToTxt();
-                                        }
-                                    }])
-                            }}>保存到本地</Button>
-                            <Button type="warning" style={{ marginTop: 16, marginBottom: 32 }} loading={this.state.reading} onPress={() => {
-                                Modal.alert('注意', '确定上传本地文件数据吗?\n(上传后会清空本地文件和缓存)', [
-                                    {
-                                        text: '取消'
-                                    },
-                                    {
-                                        text: '确定', onPress: () => {
-                                            this.setState({ popVisible: false })
-                                            this.readDataFromTxt()
-                                        }
-                                    }])
-                            }}>上传本地文件</Button>
-                        </WingBlank>
-                    </Modal>
-
+                    <Button type="warning" style={{ marginTop: 16, marginBottom: 32 }} disabled={this.state.uploading} loading={this.state.uploading} onPress={() => {
+                        Modal.alert('注意', '确定上传本地文件数据吗?\n(上传成功后会清除本地文件)', [
+                            {
+                                text: '取消'
+                            },
+                            {
+                                text: '确定', onPress: () => {
+                                    this.setState({ popVisible: false })
+                                    this.readDataFromTxt()
+                                }
+                            }])
+                    }}>上传巡检记录</Button>
                 </View>
             </View >
         );
@@ -166,168 +117,195 @@ export default class SelfView extends Component {
     /**
      *将数据写入文本中
      */
-    getDataStorageAndWirteToTxt = async () => {
-        this.setState({ writing: true })
-        let bugs = await DeviceStorage.get(LOCAL_BUGS);
-        let records = await DeviceStorage.get(LOCAL_RECORDS);
-        if (!bugs && !records) { Toast.info('缓存中暂无数据,不需要写入文件', DURINGTIME); this.setState({ writing: false }); return }
-        if (bugs && bugs.localBugs.length > 0) {
-            ///将 bugs.localBugs 写入本地文件中；
-            let bugsTxt = JSON.stringify(bugs.localBugs);
-            ToastExample.writeToTxt(bugsTxt, "bugs", (res) => {
-                if (res) {
-                    Toast.success('缺陷写入成功', DURINGTIME);
-                    DeviceStorage.delete(LOCAL_BUGS);
-                } else {
-                    Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
-                    this.setState({ writing: false });
-                    return;
-                }
-            })
-        }
-        if (records && records.localRecords.length > 0) {
-            let recordsTxt = JSON.stringify(records.localRecords);
-            ToastExample.writeToTxt(recordsTxt, "records", (res) => {
-                if (res) {
-                    Toast.success('巡检写入成功', DURINGTIME);
-                    DeviceStorage.delete(LOCAL_RECORDS);
-                } else {
-                    Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
-                    this.setState({ writing: false });
-                    return;
-                }
-            })
-        }
-        this.setState({ writing: false });
-    }
+    // getDataStorageAndWirteToTxt = async () => {
+    //     this.setState({ writing: true })
+    //     let bugs = await DeviceStorage.get(LOCAL_BUGS);
+    //     let records = await DeviceStorage.get(LOCAL_RECORDS);
+    //     if (!bugs && !records) { Toast.info('缓存中暂无数据,不需要写入文件', DURINGTIME); this.setState({ writing: false }); return }
+    //     if (bugs && bugs.localBugs.length > 0) {
+    //         ///将 bugs.localBugs 写入本地文件中；
+    //         let bugsTxt = JSON.stringify(bugs.localBugs);
+    //         ToastExample.writeToTxt(bugsTxt, "bugs", (res) => {
+    //             if (res) {
+    //                 Toast.success('缺陷写入成功', DURINGTIME);
+    //                 DeviceStorage.delete(LOCAL_BUGS);
+    //             } else {
+    //                 Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
+    //                 this.setState({ writing: false });
+    //                 return;
+    //             }
+    //         })
+    //     }
+    //     if (records && records.localRecords.length > 0) {
+    //         let recordsTxt = JSON.stringify(records.localRecords);
+    //         ToastExample.writeToTxt(recordsTxt, "records", (res) => {
+    //             if (res) {
+    //                 Toast.success('巡检写入成功', DURINGTIME);
+    //                 DeviceStorage.delete(LOCAL_RECORDS);
+    //             } else {
+    //                 Toast.fail('写入失败,请开启【存储空间权限】后再重新尝试');
+    //                 this.setState({ writing: false });
+    //                 return;
+    //             }
+    //         })
+    //     }
+    //     this.setState({ writing: false });
+    // }
     /**
      *从文本中读取数据
      */
     readDataFromTxt = () => {
-        this.setState({ reading: true })
+        this.setState({ uploading: true })
         ///先从文件中读取数据，写进缓存
         ToastExample.readFromTxt('bugs', async (bugsTxt) => {
             if (bugsTxt) {
-                let storageBugs = await DeviceStorage.get(LOCAL_BUGS);///使用场景，机子重启后，缓存没了 storageBugs 不存在 null 理论上只会执行 save()
-                let tempArr1 = [];
-                tempArr1 = JSON.parse(bugsTxt);
-                if (storageBugs) {
-                    await DeviceStorage.update(LOCAL_BUGS, { "localBugs": tempArr1 })
-                } else {
-                    await DeviceStorage.save(LOCAL_BUGS, { "localBugs": tempArr1 })
-                }
+                console.log('bugsTxt:', bugsTxt)
             }
             ///先从文件中读取数据，写进缓存
             ToastExample.readFromTxt('records', async (recordsTxt) => {
                 if (recordsTxt) {
-                    let storageRecords = await DeviceStorage.get(LOCAL_RECORDS)///使用场景，机子重启后，缓存没了 storageRecords 不存在 null 理论上只会执行 save()
-                    let tempArr2 = [];
-                    tempArr2 = JSON.parse(recordsTxt);
-                    if (storageRecords) {
-                        await DeviceStorage.update(LOCAL_RECORDS, { "localRecords": tempArr2 })
-                    } else {
-                        await DeviceStorage.save(LOCAL_RECORDS, { "localRecords": tempArr2 })
-                    }
+                    console.log('recordsTxt:', recordsTxt)
                 }
                 if (!bugsTxt && !recordsTxt) {
-                    Toast.info('文件中没有数据\n(请检查【存储空间】权限是否开启)', DURINGTIME);
+                    Toast.info('无巡检记录', DURINGTIME);
+                    this.setState({ uploading: false });
                 } else if (bugsTxt || recordsTxt) { ///缓存恢复成功,可以点击上传缓存数据
                     if (AppData.isNetConnetion) {
-                        this.checkLocalStorageAndUploadToDB();
+                        this.uploadDataFromTxt(bugsTxt, recordsTxt);
                     } else {
                         Toast.info('请先连接网络再点击上传');
                     }
                 }
-                this.setState({ reading: false })
             });
         });
     }
-    cleanTxt = () => {
-        // console.log('cleanTxt')
-        ToastExample.writeToTxt('', "bugs", (_) => { })
-        ToastExample.writeToTxt('', "records", (_) => { })
+    deleteFile = () => {
+        ToastExample.deleteFile("bugs", (_) => { })
+        ToastExample.deleteFile("records", (_) => { })
     }
     /////////////////////////////////////////////////////
-    checkLocalStorageAndUploadToDB = async () => {
-        console.log('连接上网络,并且检查本地缓存,上传至数据库,checkLocalStorageAndUploadToDB')
-        let bugs = await DeviceStorage.get(LOCAL_BUGS);
-        let records = await DeviceStorage.get(LOCAL_RECORDS);
-        let newBugsArrhasBugId = [];
-        if (!bugs && !records) { Toast.info('缓存中暂无数据', DURINGTIME); return }
-        if (bugs && bugs.localBugs && bugs.localBugs.length > 0) {
-            // key = Toast.loading('缓存信息上传中...', 0);
-            // console.log('本地的待上传的bugs', bugs.localBugs);
-            ///将这些缺陷中专业都提取出来。
-            logHandler('1连接上网络,并且检查本地缓存发现有bugs,上传至数据库', AppData.name)
-            pickUpMajorFromBugsAndPushNotice(bugs.localBugs);
-            logHandler('2pickUpMajorFromBugsAndPushNotice', AppData.name)
-            ///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
-            let newBugsArrhasNetImgUri = await this.changeImgsValue(bugs.localBugs);
-            logHandler('3先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri', AppData.name)
-            ////先将bugs依次上传到数据库，获取bugid。
-            newBugsArrhasBugId = await this.uploadbugsToDB(newBugsArrhasNetImgUri);
-            logHandler('4先将bugs依次上传到数据库，获取bugid', AppData.name)
-            // console.log('上传后的bugs包含bugid：', newBugsArrhasBugId); ///到这一步正常。获取到bugsid 的数组。
-            ////缺陷都上传成功了。要删除本地缓存中的bugs数据
-            await DeviceStorage.delete(LOCAL_BUGS)
-            logHandler('5缺陷都上传成功了。要删除本地缓存中的bugs数据', AppData.name)
-        }
-        if (records && records.localRecords && records.localRecords.length > 0) {
-            this.setState({ showProgress: true, percent: 0 })
-            ///将reocrds里面的bug_id，都去查一遍，去除那些在我巡检过程中就被消缺的bug
-            // console.log('records.localRecords:', records.localRecords)
-            logHandler('1连接上网络,并且检查本地缓存发现有records,上传至数据库', AppData.name)
-            let localRecordsAfterFilter = await this.removeRecordsExistBugId(records.localRecords);///去除那些在我巡检过程中就被消缺的bug
-            logHandler('2去除那些在巡检过程中就被消缺的bug', AppData.name)
-            // console.log('localRecordsAfterFilter:', localRecordsAfterFilter)
-            // return
-            ////开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
-            let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);
-            logHandler('3开始bugs和records的整合', AppData.name)
-            // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
-            // return
-            // let aftherCopy = copyArrayItem(newRecordsHasReallyBugId, 20)
-            let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
-            logHandler(`4isOver: ${isOver}`, AppData.name)
-            if (isOver) {
-                // let records = await DeviceStorage.get(LOCAL_RECORDS);
-                // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
-                // Portal.remove(key);
-                Modal.alert('缓存的巡检数据上传完毕', null, [{
+    uploadDataFromTxt = async (bugsTxt, recordsTxt) => {
+        try {
+            let newBugsArrhasBugId = [];
+            if (bugsTxt) {
+                let bugsList = JSON.parse(bugsTxt)
+                pickUpMajorFromBugsAndPushNotice(bugsList);///将这些缺陷中专业都提取出来。
+                let newBugsArrhasNetImgUri = await this.changeImgsValue(bugsList);///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
+                newBugsArrhasBugId = await this.uploadbugsToDB(newBugsArrhasNetImgUri); ////先将bugs依次上传到数据库，获取bugid。
+                console.log('bug over')
+            }
+            if (recordsTxt) {
+                console.log('recordsTxt 1')
+                let recordsList = JSON.parse(recordsTxt)
+                this.setState({ showProgress: true, percent: 0 })
+                let localRecordsAfterFilter = await this.removeRecordsExistBugId(recordsList);///去除那些在我巡检过程中就被消缺的bug
+                console.log('recordsTxt 2')
+                let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);///开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
+                console.log('recordsTxt 3')
+                let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
+                console.log('recordsTxt 4')
+                if (isOver) {
+                    Modal.alert('缓存的巡检数据上传完毕', null, [{
+                        text: '确定', onPress: () => {
+                            this.setState({ showProgress: false, uploading: false })
+                            this.deleteFile();
+                        }
+                    }])
+                    await DeviceStorage.delete(LOCAL_RECORDS)
+                }
+            } else if (!recordsTxt && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
+                Modal.alert('缓存的缺陷数据上传完毕', null, [{
                     text: '确定', onPress: () => {
-                        this.setState({ showProgress: false })
-                        this.cleanTxt();
+                        this.setState({ uploading: false });
+                        this.deleteFile();
                     }
                 }])
-                await DeviceStorage.delete(LOCAL_RECORDS)
-                logHandler(`5缓存的巡检数据上传完毕`, AppData.name)
-                // let sss = await DeviceStorage.get(LOCAL_RECORDS);
-                // console.log('删除后的本地LOCAL_RECORDS缓存:', sss)
             }
-        } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
-            logHandler(`此次上传只有缺陷数据,没有巡检数据`, AppData.name)
-            // Portal.remove(key);
-            Modal.alert('缓存的缺陷数据上传完毕', null, [{
-                text: '确定', onPress: () => {
-                    this.cleanTxt();
-                }
-            }])
+        } catch (error) {
+            console.log('error', error);
         }
     }
+    // /////////////////////////////////////////////////////
+    // checkLocalStorageAndUploadToDB = async () => {
+    //     console.log('连接上网络,并且检查本地缓存,上传至数据库,checkLocalStorageAndUploadToDB')
+    //     let bugs = await DeviceStorage.get(LOCAL_BUGS);
+    //     let records = await DeviceStorage.get(LOCAL_RECORDS);
+    //     let newBugsArrhasBugId = [];
+    //     if (!bugs && !records) { Toast.info('缓存中暂无数据', DURINGTIME); return }
+    //     if (bugs && bugs.localBugs && bugs.localBugs.length > 0) {
+    //         // key = Toast.loading('缓存信息上传中...', 0);
+    //         // console.log('本地的待上传的bugs', bugs.localBugs);
+    //         ///将这些缺陷中专业都提取出来。
+    //         logHandler('1连接上网络,并且检查本地缓存发现有bugs,上传至数据库', AppData.name)
+    //         pickUpMajorFromBugsAndPushNotice(bugs.localBugs);
+    //         logHandler('2pickUpMajorFromBugsAndPushNotice', AppData.name)
+    //         ///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
+    //         let newBugsArrhasNetImgUri = await this.changeImgsValue(bugs.localBugs);
+    //         logHandler('3先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri', AppData.name)
+    //         ////先将bugs依次上传到数据库，获取bugid。
+    //         newBugsArrhasBugId = await this.uploadbugsToDB(newBugsArrhasNetImgUri);
+    //         logHandler('4先将bugs依次上传到数据库，获取bugid', AppData.name)
+    //         // console.log('上传后的bugs包含bugid：', newBugsArrhasBugId); ///到这一步正常。获取到bugsid 的数组。
+    //         ////缺陷都上传成功了。要删除本地缓存中的bugs数据
+    //         await DeviceStorage.delete(LOCAL_BUGS)
+    //         logHandler('5缺陷都上传成功了。要删除本地缓存中的bugs数据', AppData.name)
+    //     }
+    //     if (records && records.localRecords && records.localRecords.length > 0) {
+    //         this.setState({ showProgress: true, percent: 0 })
+    //         ///将reocrds里面的bug_id，都去查一遍，去除那些在我巡检过程中就被消缺的bug
+    //         // console.log('records.localRecords:', records.localRecords)
+    //         logHandler('1连接上网络,并且检查本地缓存发现有records,上传至数据库', AppData.name)
+    //         let localRecordsAfterFilter = await this.removeRecordsExistBugId(records.localRecords);///去除那些在我巡检过程中就被消缺的bug
+    //         logHandler('2去除那些在巡检过程中就被消缺的bug', AppData.name)
+    //         // console.log('localRecordsAfterFilter:', localRecordsAfterFilter)
+    //         // return
+    //         ////开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
+    //         let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);
+    //         logHandler('3开始bugs和records的整合', AppData.name)
+    //         // console.log('最新的newRecordsHasReallyBugId：：：：', newRecordsHasReallyBugId);
+    //         // return
+    //         // let aftherCopy = copyArrayItem(newRecordsHasReallyBugId, 20)
+    //         let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
+    //         logHandler(`4isOver: ${isOver}`, AppData.name)
+    //         if (isOver) {
+    //             // let records = await DeviceStorage.get(LOCAL_RECORDS);
+    //             // console.log('缓存信息都上传成功,上传后本地的缓存数据：', records)
+    //             // Portal.remove(key);
+    //             Modal.alert('缓存的巡检数据上传完毕', null, [{
+    //                 text: '确定', onPress: () => {
+    //                     this.setState({ showProgress: false })
+    //                     this.cleanTxt();
+    //                 }
+    //             }])
+    //             await DeviceStorage.delete(LOCAL_RECORDS)
+    //             logHandler(`5缓存的巡检数据上传完毕`, AppData.name)
+    //             // let sss = await DeviceStorage.get(LOCAL_RECORDS);
+    //             // console.log('删除后的本地LOCAL_RECORDS缓存:', sss)
+    //         }
+    //     } else if (!records && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
+    //         logHandler(`此次上传只有缺陷数据,没有巡检数据`, AppData.name)
+    //         // Portal.remove(key);
+    //         Modal.alert('缓存的缺陷数据上传完毕', null, [{
+    //             text: '确定', onPress: () => {
+    //                 this.cleanTxt();
+    //             }
+    //         }])
+    //     }
+    // }
     uploadRecordsToDB = async (finallyRecordsArr) => {
         let count = 0;
         for (let index = 0; index < finallyRecordsArr.length; index++) {
             count = index;
             const oneRecord = finallyRecordsArr[index];
             if (!oneRecord.isUploaded) {
-                let uploadResult = await this.upLoadRecordInfo(oneRecord)///如果上传成功，就要立马改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
-                if (uploadResult.flag) {
-                    await this.updateLocalRecordsInfo(oneRecord)
-                }
-                else {
-                    console.log('上传失败的对象是：', oneRecord, uploadResult.error)///这里可以想办法，上传到后台
-                    logHandler(JSON.stringify(oneRecord), JSON.stringify(uploadResult.error || []))
-                }
+                await this.upLoadRecordInfo(oneRecord)///如果上传成功，就要立马改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
+                // if (uploadResult.flag) {
+                //     await this.updateLocalRecordsInfo(oneRecord)
+                // }
+                // else {
+                //     console.log('上传失败的对象是：', oneRecord, uploadResult.error)///这里可以想办法，上传到后台
+                //     logHandler(JSON.stringify(oneRecord), JSON.stringify(uploadResult.error || []))
+                // }
             }
             this.setState({ percent: parseInt(((count + 1) / finallyRecordsArr.length) * 100) })
         }
@@ -337,15 +315,15 @@ export default class SelfView extends Component {
         } else { return false }
     }
     ///改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
-    updateLocalRecordsInfo = async (oneRecord) => {
-        let records = await DeviceStorage.get(LOCAL_RECORDS);
-        let tempArr = JSON.parse(JSON.stringify(records.localRecords));
-        tempArr.forEach((item) => {
-            if (item.device_id === oneRecord.device_id && item.checkedAt === oneRecord.checkedAt) { item.isUploaded = true }
-        })
-        await DeviceStorage.update(LOCAL_RECORDS, { "localRecords": tempArr })
-        return true;
-    }
+    // updateLocalRecordsInfo = async (oneRecord) => {
+    //     let records = await DeviceStorage.get(LOCAL_RECORDS);
+    //     let tempArr = JSON.parse(JSON.stringify(records.localRecords));
+    //     tempArr.forEach((item) => {
+    //         if (item.device_id === oneRecord.device_id && item.checkedAt === oneRecord.checkedAt) { item.isUploaded = true }
+    //     })
+    //     await DeviceStorage.update(LOCAL_RECORDS, { "localRecords": tempArr })
+    //     return true;
+    // }
     upLoadRecordInfo = async (oneRecord) => {
         let contentArr = JSON.parse(oneRecord.content);
         for (let index = 0; index < contentArr.length; index++) {
@@ -500,7 +478,7 @@ export default class SelfView extends Component {
      */
     logoutHandler = async () => {
         ///打开对话框 是否确定要退出登录？如果再次登录，本地所有的设备状态都将被重置成待检状态
-        Modal.alert('注意', '是否确定要退出？请确保检测记录已经上传，离线状态下请勿退出', [
+        Modal.alert('注意', '是否确定要退出？请确保巡检记录已经上传，离线状态下请勿退出', [
             {
                 text: '取消'
             },

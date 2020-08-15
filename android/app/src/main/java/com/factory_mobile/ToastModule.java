@@ -293,27 +293,27 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
     ////////////////////////////////////////////
     public static String rootXMLPath = Environment.getExternalStorageDirectory().getPath() + "/巡检记录";
 
-    @ReactMethod
-    public boolean writeToTxt(String content, String fileName, Callback callback) {
-        FileOutputStream fileOutputStream;
-        BufferedWriter bufferedWriter;
-        createDirectory(rootXMLPath);
-        File file = new File(rootXMLPath + "/" + fileName + ".txt");
-        try {
-            file.createNewFile();
-            fileOutputStream = new FileOutputStream(file);
-            bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
-            bufferedWriter.write(content);
-            bufferedWriter.close();
-            callback.invoke(true);
-        } catch (IOException e) {
-            callback.invoke(false);
-            Log.e("报错:", "。。。。。");
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
+//    @ReactMethod
+//    public boolean writeToTxt(String content, String fileName, Callback callback) {
+//        FileOutputStream fileOutputStream;
+//        BufferedWriter bufferedWriter;
+//        createDirectory(rootXMLPath);
+//        File file = new File(rootXMLPath + "/" + fileName + ".txt");
+//        try {
+//            file.createNewFile();
+//            fileOutputStream = new FileOutputStream(file);
+//            bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+//            bufferedWriter.write(content);
+//            bufferedWriter.close();
+//            callback.invoke(true);
+//        } catch (IOException e) {
+//            callback.invoke(false);
+//            Log.e("报错:", "。。。。。");
+//            e.printStackTrace();
+//            return false;
+//        }
+//        return true;
+//    }
 
     /**
      * 创建文件夹
@@ -331,7 +331,7 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
     public void readFromTxt(String fileName, Callback callback) {
         try {
             FileInputStream fis = new FileInputStream(rootXMLPath + "/" + fileName + ".txt");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis, "gb2312"));
             StringBuilder sb = new StringBuilder("");
             String line = null;
             while ((line = br.readLine()) != null) {
@@ -342,6 +342,63 @@ public class ToastModule extends ReactContextBaseJavaModule implements BleConnec
         } catch (Exception e) {
             callback.invoke("");
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 追加写入数据
+     *
+     * @param fileName 文件名称
+     * @param content  序列化的对象数据 String 类型 "{}"
+     * @param callback 回调函数
+     */
+    @ReactMethod
+    public void pushDataToTxt(String fileName, String content, Callback callback) {
+        try {
+            createDirectory(rootXMLPath);
+            final String filePath = rootXMLPath + "/" + fileName + ".txt";
+            // 打开一个随机访问文件流，按读写方式
+            RandomAccessFile randomFile = new RandomAccessFile(filePath, "rw");
+            // 文件长度，字节数
+            long fileLength = randomFile.length();
+            long index;///指针
+            String new_content = "";
+            ///如果txt文件中已经存在 数组数据 如：[{},{},{}]
+            if (fileLength > 0) {
+                index = fileLength - 1;
+                //将content,添加上一个,逗号和]
+                new_content = "," + content + "]";
+            } else {
+                index = fileLength;
+                new_content = "[" + content + "]";
+            }
+            // 将写文件光标指针移到对应的位置。
+            randomFile.seek(index);
+            randomFile.write((new_content).getBytes("gb2312"));
+            randomFile.close();
+            callback.invoke(true);
+        } catch (IOException e) {
+            callback.invoke(false);
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 删除单个文件
+     *
+     * @param fileName
+     * @param callback
+     */
+    @ReactMethod
+    public void deleteFile(String fileName, Callback callback) {
+        String filePath = rootXMLPath + "/" + fileName + ".txt";
+        File file = new File(filePath);
+        if (file.isFile() && file.exists()) {
+            callback.invoke(file.delete());
+        } else {
+            callback.invoke(false);
+
         }
     }
 }

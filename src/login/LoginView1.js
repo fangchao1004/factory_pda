@@ -4,7 +4,7 @@ import { Button, Provider, Toast } from '@ant-design/react-native';
 import NfcManager from 'react-native-nfc-manager';
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO, SAMPLE_INFO } from '../util/DeviceStorage'
-import AppData, { NET_CONNECT, NET_DISCONNECT } from '../util/AppData'
+import AppData, { NET_CONNECT, NET_DISCONNECT, TESTLIST } from '../util/AppData'
 import { checkTimeAllow, bindWithSchemeInfo } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
 import NetInfo from '@react-native-community/netinfo'
@@ -75,6 +75,21 @@ export default class LoginView1 extends Component {
                     <Text>{this.state.value}</Text>
                 </View>
                 <Text style={styles.ver}>{AppData.record[0].version}</Text>
+                {/* <Button onPress={() => {
+                    ToastExample.readFromTxt("测试", (res) => {
+                        console.log('readFromTxt:', res)
+                    })
+                }}>read txt</Button>
+                <Button onPress={() => {
+                    ToastExample.pushDataToTxt("测试", JSON.stringify(TESTLIST), (res) => {
+                        console.log('res:', res)
+                    })
+                }}>push to txt</Button>
+                <Button onPress={() => {
+                    ToastExample.deleteFile("测试", (res) => {
+                        console.log('测试 deleteFile:', res)
+                    })
+                }}>deleteFile</Button> */}
             </Provider>
         );
     }
@@ -111,7 +126,7 @@ export default class LoginView1 extends Component {
      * 贴卡操作，发现的NFC信息
      */
     onTagDiscovered = async (tag) => {
-        console.log('发现新的NFC : tag 数据', tag); ///nfc贴卡后的数据
+        // console.log('发现新的NFC : tag 数据', tag); ///nfc贴卡后的数据
         this.setState({
             tag: tag
         })
@@ -120,7 +135,7 @@ export default class LoginView1 extends Component {
         if (!AppData.loginFlag) {
             this.LoginHandler(tag)
         } else {
-            console.log('已经登录，默认是设备的nfc');
+            console.log('检查到贴卡（巡检）操作，已经登录，默认是设备的nfc');
             if (AppData.isNetConnetion) {///在线
                 ////这里要先去后台查询，如果是设备的NFC,就跳转到报表界面。否则就提示用户该NFC号码，不是设备的NFC号码
                 this.getDeviceInfoFromDB(tag.id)
@@ -132,7 +147,6 @@ export default class LoginView1 extends Component {
                         return;
                     }
                 }
-                console.log('检查到贴卡（巡检）操作。但是没有网络');
                 this.getSomeInfoFromLocalStorage();
             }
         }
@@ -272,13 +286,15 @@ export default class LoginView1 extends Component {
         this.props.navigation.navigate('RegisterDeviceView', { 'nfcid': this.state.tag.id })
     }
     getSomeInfoFromLocalStorage = async () => {
-        let last_deivces_info = await DeviceStorage.get(LAST_DEVICES_INFO)
-        last_deivces_info.lastDevicesInfo.forEach((deviceInfo) => {
+        let list = AppData.last_devices_info;
+        for (let index = 0; index < list.length; index++) {
+            const deviceInfo = list[index];
             if (deviceInfo.nfcid === this.state.tag.id) {
-                // console.log('本地缓存中查询到：', deviceInfo);
+                // console.log('匹配到', deviceInfo);
                 this.props.navigation.navigate('ReportView1', { "deviceInfo": deviceInfo })
+                return;
             }
-        })
+        }
     }
 }
 
