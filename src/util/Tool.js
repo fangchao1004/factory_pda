@@ -1,6 +1,7 @@
 import HttpApi from './HttpApi'
 import moment from 'moment'
 import DeviceStorage, { ALLOW_TIME } from '../util/DeviceStorage';
+
 /**
  *省略文本长度
  * @param {*} text

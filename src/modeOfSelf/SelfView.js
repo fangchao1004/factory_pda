@@ -192,18 +192,13 @@ export default class SelfView extends Component {
                 pickUpMajorFromBugsAndPushNotice(bugsList);///将这些缺陷中专业都提取出来。
                 let newBugsArrhasNetImgUri = await this.changeImgsValue(bugsList);///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
                 newBugsArrhasBugId = await this.uploadbugsToDB(newBugsArrhasNetImgUri); ////先将bugs依次上传到数据库，获取bugid。
-                console.log('bug over')
             }
             if (recordsTxt) {
-                console.log('recordsTxt 1')
                 let recordsList = JSON.parse(recordsTxt)
                 this.setState({ showProgress: true, percent: 0 })
                 let localRecordsAfterFilter = await this.removeRecordsExistBugId(recordsList);///去除那些在我巡检过程中就被消缺的bug
-                console.log('recordsTxt 2')
                 let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);///开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
-                console.log('recordsTxt 3')
                 let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
-                console.log('recordsTxt 4')
                 if (isOver) {
                     Modal.alert('缓存的巡检数据上传完毕', null, [{
                         text: '确定', onPress: () => {
@@ -511,6 +506,7 @@ export default class SelfView extends Component {
             DeviceStorage.delete(USER_INFO);
             DeviceStorage.delete(LOCAL_BUGS);
             DeviceStorage.delete(LOCAL_RECORDS);
+            DeviceStorage.delete(DEVICE_INFO);
             this.props.navigation.navigate('LoginView1')
             AppData.loginFlag = false;
             AppData.username = null;

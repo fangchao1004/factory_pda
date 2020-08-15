@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, Alert, StatusBar, DeviceEventEmitter } f
 import { Button, Provider, Toast } from '@ant-design/react-native';
 import NfcManager from 'react-native-nfc-manager';
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO, SAMPLE_INFO } from '../util/DeviceStorage'
+import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO, SAMPLE_INFO, DEVICE_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT, NET_DISCONNECT, TESTLIST } from '../util/AppData'
 import { checkTimeAllow, bindWithSchemeInfo } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
@@ -21,6 +21,9 @@ export default class LoginView1 extends Component {
         this.checkNfcHandler();
         this.checkAccount();
         this.startMonitorNet();
+        DeviceStorage.delete(LOCAL_BUGS);
+        DeviceStorage.delete(LOCAL_RECORDS);
+        DeviceStorage.delete(DEVICE_INFO);
     }
     componentWillUnmount() {
         console.log('loginView1 卸载');
@@ -67,8 +70,6 @@ export default class LoginView1 extends Component {
                         type='primary'
                         onPress={() => {
                             this.props.navigation.navigate('LoginView2')
-                            DeviceStorage.delete(LOCAL_BUGS);
-                            DeviceStorage.delete(LOCAL_RECORDS);
                         }}>
                         账号密码登录
                     </Button>
