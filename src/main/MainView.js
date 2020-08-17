@@ -10,8 +10,8 @@ import AreaView from '../modeOfArea/AreaView';
 import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
-import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME } from '../util/DeviceStorage';
-import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo } from '../util/Tool'
+import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME, AREA123_INFO } from '../util/DeviceStorage';
+import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo, transfromDataTo3level, sortByOrderKey2 } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
 var isreadyOut = false;///准备退出
 export default class MainView extends Component {
@@ -242,6 +242,12 @@ export default class MainView extends Component {
         if (area12_info) { await DeviceStorage.update(AREA12_INFO, { "area12Info": area12Info }) }
         else { await DeviceStorage.save(AREA12_INFO, { "area12Info": area12Info }) }
 
+        let area123Data = await this.getArea123Info();
+        let afterFixData = sortByOrderKey2(transfromDataTo3level(area123Data));
+        let area123_info = await DeviceStorage.get(AREA123_INFO);
+        if (area123_info) { await DeviceStorage.update(AREA123_INFO, { "area123Info": afterFixData }) }
+        else { await DeviceStorage.save(AREA123_INFO, { "area123Info": afterFixData }) }
+
         let last_devices_info = await this.getLastRecordsByAllDevices();
         let tempResult = bindWithSchemeInfo(last_devices_info, sampleInfo);///给每个设备的相关数据中，对应的某类sample,绑定上对应的方案数据scheme_data
         // console.log('tempResult:', tempResult)
@@ -386,6 +392,22 @@ export default class MainView extends Component {
             HttpApi.obs({ sql }, (res) => {
                 if (res.data.code == 0) { result = res.data.data }
                 resolve(result);
+            })
+        })
+    }
+    getArea123Info = () => {
+        return new Promise((resolve, reject) => {
+            let sql = `select area_1.order_key,area_1.id as area1_id , area_1.name as area1_name, area_2.id as area2_id ,area_2.name as area2_name,area_3.id as area3_id,area_3.name as area3_name from area_1
+            left join (select * from area_2 where effective = 1)area_2 on area_1.id = area_2.area1_id
+            left join (select * from area_3 where effective = 1)area_3 on area_2.id = area_3.area2_id
+            where area_1.effective = 1 and area_1.area0_id = ${AppData.area0_id}
+            order by area_1.order_key,area_1.id`;
+            HttpApi.obs({ sql }, (res) => {
+                let result = [];
+                if (res.data.code === 0) {
+                    result = res.data.data
+                }
+                resolve(result)
             })
         })
     }

@@ -1,9 +1,7 @@
 import React, { Component } from 'react';
-import { View, Text, ToastAndroid, StyleSheet, FlatList, Dimensions, TouchableHighlight } from 'react-native'
-import { Button, Modal, Provider } from '@ant-design/react-native';
-import HttpApi from '../util/HttpApi';
-import AreaTabs from './AreaTabs';
+import { View, Text, StyleSheet, Dimensions } from 'react-native'
 import AreaGroupView from './AreaGroupView';
+import AreaGroupView1 from './AreaGroupView1';
 const screenW = Dimensions.get('window').width;
 
 export default class AreaView extends Component {
@@ -16,7 +14,8 @@ export default class AreaView extends Component {
                 <View>
                     {/* <AreaTabs navigation={this.props.navigation} /> */}
                     {/* <Text>123</Text> */}
-                    <AreaGroupView navigation={this.props.navigation} />
+                    {/* <AreaGroupView navigation={this.props.navigation} /> */}
+                    <AreaGroupView1 navigation={this.props.navigation} />
                 </View>
             </View>
         );

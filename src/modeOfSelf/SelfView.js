@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Dimensions, DeviceEventEmitter, Image, TouchableOpacity } from 'react-native'
 import { InputItem, Toast, Modal, Button, Progress, Portal, WhiteSpace, WingBlank } from '@ant-design/react-native'
-import DeviceStorage, { USER_CARD, USER_INFO, LOCAL_BUGS, LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage'
+import DeviceStorage, { USER_CARD, USER_INFO, LOCAL_BUGS, LOCAL_RECORDS, DEVICE_INFO, AREA123_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT } from '../util/AppData'
 import HttpApi from '../util/HttpApi'
 import { logHandler, pickUpMajorFromBugsAndPushNotice, copyArrayItem } from '../util/Tool';
@@ -458,6 +458,7 @@ export default class SelfView extends Component {
             DeviceStorage.delete(LOCAL_BUGS);
             DeviceStorage.delete(LOCAL_RECORDS);
             DeviceStorage.delete(DEVICE_INFO);
+            DeviceStorage.delete(AREA123_INFO);
             this.props.navigation.navigate('LoginView1')
             AppData.loginFlag = false;
             AppData.username = null;

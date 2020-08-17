@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { View, Text, ScrollView, Dimensions, DeviceEventEmitter, Image } from 'react-native'
-import { Grid, Toast } from '@ant-design/react-native'
+import { View, ScrollView, Dimensions, DeviceEventEmitter, Image } from 'react-native'
+import { Grid } from '@ant-design/react-native'
 import AppData, { UPDATE_DEVICE_INFO } from '../util/AppData'
 import DeviceStorage, { AREA_INFO, DEVICE_INFO } from '../util/DeviceStorage'
 import { omitTextLength, groupBy } from '../util/Tool'

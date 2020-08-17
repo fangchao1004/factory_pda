@@ -307,3 +307,130 @@ export function logHandler(content = '', error = '') {
     let sql = `insert into bug_log (createdAt,content,error,name,version,area0_id) values ('${moment().format('YYYY-MM-DD HH:mm:ss')}','${content}','${error}','${AppData.name}','${AppData.record[0].version || '/'}',${AppData.area0_id})`
     HttpApi.obs({ sql }, (_) => { })
 }
+
+/**
+ *将数据库查询的 数据进行 三层结构转换
+ *123级
+ * 三级的节点都可以被选择 (默认三级都可选)
+ * 只有在添加 巡检点时 只能选择第三级
+ * 在添加缺陷时，三级区域范围都可以被选择
+ * @export
+ * @param {*} area123result
+ * @param {boolean} [all3=true]
+ * @returns
+ */
+export function transfromDataTo3level(area123result, all3 = true) {
+    let tempObj = {};
+    area123result.forEach((item) => {
+        if (tempObj[item.area2_id]) { /// 如果它已经有了某个二级属性
+            if (item.area3_id)
+                tempObj[item.area2_id].children.push({ area3_id: item.area3_id, value: item.area1_id + '-' + item.area2_id + '-' + item.area3_id, title: item.area3_name, key: item.area1_id + '-' + item.area2_id + '-' + item.area3_id })
+        } else {
+            if (item.area3_id) { /// 有三级
+                tempObj[item.area2_id] = {
+                    area2_id: item.area2_id,
+                    title: item.area2_name,
+                    value: item.area1_id + '-' + item.area2_id,
+                    key: item.area1_id + '-' + item.area2_id,
+                    selectable: all3,
+                    children: [{ area3_id: item.area3_id, value: item.area1_id + '-' + item.area2_id + '-' + item.area3_id, title: item.area3_name, key: item.area1_id + '-' + item.area2_id + '-' + item.area3_id }]
+                }
+            }
+            else if (!item.area3_id && item.area2_id) { /// 没有三级
+                tempObj[item.area2_id] = {
+                    area2_id: item.area2_id,
+                    title: item.area2_name,
+                    value: item.area1_id + '-' + item.area2_id,
+                    key: item.area1_id + '-' + item.area2_id,
+                    selectable: all3,
+                    children: []
+                };
+            }
+        }
+    })
+    let jsonList = [];
+    for (let key in tempObj) {
+        jsonList.push(tempObj[key]);
+    }
+    /// jsonList 到此步 二三级已经形成了 所需的数据结构 继续解析 一级区域数据
+    let rootObj = {}
+    area123result.forEach((item) => {
+        rootObj[item.area1_id] = {
+            area1_id: item.area1_id,
+            order_key: item.order_key, ///新增order_key
+            title: item.area1_name,
+            value: item.area1_id + '',
+            key: item.area1_id + '',
+            selectable: all3,
+            children: [],
+        }
+    })
+    let rootList = [];
+    for (let key in rootObj) {
+        rootList.push(rootObj[key]);
+    }
+    rootList.forEach((area1item) => {
+        jsonList.forEach((area2item) => {
+            if (area1item.value === area2item.value.split('-')[0] + '') {
+                area1item.children.push(area2item)
+            }
+        })
+    })
+    return rootList;
+}
+
+/**
+ * 适用与1级及以下
+ * @param {*} result 
+ */
+export function sortByOrderKey2(result) {
+    let copyResult = JSON.parse(JSON.stringify(result))
+    copyResult.sort((x, y) => {
+        return x.order_key - y.order_key
+    })
+    return copyResult
+}
+
+/**
+ * 将三级区间结构数+巡检点信息之间进行绑定
+ * 形成了4级结构
+ * 因为要统计每一层的status2_count 所以无法用递归算法
+ * @export
+ * @param {*} level3List
+ * @param {*} devicesList
+ * @returns
+ */
+export function combinAreaAndDevice(level3List, devicesList) {
+    level3List.forEach((area1Item) => {
+        area1Item.device_count = 0;
+        if (area1Item && area1Item.children.length > 0) {
+            let area2ItemList = area1Item.children;
+            area2ItemList.forEach((area2Item) => {
+                area2Item.device_count = 0;
+                if (area2Item && area2Item.children.length > 0) {
+                    let area3ItemList = area2Item.children;
+                    area3ItemList.forEach((area3Item) => {
+                        area3Item.children = []
+                        area3Item.device_count = 0;
+                        devicesList.forEach((deviceItem) => {
+                            if (area3Item.area3_id === deviceItem.area_id) {
+                                area3Item.device_count = area3Item.device_count + 1;
+                                area2Item.device_count = area2Item.device_count + 1;
+                                area1Item.device_count = area1Item.device_count + 1;
+                                area3Item.children.push(deviceItem)
+                            }
+                        })
+                    })
+                }
+            })
+        }
+    }
+    )
+    return level3List
+}
+export function filterDeviceCount0(list) {
+    let afterFilter = list.filter((item) => {
+        return item.device_count > 0
+    })
+    return afterFilter
+}

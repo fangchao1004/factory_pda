@@ -18,6 +18,9 @@ import RecordDetailView2 from './src/modeOfDeviceDetail/RecordDetailView2'
 import RegisterDeviceView from './src/modeOfRegsiterDevice/RegisterDeviceView'
 import NetInfoView from './src/test/NetInfoView'
 import AreaDeviceView from './src/modeOfArea/AreaDeviceView'
+import AreaGroupView2 from './src/modeOfArea/AreaGroupView2';
+import AreaGroupView3 from './src/modeOfArea/AreaGroupView3';
+import AreaGroupView4Device from './src/modeOfArea/AreaGroupView4Device';
 
 const AppNavigator = createStackNavigator({
   NetInfoView: { screen: NetInfoView },
@@ -30,6 +33,9 @@ const AppNavigator = createStackNavigator({
   RecordDetailView2: { screen: RecordDetailView2 },
   RegisterDeviceView: { screen: RegisterDeviceView },
   AreaDeviceView: { screen: AreaDeviceView },
+  AreaGroupView2: { screen: AreaGroupView2 },
+  AreaGroupView3: { screen: AreaGroupView3 },
+  AreaGroupView4Device: { screen: AreaGroupView4Device },
 },
   {//定义配置
     initialRouteName: 'LoginView1',     //设置初始路由为Home
