@@ -342,6 +342,16 @@ class HttpApi {
             if (f2) { f2(res) }
         })
     }
+
+    static ping(f1) {
+        Axios.post(Testuri + 'find_major', {})
+            .then(function (res) {
+                f1({ flag: true })
+            })
+            .catch(function (err) {
+                f1({ flag: false, err })
+            })
+    }
 }
 
 export default HttpApi;

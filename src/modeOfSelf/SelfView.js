@@ -18,7 +18,6 @@ export default class SelfView extends Component {
             showProgress: false,
             writing: false,
             uploading: false,
-            popVisible: false,
         }
     }
     componentWillReceiveProps() {
@@ -104,8 +103,20 @@ export default class SelfView extends Component {
                             },
                             {
                                 text: '确定', onPress: () => {
-                                    this.setState({ popVisible: false })
-                                    this.readDataFromTxt()
+                                    if (AppData.isNetConnetion) {
+                                        HttpApi.ping((res) => {
+                                            this.setState({ uploading: true })
+                                            if (res.flag) {
+                                                this.readDataFromTxt()
+                                            } else {
+                                                this.setState({ uploading: false })
+                                                logHandler('网络有问题')
+                                                Toast.info('请检查网络是否能正常上网再点击上传', DURINGTIME);
+                                            }
+                                        })
+                                    } else {
+                                        Toast.info('请先连接网络再点击上传');
+                                    }
                                 }
                             }])
                     }}>上传巡检记录</Button>
@@ -155,26 +166,38 @@ export default class SelfView extends Component {
      *从文本中读取数据
      */
     readDataFromTxt = () => {
-        this.setState({ uploading: true })///上传中-按钮一直loading
+        // this.setState({ uploading: true })///上传中-按钮一直loading
         ///先从文件中读取数据，写进缓存
         ToastExample.readFromTxt('bugs', async (bugsTxt) => {
             if (bugsTxt) {
-                console.log('bugsTxt:', bugsTxt)///从文本中读取的bugsTxt
+                // console.log('bugsTxt:', bugsTxt)///从文本中读取的bugsTxt
+                try {
+                    JSON.parse(bugsTxt)
+                } catch (error) {
+                    logHandler(`bugsTxt解析有问题:${error.message}`, bugsTxt)
+                    Modal.alert('注意', '缺陷信息解析有问题，请联系管理员', [
+                        { text: '确定' }])
+                    return
+                }
             }
             ///先从文件中读取数据，写进缓存
             ToastExample.readFromTxt('records', async (recordsTxt) => {
                 if (recordsTxt) {
-                    console.log('recordsTxt:', recordsTxt)///从文本中读取的recordsTxt
+                    // console.log('recordsTxt:', recordsTxt)///从文本中读取的recordsTxt
+                    try {
+                        JSON.parse(recordsTxt)
+                    } catch (error) {
+                        logHandler(`recordsTxt解析有问题:${error.message}`, recordsTxt)
+                        Modal.alert('注意', '巡检信息解析有问题，请联系管理员', [
+                            { text: '确定' }])
+                        return
+                    }
                 }
                 if (!bugsTxt && !recordsTxt) {/// recordsTxt 和 bugsTxt 都不存在时
                     Toast.info('无巡检记录', DURINGTIME);
                     this.setState({ uploading: false });///按钮恢复可点击状态
                 } else if (bugsTxt || recordsTxt) { ///recordsTxt 或 bugsTxt 只要有一个存在 缓存恢复成功,可以点击上传缓存数据
-                    if (AppData.isNetConnetion) {
-                        this.uploadDataFromTxt(bugsTxt, recordsTxt);
-                    } else {
-                        Toast.info('请先连接网络再点击上传');
-                    }
+                    this.uploadDataFromTxt(bugsTxt, recordsTxt);
                 }
             });
         });
@@ -185,6 +208,7 @@ export default class SelfView extends Component {
     }
     /////////////////////////////////////////////////////
     uploadDataFromTxt = async (bugsTxt, recordsTxt) => {
+        logHandler('开始上传');
         try {
             let newBugsArrhasBugId = [];
             if (bugsTxt) {
@@ -202,7 +226,7 @@ export default class SelfView extends Component {
                 let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
                 logHandler(`isOver:${isOver}`);
                 if (isOver) {
-                    Modal.alert('缓存的巡检数据上传完毕', null, [{
+                    Modal.alert('巡检数据上传完毕', null, [{
                         text: '确定', onPress: () => {
                             this.setState({ showProgress: false, uploading: false })
                             this.deleteFile();
@@ -211,7 +235,7 @@ export default class SelfView extends Component {
                     await DeviceStorage.delete(LOCAL_RECORDS)
                 }
             } else if (!recordsTxt && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
-                Modal.alert('缓存的缺陷数据上传完毕', null, [{
+                Modal.alert('缺陷数据上传完毕', null, [{
                     text: '确定', onPress: () => {
                         this.setState({ uploading: false });
                         this.deleteFile();
@@ -223,7 +247,7 @@ export default class SelfView extends Component {
                     { text: '确定' }])
             }
         } catch (error) {
-            logHandler('uploadDataFromTxt():报错', error)
+            logHandler('uploadDataFromTxt():报错', error.message)
             Modal.alert('注意', '上传出错，请联系管理员', [
                 { text: '确定' }])
         } finally {
