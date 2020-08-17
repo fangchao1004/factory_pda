@@ -126,7 +126,7 @@ class LoginView2 extends Component {
                             this.saveUserInfoInStorageHandler();
                             this.saveUserInfoInGloabel(data.data.data[0]);
                             // checkTimeAllow(); 测试用登录成功后打印巡检时间段信息
-                            let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',0,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.username}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
+                            let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',0,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.name}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
                             HttpApi.obs({ sql }) ///添加登录日志记录
                         } else {
                             Toast.fail('用户名密码错误', 1)

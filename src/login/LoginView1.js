@@ -192,7 +192,7 @@ export default class LoginView1 extends Component {
                                     AppData.loginFlag = true;
                                     AppData.username = response.data.data.username;
                                     AppData.user_id = response.data.data.id;
-                                    let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',1,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.username}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
+                                    let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',1,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.name}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
                                     HttpApi.obs({ sql }) ///添加登录日志记录
                                 } else {
                                     console.log('cardid不存在，不允许登录');

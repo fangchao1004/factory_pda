@@ -1,6 +1,7 @@
 import HttpApi from './HttpApi'
 import moment from 'moment'
 import DeviceStorage, { ALLOW_TIME } from '../util/DeviceStorage';
+import AppData from './AppData';
 
 /**
  *省略文本长度
@@ -303,8 +304,6 @@ export function copyArrayItem(array, times = 1) {
 }
 
 export function logHandler(content = '', error = '') {
-    let sql = `insert into bug_log (createdAt,content,error) values ('${moment().format('YYYY-MM-DD HH:mm:ss')}','${content}','${error}')`
-    HttpApi.obs({ sql }, (res) => {
-        // console.log('logHandler res:', res)
-    })
+    let sql = `insert into bug_log (createdAt,content,error,name,version,area0_id) values ('${moment().format('YYYY-MM-DD HH:mm:ss')}','${content}','${error}','${AppData.name}','${AppData.record[0].version || '/'}',${AppData.area0_id})`
+    HttpApi.obs({ sql }, (_) => { })
 }
