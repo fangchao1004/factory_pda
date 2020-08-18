@@ -18,6 +18,9 @@ export default class SelfView extends Component {
             showProgress: false,
             writing: false,
             uploading: false,
+            recordsNum: 0,
+            bugsNum: 0,
+            macAddress: '',
         }
     }
     componentWillReceiveProps() {
@@ -37,6 +40,10 @@ export default class SelfView extends Component {
         this.init();
     }
     init = async () => {
+        ToastExample.getMac((macAddress) => {
+            console.log('macAddress:', macAddress)
+            this.setState({ macAddress })
+        })
         let userInfoData = {}
         let oneUserInfo = await this.getUserInfo();
         if (oneUserInfo[0].level_id) {
@@ -45,8 +52,13 @@ export default class SelfView extends Component {
         } else {
             userInfoData = { ...oneUserInfo[0], nfcid: AppData.userNFC }
         }
+
+        let result = await this.getDataHandler();
+        console.log('init result:', result)
         this.setState({
-            userInfo: userInfoData
+            userInfo: userInfoData,
+            bugsNum: result.bugsList.length,
+            recordsNum: result.recordsList.length,
         })
     }
     getDataFromStorage = () => {
@@ -95,19 +107,26 @@ export default class SelfView extends Component {
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.name : ''}>{'名称:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.username : ''}>{'登录账号:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.levelname : ''}>{'所属部门:'}</InputItem>
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.macAddress}>{'mac地址:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={AppData.record[0].version || ''}>{'版本:'}</InputItem>
-                    <Button type="warning" style={{ marginTop: 16, marginBottom: 32 }} disabled={this.state.uploading} loading={this.state.uploading} onPress={() => {
-                        Modal.alert('注意', '确定上传本地文件数据吗?\n(上传成功后会清除本地文件)', [
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.bugsNum + ''}>{'缺陷数量:'}</InputItem>
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.recordsNum + ''}>{'巡检数量:'}</InputItem>
+                    <Button type="primary" style={{ marginTop: 24 }} onPress={() => { this.init() }}>刷新</Button>
+                    <Button type="warning" style={{ marginTop: 24 }} disabled={this.state.uploading} loading={this.state.uploading} onPress={() => {
+                        Modal.alert('注意', '确定上传本地数据吗?\n(上传成功后会清除本地数据)', [
                             {
                                 text: '取消'
                             },
                             {
                                 text: '确定', onPress: () => {
                                     if (AppData.isNetConnetion) {
-                                        HttpApi.ping((res) => {
-                                            this.setState({ uploading: true })
+                                        HttpApi.ping(async (res) => {
                                             if (res.flag) {
-                                                this.readDataFromTxt()
+                                                // this.readDataFromTxt()
+                                                ///直接读缓存（records 和 bugs） 如果机器崩了缓存还在
+                                                let result = await this.getDataHandler();
+                                                console.log('hahah:', result)
+                                                this.uploadDataFromLocalStorage(result.bugsList, result.recordsList);
                                             } else {
                                                 this.setState({ uploading: false })
                                                 logHandler('网络有问题')
@@ -119,7 +138,18 @@ export default class SelfView extends Component {
                                     }
                                 }
                             }])
-                    }}>上传巡检记录</Button>
+                    }}>上传巡检数据</Button>
+                    {/* <Button type="warning" style={{ marginTop: 24 }} disabled={this.state.uploading} loading={this.state.uploading} onPress={() => {
+                        Modal.alert('注意', '确定要强制删除本地的巡检和缺陷数据吗', [
+                            {
+                                text: '取消'
+                            },
+                            {
+                                text: '强制删除', onPress: () => {
+                                    console.log('强制删除')
+                                }
+                            }])
+                    }}>强制删除巡检数据</Button> */}
                 </View>
             </View >
         );
@@ -165,61 +195,126 @@ export default class SelfView extends Component {
     /**
      *从文本中读取数据
      */
-    readDataFromTxt = () => {
-        // this.setState({ uploading: true })///上传中-按钮一直loading
-        ///先从文件中读取数据，写进缓存
-        ToastExample.readFromTxt('bugs', async (bugsTxt) => {
-            if (bugsTxt) {
-                // console.log('bugsTxt:', bugsTxt)///从文本中读取的bugsTxt
-                try {
-                    JSON.parse(bugsTxt)
-                } catch (error) {
-                    logHandler(`bugsTxt解析有问题:${error.message}`, bugsTxt)
-                    Modal.alert('注意', '缺陷信息解析有问题，请联系管理员', [
-                        { text: '确定' }])
-                    return
-                }
-            }
-            ///先从文件中读取数据，写进缓存
-            ToastExample.readFromTxt('records', async (recordsTxt) => {
-                if (recordsTxt) {
-                    // console.log('recordsTxt:', recordsTxt)///从文本中读取的recordsTxt
-                    try {
-                        JSON.parse(recordsTxt)
-                    } catch (error) {
-                        logHandler(`recordsTxt解析有问题:${error.message}`, recordsTxt)
-                        Modal.alert('注意', '巡检信息解析有问题，请联系管理员', [
-                            { text: '确定' }])
-                        return
-                    }
-                }
-                if (!bugsTxt && !recordsTxt) {/// recordsTxt 和 bugsTxt 都不存在时
-                    Toast.info('无巡检记录', DURINGTIME);
-                    this.setState({ uploading: false });///按钮恢复可点击状态
-                } else if (bugsTxt || recordsTxt) { ///recordsTxt 或 bugsTxt 只要有一个存在 缓存恢复成功,可以点击上传缓存数据
-                    this.uploadDataFromTxt(bugsTxt, recordsTxt);
-                }
-            });
-        });
-    }
-    deleteFile = () => {
-        ToastExample.deleteFile("bugs", (_) => { })
-        ToastExample.deleteFile("records", (_) => { })
-    }
+    // readDataFromTxt = () => {
+    //     // this.setState({ uploading: true })///上传中-按钮一直loading
+    //     ///先从文件中读取数据，写进缓存
+    //     ToastExample.readFromTxt('bugs', async (bugsTxt) => {
+    //         if (bugsTxt) {
+    //             // console.log('bugsTxt:', bugsTxt)///从文本中读取的bugsTxt
+    //             try {
+    //                 JSON.parse(bugsTxt)
+    //             } catch (error) {
+    //                 logHandler(`bugsTxt解析有问题:${error.message}`, bugsTxt)
+    //                 Modal.alert('注意', '缺陷信息解析有问题，请联系管理员', [
+    //                     { text: '确定' }])
+    //                 return
+    //             }
+    //         }
+    //         ///先从文件中读取数据，写进缓存
+    //         ToastExample.readFromTxt('records', async (recordsTxt) => {
+    //             if (recordsTxt) {
+    //                 // console.log('recordsTxt:', recordsTxt)///从文本中读取的recordsTxt
+    //                 try {
+    //                     JSON.parse(recordsTxt)
+    //                 } catch (error) {
+    //                     logHandler(`recordsTxt解析有问题:${error.message}`, recordsTxt)
+    //                     Modal.alert('注意', '巡检信息解析有问题，请联系管理员', [
+    //                         { text: '确定' }])
+    //                     return
+    //                 }
+    //             }
+    //             if (!bugsTxt && !recordsTxt) {/// recordsTxt 和 bugsTxt 都不存在时
+    //                 Toast.info('无巡检记录', DURINGTIME);
+    //                 this.setState({ uploading: false });///按钮恢复可点击状态
+    //             } else if (bugsTxt || recordsTxt) { ///recordsTxt 或 bugsTxt 只要有一个存在 缓存恢复成功,可以点击上传缓存数据
+    //                 this.uploadDataFromTxt(bugsTxt, recordsTxt);
+    //             }
+    //         });
+    //     });
+    // }
+    // deleteFile = () => {
+    //     ToastExample.deleteFile("bugs", (_) => { })
+    //     ToastExample.deleteFile("records", (_) => { })
+    // }
     /////////////////////////////////////////////////////
-    uploadDataFromTxt = async (bugsTxt, recordsTxt) => {
+    // uploadDataFromTxt = async (bugsTxt, recordsTxt) => {
+    //     logHandler('开始上传');
+    //     try {
+    //         let newBugsArrhasBugId = [];
+    //         if (bugsTxt) {
+    //             let bugsList = JSON.parse(bugsTxt)
+    //             pickUpMajorFromBugsAndPushNotice(bugsList);///将这些缺陷中专业都提取出来。
+    //             let newBugsArrhasNetImgUri = await this.changeImgsValue(bugsList);///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
+    //             newBugsArrhasBugId = await this.uploadbugsToDB(newBugsArrhasNetImgUri); ///先将bugs依次上传到数据库，获取bugid。
+    //             logHandler('uploadbugsToDB:完毕')
+    //         }
+    //         if (recordsTxt) {
+    //             let recordsList = JSON.parse(recordsTxt)
+    //             this.setState({ showProgress: true, percent: 0 })///展示进度条组件，当前百分比进度设置成0
+    //             let localRecordsAfterFilter = await this.removeRecordsExistBugId(recordsList);///去除那些在我巡检过程中就被消缺的bug
+    //             let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);///开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
+    //             let isOver = await this.uploadRecordsToDB(newRecordsHasReallyBugId);///只做是否全部上传，不考虑中间有上传失败的情况。会继续上传下一个record
+    //             logHandler(`isOver:${isOver}`);
+    //             if (isOver) {
+    //                 Modal.alert('巡检数据上传完毕', null, [{
+    //                     text: '确定', onPress: () => {
+    //                         this.setState({ showProgress: false, uploading: false })
+    //                         this.deleteFile();
+    //                     }
+    //                 }])
+    //                 await DeviceStorage.delete(LOCAL_RECORDS)
+    //             }
+    //         } else if (!recordsTxt && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
+    //             Modal.alert('缺陷数据上传完毕', null, [{
+    //                 text: '确定', onPress: () => {
+    //                     this.setState({ uploading: false });
+    //                     this.deleteFile();
+    //                 }
+    //             }])
+    //         } else {
+    //             logHandler('出现了其他情况', `newBugsArrhasBugId:${JSON.stringify(newBugsArrhasBugId)}`)
+    //             Modal.alert('注意', '上传失败，请联系管理员', [
+    //                 { text: '确定' }])
+    //         }
+    //     } catch (error) {
+    //         logHandler('uploadDataFromTxt():报错', error.message)
+    //         Modal.alert('注意', '上传出错，请联系管理员', [
+    //             { text: '确定' }])
+    //     } finally {
+    //         this.setState({ showProgress: false, uploading: false })
+    //     }
+    // }
+    //////////////////////////////////////直接从缓存中获取//////////////////////////////////////
+    /**
+     *直接从缓存中获取
+     */
+    getDataHandler = async () => {
+        let records = await DeviceStorage.get(LOCAL_RECORDS)
+        let bugs = await DeviceStorage.get(LOCAL_BUGS)
+        let bugsList = [];
+        let recordsList = [];
+        if (records) { recordsList = records['localRecords'] }
+        if (bugs) { bugsList = bugs['localBugs'] }
+        return { bugsList, recordsList }
+    }
+    uploadDataFromLocalStorage = async (bugsList, recordsList) => {
+        console.log('bugsList:', bugsList)
+        console.log('recordsList:', recordsList)
+        // return;
+        // let recordsList = copyArrayItem(recordsListA, 100)
+        // console.log('recordsList:', recordsList)
         logHandler('开始上传');
+        this.setState({ uploading: true })
         try {
             let newBugsArrhasBugId = [];
-            if (bugsTxt) {
-                let bugsList = JSON.parse(bugsTxt)
+            if (bugsList.length > 0) {
                 pickUpMajorFromBugsAndPushNotice(bugsList);///将这些缺陷中专业都提取出来。
                 let newBugsArrhasNetImgUri = await this.changeImgsValue(bugsList);///先将其中的imgs。进行转化。从本地文件路径。转化成网络的uri
                 newBugsArrhasBugId = await this.uploadbugsToDB(newBugsArrhasNetImgUri); ///先将bugs依次上传到数据库，获取bugid。
-                logHandler('uploadbugsToDB:完毕')
+                logHandler('【缺陷】上传完毕')
+                await DeviceStorage.delete(LOCAL_BUGS)
             }
-            if (recordsTxt) {
-                let recordsList = JSON.parse(recordsTxt)
+            if (recordsList.length > 0) {
                 this.setState({ showProgress: true, percent: 0 })///展示进度条组件，当前百分比进度设置成0
                 let localRecordsAfterFilter = await this.removeRecordsExistBugId(recordsList);///去除那些在我巡检过程中就被消缺的bug
                 let newRecordsHasReallyBugId = await this.linkBugsAndRecords(newBugsArrhasBugId, localRecordsAfterFilter);///开始bugs和records的整合。目的是将bugsId正确的填充到 bug_id = -1 的地方。生成新的合理的records。
@@ -228,40 +323,46 @@ export default class SelfView extends Component {
                 if (isOver) {
                     Modal.alert('巡检数据上传完毕', null, [{
                         text: '确定', onPress: () => {
+                            this.init();
                             this.setState({ showProgress: false, uploading: false })
-                            this.deleteFile();
                         }
                     }])
                     await DeviceStorage.delete(LOCAL_RECORDS)
                 }
-            } else if (!recordsTxt && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
-                Modal.alert('缺陷数据上传完毕', null, [{
-                    text: '确定', onPress: () => {
-                        this.setState({ uploading: false });
-                        this.deleteFile();
-                    }
-                }])
+            } else if (recordsList.length === 0 && newBugsArrhasBugId.length > 0) { ///如果只有缺陷数据,没有巡检数据
+                Modal.alert('缺陷数据上传完毕', null, [{ text: '确定', onPress: () => { this.init(); this.setState({ uploading: false }) } }])
+                this.setState({ showProgress: false, uploading: false })
+            } else if (recordsList.length === 0 && newBugsArrhasBugId.length === 0) {
+                logHandler('巡检记录和缺陷记录都不存在')
+                Modal.alert('注意', '巡检记录和缺陷记录都不存在', [{ text: '确定' }])
+                this.setState({ showProgress: false, uploading: false })
             } else {
                 logHandler('出现了其他情况', `newBugsArrhasBugId:${JSON.stringify(newBugsArrhasBugId)}`)
-                Modal.alert('注意', '上传失败，请联系管理员', [
-                    { text: '确定' }])
+                Modal.alert('注意', '上传失败，请联系管理员', [{ text: '确定' }])
+                this.setState({ showProgress: false, uploading: false })
             }
         } catch (error) {
-            logHandler('uploadDataFromTxt():报错', error.message)
-            Modal.alert('注意', '上传出错，请联系管理员', [
-                { text: '确定' }])
+            logHandler('uploadDataFromLocalStorage():报错', error.message)
+            Modal.alert('注意', '上传出错，请联系管理员', [{ text: '确定' }])
+            this.setState({ showProgress: false, uploading: false })
         } finally {
             this.setState({ showProgress: false, uploading: false })
         }
     }
-
+    //////////////////////////////////////直接从缓存中获取//////////////////////////////////////
     uploadRecordsToDB = async (finallyRecordsArr) => {
         let count = 0;
         for (let index = 0; index < finallyRecordsArr.length; index++) {
             count = index;
             const oneRecord = finallyRecordsArr[index];
-            if (!oneRecord.isUploaded) {
-                await this.upLoadRecordInfo(oneRecord)
+            if (!(oneRecord.isUploaded)) {
+                let uploadResult = await this.upLoadRecordInfo(oneRecord);
+                if (uploadResult.flag) {
+                    await this.updateLocalRecordsInfo(oneRecord)
+                } else {
+                    // console.log('上传失败的对象是：', oneRecord, uploadResult.error)///这里可以想办法，上传到后台
+                    logHandler(`上传失败的对象是:${JSON.stringify(oneRecord)}`, JSON.stringify(uploadResult.error || []))
+                }
             }
             this.setState({ percent: parseInt(((count + 1) / finallyRecordsArr.length) * 100) })
         }
@@ -269,6 +370,17 @@ export default class SelfView extends Component {
             logHandler(`【巡检】数据全部上传`)
             return true
         } else { return false }
+    }
+    ///改变LOCAL_RECORDS中这个record的状态 isUploaded = true;
+    updateLocalRecordsInfo = async (oneRecord) => {
+        let records = await DeviceStorage.get(LOCAL_RECORDS);
+        let tempArr = JSON.parse(JSON.stringify(records.localRecords));
+        tempArr.forEach((item) => {
+            if (item.device_id === oneRecord.device_id && item.checkedAt === oneRecord.checkedAt) { item.isUploaded = true }
+        })
+        console.log('改变LOCAL_RECORDS中这个record的状态 isUploaded = true; tempArr:', tempArr)
+        await DeviceStorage.update(LOCAL_RECORDS, { "localRecords": tempArr })
+        return true;
     }
     upLoadRecordInfo = async (oneRecord) => {
         let contentArr = JSON.parse(oneRecord.content);
@@ -455,8 +567,6 @@ export default class SelfView extends Component {
             //清除本地存储的card信息
             DeviceStorage.delete(USER_CARD);
             DeviceStorage.delete(USER_INFO);
-            DeviceStorage.delete(LOCAL_BUGS);
-            DeviceStorage.delete(LOCAL_RECORDS);
             DeviceStorage.delete(DEVICE_INFO);
             DeviceStorage.delete(AREA123_INFO);
             this.props.navigation.navigate('LoginView1')

@@ -293,13 +293,14 @@ export default class ReportView1 extends Component {
             tempArr.push(recordData);
             await DeviceStorage.save(LOCAL_RECORDS, { "localRecords": tempArr })
         }
-        ToastExample.pushDataToTxt("records", JSON.stringify(recordData), (res) => {
-            if (res) {
-                Toast.success('本次点检记录本地存储成功', 1);
-            } else {
-                Toast.fail('本地存储失败，请检查是否开启存储权限', 3);
-            }
-        })
+        ///先不存在于文件中
+        // ToastExample.pushDataToTxt("records", JSON.stringify(recordData), (res) => {
+        //     if (res) {
+        //         Toast.success('本次点检记录本地存储成功', 1);
+        //     } else {
+        //         Toast.fail('本地存储失败，请检查是否开启存储权限', 3);
+        //     }
+        // })
         ///缓存成功以后，。要根据tempArr（存储了各个设备的record的数组数据）去改变本地的设备信息副本中的设备状态。
         if (tempArr.length > 0) {
             this.changeLocalDeviceStatusByTempRecordArry(tempArr);
@@ -326,7 +327,7 @@ export default class ReportView1 extends Component {
             })
             ////再将替换后的数据重新 放进本地缓存中。
             await DeviceStorage.save(DEVICE_INFO, { "deviceInfo": tempDeviceArr });
-            await getAreaWithDeviceTree();
+            await getAreaWithDeviceTree();///更新区域和设备形成的JSON树
             ////等这完成后。再发事件。通知DeviceTabs和AreaTabs界面去缓存中获取最新的设备信息。（主要时设备的状态变化）
             DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
         }

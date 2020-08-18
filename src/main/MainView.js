@@ -11,7 +11,7 @@ import ReportIndependentView from "../modeOfReport/ReportIndependentView";
 import NetInfo from '@react-native-community/netinfo'
 import HttpApi from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, USER_INFO, NFC_INFO, DEVICE_INFO, SAMPLE_INFO, LOCAL_BUGS, LOCAL_RECORDS, MAJOR_INFO, LAST_DEVICES_INFO, AREA_INFO, AREA12_INFO, BUG_LEVEL_INFO, ALLOW_TIME, AREA123_INFO } from '../util/DeviceStorage';
-import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo, transfromDataTo3level, sortByOrderKey2 } from '../util/Tool'
+import { transfromDataTo2level, findDurtion, filterDevicesByDateScheme, bindWithSchemeInfo, transfromDataTo3level, sortByOrderKey2, getAreaWithDeviceTree } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
 var isreadyOut = false;///准备退出
 export default class MainView extends Component {
@@ -145,15 +145,13 @@ export default class MainView extends Component {
                         text: '取消', onPress: () => { isreadyOut = false; return; }
                     },
                     {
-                        text: '确定退出', onPress: () => {
+                        text: '强制退出', onPress: () => {
                             isreadyOut = false;
                             AppData.loginFlag = false;
                             AppData.username = null;
                             AppData.userNFC = null;
                             DeviceStorage.delete(USER_CARD);
                             DeviceStorage.delete(USER_INFO);
-                            DeviceStorage.delete(LOCAL_BUGS);
-                            DeviceStorage.delete(LOCAL_RECORDS);
                             BackHandler.exitApp();
                             return;
                         }
@@ -263,31 +261,34 @@ export default class MainView extends Component {
 
         if (deviceInfoFilter.length === 0) { Modal.alert('当前时间段内需要巡检的设备列表为空', '如确认数据缺失，则可点击重新获取按钮后等待数秒；若仍为空或无反应则请检查网络环境或重新启动应用', [{ text: '重新获取', onPress: () => { this.localDataSave() } }, { text: '取消' }]) }
         else {
-            Modal.alert('设备数据字典本地备份完成', '可以进行离线打点操作', [{ text: '确定' }])
+            Modal.alert('初始化完成', '可以进行离线打点操作', [{ text: '确定' }])
         }
         ///获取文件中的records数据，再去通过这个数据去更新本地设备的状态信息。
-        ToastExample.readFromTxt("records", (res) => {
-            // console.log('重新登录后获取records:', res)
-            if (res) {
-                let recordsList = JSON.parse(res);
-                this.changeLocalDeviceStatusByTempRecordArry(recordsList);
-            } else {
-                DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
-            }
-        })
+        // ToastExample.readFromTxt("records", (res) => {
+        //     // console.log('重新登录后获取records:', res)
+        //     if (res) {
+        //         let recordsList = JSON.parse(res);
+        //         this.changeLocalDeviceStatusByTempRecordArry(recordsList);
+        //     } else {
+        //         DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
+        //     }
+        // })
+        this.changeLocalDeviceStatusByTempRecordArry();
         ///设备信息 重置好后，通知 DeviceTabs 去获取。
         // console.log('设备信息 重置好后，通知 DeviceTabs 去获取。111'); ///这里没执行。上方代码有误
         // DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
     }
 
-    changeLocalDeviceStatusByTempRecordArry = async (tempArr) => {
+    changeLocalDeviceStatusByTempRecordArry = async () => {
+        let records = await DeviceStorage.get(LOCAL_RECORDS);
         let deviceInfo = await DeviceStorage.get(DEVICE_INFO);
-        if (deviceInfo) {
+        // console.log('records:', records)
+        if (deviceInfo && records) {
             // console.log('待与本地数据合并的recordArr:', tempArr);
             // console.log('本地的设备数据副本a:', deviceInfo.deviceInfo);
             let tempDeviceArr = JSON.parse(JSON.stringify(deviceInfo.deviceInfo));
             ////遍历待上传的record数组。
-            tempArr.forEach((oneRecord) => {
+            records.localRecords.forEach((oneRecord) => {
                 tempDeviceArr.forEach((oneDevice) => {
                     if (oneDevice.id === oneRecord.device_id) { ////如果找到record和device的匹配项
                         oneDevice.status = oneRecord.device_status ////将record的device_status替换到设备的status
@@ -297,9 +298,10 @@ export default class MainView extends Component {
             })
             ////再将替换后的数据重新 放进本地缓存中。
             await DeviceStorage.save(DEVICE_INFO, { "deviceInfo": tempDeviceArr });
-            ////等这完成后。再发事件。通知DeviceTabs和AreaTabs界面去缓存中获取最新的设备信息。（主要时设备的状态变化）
-            DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
-        }
+        }///到此设备列表模块已经恢复到之前状态
+        getAreaWithDeviceTree();///到此设备区域模块已经恢复到之前状态
+        ////等这完成后。再发事件。通知DeviceTabs和AreaTabs界面去缓存中获取最新的设备信息。（主要时设备的状态变化）
+        DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
     }
 
     getNeedDeviceList = (allowTimeList) => {

@@ -21,9 +21,9 @@ export default class LoginView1 extends Component {
         this.checkNfcHandler();
         this.checkAccount();
         this.startMonitorNet();
-        DeviceStorage.delete(LOCAL_BUGS);
-        DeviceStorage.delete(LOCAL_RECORDS);
-        DeviceStorage.delete(DEVICE_INFO);
+        // DeviceStorage.delete(LOCAL_BUGS);
+        // DeviceStorage.delete(LOCAL_RECORDS);
+        // DeviceStorage.delete(DEVICE_INFO);
     }
     componentWillUnmount() {
         console.log('loginView1 卸载');
