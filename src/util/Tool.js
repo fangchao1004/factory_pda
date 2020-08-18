@@ -1,6 +1,6 @@
 import HttpApi from './HttpApi'
 import moment from 'moment'
-import DeviceStorage, { ALLOW_TIME } from '../util/DeviceStorage';
+import DeviceStorage, { ALLOW_TIME, AREA123_INFO, DEVICE_INFO } from '../util/DeviceStorage';
 import AppData from './AppData';
 
 /**
@@ -403,20 +403,28 @@ export function sortByOrderKey2(result) {
 export function combinAreaAndDevice(level3List, devicesList) {
     level3List.forEach((area1Item) => {
         area1Item.device_count = 0;
+        area1Item.finish_count = 0;
         if (area1Item && area1Item.children.length > 0) {
             let area2ItemList = area1Item.children;
             area2ItemList.forEach((area2Item) => {
                 area2Item.device_count = 0;
+                area2Item.finish_count = 0;
                 if (area2Item && area2Item.children.length > 0) {
                     let area3ItemList = area2Item.children;
                     area3ItemList.forEach((area3Item) => {
                         area3Item.children = []
                         area3Item.device_count = 0;
+                        area3Item.finish_count = 0;
                         devicesList.forEach((deviceItem) => {
                             if (area3Item.area3_id === deviceItem.area_id) {
                                 area3Item.device_count = area3Item.device_count + 1;
                                 area2Item.device_count = area2Item.device_count + 1;
                                 area1Item.device_count = area1Item.device_count + 1;
+                                if (deviceItem.status !== 3) {
+                                    area3Item.finish_count = area3Item.finish_count + 1;
+                                    area2Item.finish_count = area2Item.finish_count + 1;
+                                    area1Item.finish_count = area1Item.finish_count + 1;
+                                }
                                 area3Item.children.push(deviceItem)
                             }
                         })
@@ -433,4 +441,10 @@ export function filterDeviceCount0(list) {
         return item.device_count > 0
     })
     return afterFilter
+}
+export async function getAreaWithDeviceTree() {
+    let data = await DeviceStorage.get(AREA123_INFO);
+    let deviceData = await DeviceStorage.get(DEVICE_INFO);
+    let result1 = combinAreaAndDevice(data.area123Info, deviceData.deviceInfo);
+    AppData.areaDeviceTree = result1;
 }

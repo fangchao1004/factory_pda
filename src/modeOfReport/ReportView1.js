@@ -7,7 +7,7 @@ import DeviceStorage, { LOCAL_RECORDS, DEVICE_INFO } from '../util/DeviceStorage
 import ToastExample from '../util/ToastExample'
 import moment from 'moment'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto';
-import { filterSampleInfoBySchemeData } from '../util/Tool'
+import { filterSampleInfoBySchemeData, getAreaWithDeviceTree } from '../util/Tool'
 
 const screenW = Dimensions.get('window').width;
 const screenH = Dimensions.get('window').height;
@@ -326,6 +326,7 @@ export default class ReportView1 extends Component {
             })
             ////再将替换后的数据重新 放进本地缓存中。
             await DeviceStorage.save(DEVICE_INFO, { "deviceInfo": tempDeviceArr });
+            await getAreaWithDeviceTree();
             ////等这完成后。再发事件。通知DeviceTabs和AreaTabs界面去缓存中获取最新的设备信息。（主要时设备的状态变化）
             DeviceEventEmitter.emit(UPDATE_DEVICE_INFO);
         }

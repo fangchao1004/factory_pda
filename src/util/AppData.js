@@ -2,6 +2,7 @@
  * 全局数据
  */
 export default object = {
+    areaDeviceTree: [],///区域和设备形成的JSON树
     last_devices_info: [],
     is_all_time: 0,
     area0_id: null,
