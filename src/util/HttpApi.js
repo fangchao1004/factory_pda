@@ -1,6 +1,6 @@
 import Axios from 'axios';
 
-const Testuri2 = 'http://ixiaomu.cn:3010/'///小木服务器地址 3010测试环境 3008正式环境
+const Testuri2 = 'http://ixiaomu.cn:3008/'///小木服务器地址 3010测试环境 3008正式环境
 const Testuri = Testuri2;
 export const SERVER_URL = Testuri;
 

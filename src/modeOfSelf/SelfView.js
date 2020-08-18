@@ -41,7 +41,6 @@ export default class SelfView extends Component {
     }
     init = async () => {
         ToastExample.getMac((macAddress) => {
-            console.log('macAddress:', macAddress)
             this.setState({ macAddress })
         })
         let userInfoData = {}
@@ -54,7 +53,6 @@ export default class SelfView extends Component {
         }
 
         let result = await this.getDataHandler();
-        console.log('init result:', result)
         this.setState({
             userInfo: userInfoData,
             bugsNum: result.bugsList.length,
@@ -125,7 +123,6 @@ export default class SelfView extends Component {
                                                 // this.readDataFromTxt()
                                                 ///直接读缓存（records 和 bugs） 如果机器崩了缓存还在
                                                 let result = await this.getDataHandler();
-                                                console.log('hahah:', result)
                                                 this.uploadDataFromLocalStorage(result.bugsList, result.recordsList);
                                             } else {
                                                 this.setState({ uploading: false })
@@ -298,8 +295,8 @@ export default class SelfView extends Component {
         return { bugsList, recordsList }
     }
     uploadDataFromLocalStorage = async (bugsList, recordsList) => {
-        console.log('bugsList:', bugsList)
-        console.log('recordsList:', recordsList)
+        // console.log('bugsList:', bugsList)
+        // console.log('recordsList:', recordsList)
         // return;
         // let recordsList = copyArrayItem(recordsListA, 100)
         // console.log('recordsList:', recordsList)
@@ -360,7 +357,6 @@ export default class SelfView extends Component {
                 if (uploadResult.flag) {
                     await this.updateLocalRecordsInfo(oneRecord)
                 } else {
-                    // console.log('上传失败的对象是：', oneRecord, uploadResult.error)///这里可以想办法，上传到后台
                     logHandler(`上传失败的对象是:${JSON.stringify(oneRecord)}`, JSON.stringify(uploadResult.error || []))
                 }
             }
@@ -378,7 +374,7 @@ export default class SelfView extends Component {
         tempArr.forEach((item) => {
             if (item.device_id === oneRecord.device_id && item.checkedAt === oneRecord.checkedAt) { item.isUploaded = true }
         })
-        console.log('改变LOCAL_RECORDS中这个record的状态 isUploaded = true; tempArr:', tempArr)
+        // console.log('改变LOCAL_RECORDS中这个record的状态 isUploaded = true; tempArr:', tempArr)
         await DeviceStorage.update(LOCAL_RECORDS, { "localRecords": tempArr })
         return true;
     }
