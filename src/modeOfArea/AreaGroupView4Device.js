@@ -46,7 +46,7 @@ export default class AreaGroupView4Device extends Component {
         if (findItem.children) {
             let areaData = findItem.children.map((item) => {
                 return {
-                    text: omitTextLength(item.name, 20), ...item,
+                    text: omitTextLength(item.name, 15), ...item,
                     icon: <Image style={{ width: 32, height: 32 }} source={ImgSourceObj[item.status]} />,
                     status: item.status === 1 ? '正常' : (item.status === 2 ? '故障' : '待检')
                 }

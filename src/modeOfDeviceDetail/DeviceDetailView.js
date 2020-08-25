@@ -45,18 +45,17 @@ class DeviceDetailView extends Component {
         })
     }
     getUserData = () => {
-        let p = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             HttpApi.getUserInfo({}, (res) => {
                 if (res.data.code === 0) {
                     resolve(res.data.data)
                 }
             })
         })
-        return p;
     }
     getRecordInfo = (device_id) => {
-        let p = new Promise((resolve, reject) => {
-            let sql = `select * from records where effective = 1 and device_id = ${device_id} limit 100`
+        return new Promise((resolve, reject) => {
+            let sql = `select * from records where effective = 1 and device_id = ${device_id} order by id desc limit 200`
             HttpApi.obs({ sql }, (res) => {
                 let result = [];
                 if (res.data.code === 0) {
@@ -65,10 +64,9 @@ class DeviceDetailView extends Component {
                 resolve(result);
             })
         })
-        return p;
     }
     findUserName = (recordItem) => {
-        let p = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let result = ''
             user_data.forEach((item) => {
                 if (item.id === recordItem.user_id) {
@@ -77,7 +75,6 @@ class DeviceDetailView extends Component {
             })
             resolve(result)
         })
-        return p;
     }
     transfromConstruct = async (data) => {
         for (let item of data) {
@@ -159,7 +156,7 @@ class DeviceDetailView extends Component {
                                 format="YYYY-MM-DD"
                             >
                                 <List.Item arrow="horizontal">
-                                    <Button type={'primary'} style={{ width: 110, height: 30 }} onPress={() => {
+                                    <Button type={'primary'} size="small" style={{ width: 100 }} onPress={() => {
                                         if (AppData.isNetConnetion) {
                                             this.setState({
                                                 timeValue: null,
@@ -172,7 +169,7 @@ class DeviceDetailView extends Component {
                         </List>
                     </View>
                     <View style={styles.bottomView}>
-                        <Text style={{ fontSize: 16, marginBottom: 10, color: '#41A8FF' }}>设备状态历史记录</Text>
+                        <Text style={{ fontSize: 16, marginBottom: 10, marginTop: 10 }}>设备状态历史记录[最近200条]</Text>
 
                         <View style={styles.recordList}>
                             {this.state.deviceRecordDataArr.length > 0 ?

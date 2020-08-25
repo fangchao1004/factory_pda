@@ -42,7 +42,7 @@ export default class AreaGroupView3 extends Component {
             let areaData = afterFilter.map((item) => {
                 let imgSrc = item.finish_count === item.device_count ? require('../../assets/area_1.png') : require('../../assets/area_0.png')
                 return {
-                    text: omitTextLength(item.title, 20), ...item,
+                    text: omitTextLength(item.title, 15), ...item,
                     icon: <Image style={{ width: 32, height: 32 }} source={imgSrc} />,
                 }
             })
