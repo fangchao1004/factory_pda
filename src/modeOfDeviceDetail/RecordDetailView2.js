@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView, Image } from 'react-native'
 import { Checkbox, TextareaItem, List, Picker, Provider } from '@ant-design/react-native'
-import HttpApi, { SERVER_URL } from '../util/HttpApi';
+import HttpApi, { URL_OBJ } from '../util/HttpApi';
 import DeviceStorage, { MAJOR_INFO } from '../util/DeviceStorage'
 import moment from 'moment'
 const CheckboxItem = Checkbox.CheckboxItem;
@@ -167,12 +167,12 @@ class RecordDetailView2 extends Component {
     }
     getImages = (params) => {
         // console.log('params:', params);
-        let pic = {
-            uri: 'https://ss0.bdstatic.com/94oJfD_bAAcT8t7mm9GUKT-xh_/timg?image&quality=100&size=b4000_4000&sec=1559128999&di=420e296d35d11262f971f1de40877d7d&src=http://pic2.52pk.com/files/allimg/090626/1553504U2-2.jpg'
-        };
+        // let pic = {
+        //     uri: 'https://ss0.bdstatic.com/94oJfD_bAAcT8t7mm9GUKT-xh_/timg?image&quality=100&size=b4000_4000&sec=1559128999&di=420e296d35d11262f971f1de40877d7d&src=http://pic2.52pk.com/files/allimg/090626/1553504U2-2.jpg'
+        // };
         let ImgsArr = []
         params.forEach((imgUri, index) => {
-            let imgP = { uri: SERVER_URL + 'get_jpg?uuid=' + imgUri }
+            let imgP = { uri: URL_OBJ.MAIN_URL + 'get_jpg?uuid=' + imgUri }
             ImgsArr.push(<Image key={index + ''} source={imgP} style={{ width: screenW * 0.9, height: screenW * 0.9 / 3 * 4, marginTop: 10 }} />);
         })
         return (<View style={{ marginTop: 20, width: screenW * 0.9 }}>

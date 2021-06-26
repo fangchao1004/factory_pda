@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Dimensions, Image } from 'react-native'
 import { Checkbox, TextareaItem, Button, List, Provider, Portal, Toast, Picker } from '@ant-design/react-native'
 import AppData from '../util/AppData'
 import SelectPhoto from '../modeOfPhoto/SelectPhoto'
-import HttpApi, { SERVER_URL } from '../util/HttpApi';
+import HttpApi, { URL_OBJ } from '../util/HttpApi';
 import DeviceStorage, { LOCAL_BUGS, MAJOR_INFO, BUG_LEVEL_INFO } from '../util/DeviceStorage';
 import { pushNoticeHandler } from '../util/Tool'
 import ToastExample from '../util/ToastExample'
@@ -269,7 +269,7 @@ class ReportView2 extends Component {
         this.state.fromData.imgs.forEach((imgUri, index) => {
             let imgP = null
             if (AppData.isNetConnetion && imgUri.indexOf('file:/') === -1) {
-                imgP = { uri: SERVER_URL + 'get_jpg?uuid=' + imgUri }
+                imgP = { uri: URL_OBJ.MAIN_URL + 'get_jpg?uuid=' + imgUri }
             } else {
                 imgP = { uri: imgUri }
             }

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Dimensions, DeviceEventEmitter, Image, TouchableOpacity } from 'react-native'
-import { InputItem, Toast, Modal, Button, Progress, Portal, WhiteSpace, WingBlank } from '@ant-design/react-native'
+import { InputItem, Toast, Modal, Button, Progress, Portal, WhiteSpace, WingBlank, Icon } from '@ant-design/react-native'
 import DeviceStorage, { USER_CARD, USER_INFO, LOCAL_BUGS, LOCAL_RECORDS, DEVICE_INFO, AREA123_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT } from '../util/AppData'
 import HttpApi from '../util/HttpApi'
@@ -103,10 +103,15 @@ export default class SelfView extends Component {
                         null
                     }
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.name : ''}>{'名称:'}</InputItem>
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.remark : ''}>{'备注:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.username : ''}>{'登录账号:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.userInfo ? this.state.userInfo.levelname : ''}>{'所属部门:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.macAddress}>{'mac地址:'}</InputItem>
-                    <InputItem type={'text'} labelNumber={6} editable={false} value={AppData.record[0].version || ''}>{'版本:'}</InputItem>
+                    <InputItem type={'text'} labelNumber={6} editable={false} value={AppData.record[0].version || ''} extra={<Icon color='#1890ff' name={'bars'} onPress={() => {
+                        Modal.alert('此次更新', AppData.record[0].des, [
+                            { text: '确定' },
+                        ]);
+                    }} />}>{'版本:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.bugsNum + ''}>{'缺陷数量:'}</InputItem>
                     <InputItem type={'text'} labelNumber={6} editable={false} value={this.state.recordsNum + ''}>{'巡检数量:'}</InputItem>
                     <Button type="primary" style={{ marginTop: 24 }} onPress={() => { this.init() }}>刷新</Button>

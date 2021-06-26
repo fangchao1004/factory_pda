@@ -1,10 +1,18 @@
 import Axios from 'axios';
 
-const Testuri2 = 'http://ixiaomu.cn:3008/'///小木服务器地址 3010测试环境 3008正式环境
-const Testuri = Testuri2;
-export const SERVER_URL = Testuri;
+/// old
+// const Testuri2 = 'http://ixiaomu.cn:3008/'///小木服务器地址 3010测试环境 3008正式环境
+// const Testuri = Testuri2;
+// export const SERVER_URL = Testuri;
+
+export const CONFIG_URL = 'http://ixiaomu.cn:3333/'///配置服务器
+export const URL_OBJ = { MAIN_URL: '' }
 
 class HttpApi {
+    static getConfigURLTable() {
+        let sql = `select * from url_address_table where id in (2) `
+        return Axios.post(CONFIG_URL + 'obs', { sql })
+    }
     /**
      * obs操作---慎用
      * @param {*} params 
@@ -12,7 +20,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static obs(params, f1, f2) {
-        Axios.post(Testuri + 'obs', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'obs', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -26,7 +34,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static loginByUserInfo(params, f1, f2) {
-        Axios.post(Testuri + 'loginByUserInfo', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'loginByUserInfo', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -39,7 +47,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static loginByNFC(params, f1, f2) {
-        Axios.post(Testuri + 'loginByNFC', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'loginByNFC', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -52,7 +60,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getDeviceInfoByNFC(params, f1, f2) {
-        Axios.post(Testuri + 'getDeviceInfoByNFC', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'getDeviceInfoByNFC', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -65,7 +73,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getDeviceSampleByTypeId(params, f1, f2) {
-        Axios.post(Testuri + 'find_sample', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_sample', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -78,7 +86,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static upLoadDeviceRecord(params, f1, f2) {
-        Axios.post(Testuri + 'insert_record', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'insert_record', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -93,7 +101,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static updateDeviceStatus(query, update, f1, f2) {
-        Axios.post(Testuri + 'update_device', { query, update: update.$set }).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'update_device', { query, update: update.$set }).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -106,7 +114,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getUserInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_user', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_user', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -119,7 +127,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getDeviceInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_device', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_device', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -132,7 +140,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getDeviceTypeInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_device_type', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_device_type', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -145,7 +153,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getAreaInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_area', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_area', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -158,7 +166,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getNFCInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_nfc', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_nfc', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -171,7 +179,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static insertNFCInfo(params, f1, f2) {
-        Axios.post(Testuri + 'insert_nfc', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'insert_nfc', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -184,7 +192,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static removeNFCInfo(params, f1, f2) {
-        Axios.post(Testuri + 'remove_nfc', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'remove_nfc', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -197,7 +205,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static insertDeviceInfo(params, f1, f2) {
-        Axios.post(Testuri + 'insert_device', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'insert_device', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -210,7 +218,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getRecordInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_record', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_record', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -223,7 +231,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getLevelInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_level', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_level', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -236,7 +244,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static uploadProblems(params, f1, f2) {
-        Axios.post(Testuri + 'insert_problem', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'insert_problem', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -250,7 +258,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static uploadBugs(params, f1, f2) {
-        Axios.post(Testuri + 'insert_bug', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'insert_bug', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -264,7 +272,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getBugs(params, f1, f2) {
-        Axios.post(Testuri + 'find_bug', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_bug', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -278,7 +286,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static removeBugs(params, f1, f2) {
-        Axios.post(Testuri + 'remove_bug', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'remove_bug', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -292,7 +300,7 @@ class HttpApi {
      * @param {*} f2 
      */
     static getMajorInfo(params, f1, f2) {
-        Axios.post(Testuri + 'find_major', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_major', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -300,7 +308,7 @@ class HttpApi {
     }
 
     static getBugLevel(params, f1, f2) {
-        Axios.post(Testuri + 'find_bug_level', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'find_bug_level', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -317,7 +325,7 @@ class HttpApi {
         let config = {
             headers: { 'Content-Type': 'multipart/form-data;boundary=' + new Date().getTime() }
         }
-        Axios.post(Testuri + 'upload_file', params, config).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'upload_file', params, config).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -325,7 +333,7 @@ class HttpApi {
     }
 
     static getSampleWithSchemeInfo(params, f1, f2) {
-        Axios.post(Testuri + 'getSampleWithSchemeInfo', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'getSampleWithSchemeInfo', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -336,7 +344,7 @@ class HttpApi {
      * app推送消息接口
      */
     static pushnotice(params, f1, f2) {
-        Axios.post(Testuri + 'push_notice', params).then(res => {
+        Axios.post(URL_OBJ.MAIN_URL + 'push_notice', params).then(res => {
             if (f1) { f1(res) }
         }).catch(res => {
             if (f2) { f2(res) }
@@ -344,7 +352,7 @@ class HttpApi {
     }
 
     static ping(f1) {
-        Axios.post(Testuri + 'find_major', {})
+        Axios.post(URL_OBJ.MAIN_URL + 'find_major', {})
             .then(function (res) {
                 f1({ flag: true })
             })

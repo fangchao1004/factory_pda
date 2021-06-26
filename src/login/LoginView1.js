@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { View, Text, StyleSheet, Image, Alert, StatusBar, DeviceEventEmitter } from 'react-native'
 import { Button, Provider, Toast } from '@ant-design/react-native';
 import NfcManager from 'react-native-nfc-manager';
-import HttpApi from '../util/HttpApi';
+import HttpApi, { URL_OBJ } from '../util/HttpApi';
 import DeviceStorage, { USER_CARD, LOCAL_BUGS, LOCAL_RECORDS, LAST_DEVICES_INFO, SAMPLE_INFO, DEVICE_INFO } from '../util/DeviceStorage'
 import AppData, { NET_CONNECT, NET_DISCONNECT, TESTLIST } from '../util/AppData'
 import { checkTimeAllow, bindWithSchemeInfo } from '../util/Tool'
@@ -18,9 +18,7 @@ export default class LoginView1 extends Component {
         }
     }
     componentDidMount() {
-        this.checkNfcHandler();
-        this.checkAccount();
-        this.startMonitorNet();
+        this.startInit()
         // DeviceStorage.delete(LOCAL_BUGS);
         // DeviceStorage.delete(LOCAL_RECORDS);
         // DeviceStorage.delete(DEVICE_INFO);
@@ -29,6 +27,20 @@ export default class LoginView1 extends Component {
         console.log('loginView1 卸载');
         this.stopDetection();
         NetInfo.removeEventListener('connectionChange', this.netHandler)
+    }
+    startInit = async () => {
+        await this.getInitConfig()
+        this.checkNfcHandler();
+        this.checkAccount();
+        this.startMonitorNet();
+    }
+    getInitConfig = async () => {
+        console.log('App 初始化')
+        let res = await HttpApi.getConfigURLTable()
+        if (res.data.code === 0) {
+            URL_OBJ.MAIN_URL = res.data.data.filter((item) => { return item.id === 2 })[0].api_address
+            console.log('URL_OBJ:', URL_OBJ.MAIN_URL)
+        }
     }
     startMonitorNet = () => {
         NetInfo.isConnected.fetch().done((isConnected) => {
