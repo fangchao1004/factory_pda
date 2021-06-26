@@ -38,7 +38,7 @@ export default class LoginView1 extends Component {
         console.log('App 初始化')
         let res = await HttpApi.getConfigURLTable()
         if (res.data.code === 0) {
-            URL_OBJ.MAIN_URL = res.data.data.filter((item) => { return item.id === 2 })[0].api_address
+            URL_OBJ.MAIN_URL = res.data.data.filter((item) => { return item.id === 11 })[0].api_address
             console.log('URL_OBJ:', URL_OBJ.MAIN_URL)
         }
     }

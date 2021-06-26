@@ -10,7 +10,7 @@ export const URL_OBJ = { MAIN_URL: '' }
 
 class HttpApi {
     static getConfigURLTable() {
-        let sql = `select * from url_address_table where id in (2) `
+        let sql = `select * from url_address_table where id in (2,11) `
         return Axios.post(CONFIG_URL + 'obs', { sql })
     }
     /**
