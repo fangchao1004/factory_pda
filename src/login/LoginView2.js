@@ -107,35 +107,56 @@ class LoginView2 extends Component {
                 Toast.fail('账号和密码都不能为空', 1)
                 return;
             }
-            let sql1 = `select * from mac_address where address = '${macAddress}'`
-            HttpApi.obs({ sql: sql1 }, (res) => {
-                if (res.data.code == 0 && res.data.data.length > 0) {
-                    AppData.mac_address = res.data.data[0].address;
-                    AppData.tool_address = res.data.data[0].tool_address;
-                    AppData.pda_name = res.data.data[0].des;
-                    AppData.area0_id = res.data.data[0].area0_id;
-                    AppData.is_all_time = res.data.data[0].is_all_time;
-                    let sql = `select users.*,levels.name as levelname from users 
+            AppData.mac_address = macAddress;
+            AppData.pda_name = '演示机';
+            AppData.area0_id = 1;
+            AppData.is_all_time = 1;
+            let sql = `select users.*,levels.name as levelname from users 
                     left join (select * from levels where effective = 1) levels on levels.id = users.level_id
                     where users.username = '${this.state.username}' 
                     and users.password = '${this.state.password}' 
                     and users.effective = 1`
-                    HttpApi.obs({ sql }, (data) => {
-                        if (data.data.code == 0 && data.data.data.length > 0) {
-                            this.props.navigation.navigate('MainView')
-                            this.saveUserInfoInStorageHandler();
-                            this.saveUserInfoInGloabel(data.data.data[0]);
-                            // checkTimeAllow(); 测试用登录成功后打印巡检时间段信息
-                            let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',0,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.name}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
-                            HttpApi.obs({ sql }) ///添加登录日志记录
-                        } else {
-                            Toast.fail('用户名密码错误', 1)
-                        }
-                    })
+            HttpApi.obs({ sql }, (data) => {
+                if (data.data.code == 0 && data.data.data.length > 0) {
+                    this.props.navigation.navigate('MainView')
+                    this.saveUserInfoInStorageHandler();
+                    this.saveUserInfoInGloabel(data.data.data[0]);
+                    // checkTimeAllow(); 测试用登录成功后打印巡检时间段信息
+                    let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',0,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.name}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
+                    HttpApi.obs({ sql }) ///添加登录日志记录
                 } else {
-                    Toast.info('当前设备未注册-请联系管理员进行注册');
+                    Toast.fail('用户名密码错误', 1)
                 }
             })
+            // let sql1 = `select * from mac_address where address = '${macAddress}'`
+            // HttpApi.obs({ sql: sql1 }, (res) => {
+            //     if (res.data.code == 0 && res.data.data.length > 0) {
+            //         AppData.mac_address = res.data.data[0].address;
+            //         AppData.tool_address = res.data.data[0].tool_address;
+            //         AppData.pda_name = res.data.data[0].des;
+            //         AppData.area0_id = res.data.data[0].area0_id;
+            //         AppData.is_all_time = res.data.data[0].is_all_time;
+            //         let sql = `select users.*,levels.name as levelname from users 
+            //         left join (select * from levels where effective = 1) levels on levels.id = users.level_id
+            //         where users.username = '${this.state.username}' 
+            //         and users.password = '${this.state.password}' 
+            //         and users.effective = 1`
+            //         HttpApi.obs({ sql }, (data) => {
+            //             if (data.data.code == 0 && data.data.data.length > 0) {
+            //                 this.props.navigation.navigate('MainView')
+            //                 this.saveUserInfoInStorageHandler();
+            //                 this.saveUserInfoInGloabel(data.data.data[0]);
+            //                 // checkTimeAllow(); 测试用登录成功后打印巡检时间段信息
+            //                 let sql = `INSERT INTO login_logs (mac_address,pad_login_type,pda_name,version,client_type,account,time) VALUES ('${AppData.mac_address}',0,'${AppData.pda_name}','${AppData.record[0].version}',1,'${AppData.name}','${moment().format('YYYY-MM-DD HH:mm:ss')}')`
+            //                 HttpApi.obs({ sql }) ///添加登录日志记录
+            //             } else {
+            //                 Toast.fail('用户名密码错误', 1)
+            //             }
+            //         })
+            //     } else {
+            //         Toast.info('当前设备未注册-请联系管理员进行注册');
+            //     }
+            // })
 
 
         });
